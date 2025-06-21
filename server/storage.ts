@@ -66,7 +66,8 @@ export class MemStorage implements IStorage {
       this.createIndustry(industry);
     });
 
-    // Initialize startup ideas
+    // Initialize startup ideas with varied times
+    const baseTime = new Date();
     const ideasData: InsertStartupIdea[] = [
       {
         title: "AI-Powered Code Review Assistant",
@@ -148,8 +149,11 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    ideasData.forEach(idea => {
-      this.createStartupIdea(idea);
+    ideasData.forEach((idea, index) => {
+      // Create ideas with different timestamps throughout the day
+      const hoursAgo = index * 2 + Math.random() * 12; // Spread across 12+ hours
+      const createdAt = new Date(baseTime.getTime() - hoursAgo * 60 * 60 * 1000);
+      this.createStartupIdeaWithTime(idea, createdAt);
     });
 
     // Initialize daily stats
@@ -190,7 +194,11 @@ export class MemStorage implements IStorage {
 
   async createIndustry(insertIndustry: InsertIndustry): Promise<Industry> {
     const id = this.currentIndustryId++;
-    const industry: Industry = { ...insertIndustry, id };
+    const industry: Industry = { 
+      ...insertIndustry, 
+      id,
+      description: insertIndustry.description || null
+    };
     this.industries.set(id, industry);
     return industry;
   }
@@ -215,22 +223,22 @@ export class MemStorage implements IStorage {
       ideas = ideas.filter(idea => 
         idea.title.toLowerCase().includes(searchTerm) ||
         idea.summary.toLowerCase().includes(searchTerm) ||
-        idea.keywords.some(keyword => keyword.toLowerCase().includes(searchTerm))
+        (idea.keywords || []).some(keyword => keyword.toLowerCase().includes(searchTerm))
       );
     }
 
     if (filters?.minUpvotes) {
-      ideas = ideas.filter(idea => idea.upvotes >= filters.minUpvotes);
+      ideas = ideas.filter(idea => (idea.upvotes || 0) >= filters.minUpvotes);
     }
 
     // Apply sorting
     if (filters?.sortBy) {
       switch (filters.sortBy) {
         case 'upvotes':
-          ideas.sort((a, b) => b.upvotes - a.upvotes);
+          ideas.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
           break;
         case 'comments':
-          ideas.sort((a, b) => b.comments - a.comments);
+          ideas.sort((a, b) => (b.comments || 0) - (a.comments || 0));
           break;
         case 'recent':
           ideas.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
@@ -258,10 +266,30 @@ export class MemStorage implements IStorage {
     const id = this.currentIdeaId++;
     const now = new Date();
     const startupIdea: StartupIdea = { 
-      ...insertStartupIdea, 
+      ...insertStartupIdea,
       id,
+      upvotes: insertStartupIdea.upvotes || 0,
+      comments: insertStartupIdea.comments || 0,
+      keywords: insertStartupIdea.keywords || [],
+      redditPostUrls: insertStartupIdea.redditPostUrls || [],
       createdAt: now,
       updatedAt: now
+    };
+    this.startupIdeas.set(id, startupIdea);
+    return startupIdea;
+  }
+
+  private createStartupIdeaWithTime(insertStartupIdea: InsertStartupIdea, createdAt: Date): StartupIdea {
+    const id = this.currentIdeaId++;
+    const startupIdea: StartupIdea = { 
+      ...insertStartupIdea,
+      id,
+      upvotes: insertStartupIdea.upvotes || 0,
+      comments: insertStartupIdea.comments || 0,
+      keywords: insertStartupIdea.keywords || [],
+      redditPostUrls: insertStartupIdea.redditPostUrls || [],
+      createdAt,
+      updatedAt: createdAt
     };
     this.startupIdeas.set(id, startupIdea);
     return startupIdea;
@@ -272,7 +300,14 @@ export class MemStorage implements IStorage {
   }
 
   async updateDailyStats(insertDailyStats: InsertDailyStats): Promise<DailyStats> {
-    this.dailyStats = { id: 1, ...insertDailyStats };
+    this.dailyStats = { 
+      id: 1, 
+      ...insertDailyStats,
+      totalIdeas: insertDailyStats.totalIdeas || 0,
+      newIndustries: insertDailyStats.newIndustries || 0,
+      avgUpvotes: insertDailyStats.avgUpvotes || 0,
+      successRate: insertDailyStats.successRate || 0
+    };
     return this.dailyStats;
   }
 }

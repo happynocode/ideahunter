@@ -111,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             industry?.name || "Unknown",
             idea.upvotes,
             idea.comments,
-            `"${idea.keywords.join(', ')}"`,
+            `"${(idea.keywords || []).join(', ')}"`,
             idea.subreddit,
             idea.createdAt?.toISOString() || ""
           ].join(",");
