@@ -1,0 +1,190 @@
+**Product Requirements Document (PRD)**
+
+**Project Name:** Reddit-based Startup Idea Scraper
+
+**Date:** June 21, 2025
+
+---
+
+## 1. Executive Summary
+
+每日自动从 Reddit 抓取针对不同行业的用户需求与痛点帖，利用 DeepSeek 提炼并聚合信息，生成高质量、未被充分满足的创业点子列表，帮助科技创业者与小型商业主发现市场空白。
+
+---
+
+## 2. Objectives & Success Metrics
+
+* **目标**：按行业分类，每日输出 10–50 条新颖、有潜力的创业点子。
+* **关键指标**：
+
+  * 每日抓取帖数 & 输出点子条数
+  * 用户访问量 & 行业报告点击率
+  * CSV/JSON 导出次数
+  * 管理后台抓取成功率 & 执行时长
+
+---
+
+## 3. Target Users & Use Cases
+
+* **用户群体**：
+
+  * 科技创业者（技术或产品驱动）
+  * Small-business 经营者（寻求利基服务）
+  * Side Hustlers & 业余创业者
+  * 投资人（洞察早期机会）
+
+* **核心场景**：
+
+  1. 按行业浏览当天点子列表，看原帖链接与摘要
+  2. 按关键词/Upvotes/评论数筛选感兴趣点子
+  3. 导出 CSV/JSON 以便深入分析或团队分享
+
+---
+
+## 4. Content Sources & Classification
+
+### 4.1 内容来源
+
+* **首期**：Reddit（后续可拓展至 Hacker News、Product Hunt 等）
+
+### 4.2 行业分类
+
+* 技术 & 软件（SaaS、云服务、开发者工具、前端、后端、移动、低/无代码）
+* 人工智能 & 机器学习
+* 电商 & 零售
+* 健康 & 健身
+* 教育科技
+* 金融科技
+* 消费者服务
+* 企业服务
+* 媒体 & 内容创作
+* 旅游 & 出行
+* 社交 & 社区
+* 绿色 & 可持续
+* 物流 & 供应链
+
+---
+
+## 5. Hot & Trending Subreddits
+
+在抓取前关注以下高订阅/快速增长版块，以捕捉新兴需求：
+
+```
+r/announcements, r/AskReddit, r/funny, r/gaming, r/AIforEveryone, r/socialmedia,
+
+r/technology, r/science, r/news, r/memes, r/movies, r/music, r/books,
+
+r/food, r/cooking, r/DIY, r/homeimprovement, r/PersonalFinance, r/financialindependence,
+
+r/crypto, r/aww, r/dataisbeautiful, r/InternetIsBeautiful, r/entrepreneur, r/startups, r/business
+```
+
+---
+
+## 6. Subreddit 划分与抓取内容
+
+| 行业         | Subreddits                                                                                                                                                              | 帖子类型       |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| SaaS & 云服务 | r/SaaS, r/SaaSgrowth, r/cloud, r/aws, r/AZURE, r/startups, r/technology, r/CloudComputing, r/SaaSSales, r/techsales                                                     | 服务需求、定价模型  |
+| 开发者工具 & 平台 | r/Programming, r/devops, r/tooling, r/git, r/github, r/stackoverflow, r/dataisbeautiful, r/InternetIsBeautiful, r/opensource, r/ExperiencedDevs, r/SoftwareArchitecture | 工具需求、集成痛点  |
+| API & 后端   | r/api, r/backend, r/node, r/rustlang, r/webapi, r/microservices, r/Database, r/Serverless, r/APIDesign                                                                  | 特性需求、性能优化  |
+| 移动应用       | r/androiddev, r/iOSProgramming, r/flutter, r/iosdev, r/reactnative, r/swift, r/AppBusiness, r/UXDesign, r/MobileGaming                                                  | 功能需求、UX 反馈 |
+| Web & 前端   | r/webdev, r/javascript, r/reactjs, r/css, r/html, r/vuejs, r/angular, r/Frontend, r/ProWordPress, r/WebPerf                                                             | 框架选择、性能问题  |
+| 低/无代码      | r/NoCode, r/LowCode, r/automate, r/integrations, r/zapier, r/Bubble, r/Webflow, r/nocode                                                                                | 自动化需求、易用性  |
+| AI / ML    | r/MachineLearning, r/learnmachinelearning, r/ArtificialInteligence, r/AIProjects, r/deeplearning, r/datascience, r/science, r/LocalLLaMA, r/LangChain, r/VectorDB       | 算法需求、案例讨论  |
+| 电商 & 零售    | r/ecommerce, r/Entrepreneur, r/Shopify, r/ShopifyDev, r/woocommerce, r/dropship, r/FulfillmentByAmazon, r/EtsySellers, r/PPC                                            | 市场需求、运营痛点  |
+| 健康 & 健身    | r/fitness, r/health, r/healthIT, r/running, r/bodyweightfitness, r/nutrition, r/WearOS, r/QuantifiedSelf, r/Telehealth                                                  | 服务需求、工具建议  |
+| 教育科技       | r/education, r/edtech, r/learnprogramming, r/teachingresources, r/books, r/Teachers, r/LanguageLearning, r/OnlineTutoring                                               | 教学痛点、平台需求  |
+| 金融科技       | r/fintech, r/PersonalFinance, r/investing, r/crypto, r/financialindependence, r/FinTechAsia, r/OpenBanking, r/CreditCards, r/FIRE                                       | 产品功能、用户需求  |
+| 消费者服务      | r/SideHustle, r/smallbusiness, r/entrepreneurship, r/growmybusiness, r/business, r/food, r/cooking, r/DIY, r/homeimprovement, r/FieldService, r/Contractor, r/freelance | 服务创意、盈利模式  |
+| 企业服务       | r/Entrepreneur, r/smallbusiness, r/b2b, r/businessdev, r/startups, r/business, r/sysadmin, r/CRM, r/ERP                                                                 | 流程优化、效率工具  |
+| 媒体 & 内容创作  | r/contentcreation, r/blogging, r/podcasting, r/youtubers, r/graphic\_design, r/writing, r/movies, r/music, r/books, r/memes, r/NewTubers, r/podcasting, r/VideoEditing  | 平台需求、创作痛点  |
+| 旅游 & 出行    | r/travel, r/digitalnomad, r/backpacking, r/solotravel, r/travelhacks, r/onebag, r/awardtravel, r/digitalnomad                                                           | 行程规划、服务需求  |
+| 社交 & 社区    | r/socialmedia, r/communitymanagement, r/socialengineering, r/onlinecommunities, r/socialplatforms, r/ModSupport, r/CommunityManager, r/forumsoftware                    | 社交功能、社区建设  |
+| 绿色 & 可持续   | r/sustainability, r/zerowaste, r/eco, r/greenliving, r/environment, r/solar, r/composting, r/upcycling                                                                  | 环保需求、产品创新  |
+| 物流 & 供应链   | r/logistics, r/supplychain, r/freight, r/warehouse, r/FreightBrokers, r/SupplyChainLogistics, r/3PL                                                                     | 效率工具、可视化需求 |
+
+## 7. 抓取 & 筛选规则
+
+* **频率**：每天 UTC 00:00 执行一次。
+* **预筛选**：Upvotes ≥ 5 且 评论数 ≥ 2。
+* **关键词过滤**：排除常见成熟话题。
+* **去重**：基于标题/正文相似度聚类，合并同一需求多帖。
+* **处理**：调用 DeepSeek 提炼摘要、关键词，并识别现有解决方案与缺陷。
+
+---
+
+## 8. 产品功能 & 输出
+
+* **输出**：每行业 10–50 条点子。
+
+* **字段**：
+
+  1. 标题
+  2. 摘要
+  3. 原帖链接列表
+  4. 行业标签
+  5. Upvotes
+  6. 评论数
+  7. 发布时间
+  8. 关键词列表
+  9. 现有解决方案
+  10. 解决方案不足
+
+* **Web 界面**：行业分页、列表视图、详情展开、关键词/行业筛选。
+
+* **导出**：CSV/JSON。
+
+---
+
+## 9. 技术架构
+
+### 9.1 前端
+
+React + Vite + Tailwind CSS，SPA 架构，组件化设计，React Context 管理状态，SWR/React Query 缓存。
+
+### 9.2 抓取与处理
+
+Supabase Edge Functions 调度执行：RedditFetcher → PreFilter → DeepSeekProcessor → Aggregator → PersistService，失败入队重试。
+
+### 9.3 数据接口
+
+前端直连 Edge Functions：
+
+```
+GET /edge/functions/getIndustries
+GET /edge/functions/getIdeas?industry=&keywords=&page=&pageSize=
+GET /edge/functions/getIdeaDetail?id=
+```
+
+* 处理参数校验、Redis 缓存、Supabase Auth 验证。
+
+### 9.4 数据存储
+
+PostgreSQL 存储主数据；Redis 用于短期缓存与任务队列。
+
+### 9.5 运维
+
+Docker Compose 本地开发；GitHub Actions CI/CD；Supabase Logs + Logflare/Datadog 监控；RLS & 定期备份。
+
+---
+
+## 10. Milestones & Release Plan
+
+| 版本           | 范围                       | 时间         |
+| ------------ | ------------------------ | ---------- |
+| MVP (M)      | 抓取 & 存储、预筛选、行业列表页、原帖链接展示 | 2025-07-15 |
+| Next (S)     | DeepSeek 集成、关键词摘要、管理端监控  | 2025-08-01 |
+| Optional (C) | 通知订阅、新数据源、用户自定义告警        | 2025-09-01 |
+
+---
+
+## 11. 风险 & 假设
+
+* **假设**：Reddit 提供足够活跃话题。
+* **风险**：API 限制、噪声数据、抓取失败。
+* **应对**：调整频率、优化过滤、强化重试与监控。
+
+---
+
+*End of PRD*
