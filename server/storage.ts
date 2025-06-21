@@ -14,6 +14,7 @@ export interface IStorage {
     keywords?: string;
     minUpvotes?: number;
     sortBy?: 'upvotes' | 'comments' | 'recent';
+    timeRange?: 'today' | 'week' | 'month' | 'all';
     page?: number;
     pageSize?: number;
   }): Promise<{ ideas: StartupIdea[]; total: number }>;
@@ -208,6 +209,7 @@ export class MemStorage implements IStorage {
     keywords?: string;
     minUpvotes?: number;
     sortBy?: 'upvotes' | 'comments' | 'recent';
+    timeRange?: 'today' | 'week' | 'month' | 'all';
     page?: number;
     pageSize?: number;
   }): Promise<{ ideas: StartupIdea[]; total: number }> {
@@ -227,8 +229,30 @@ export class MemStorage implements IStorage {
       );
     }
 
-    if (filters?.minUpvotes) {
-      ideas = ideas.filter(idea => (idea.upvotes || 0) >= filters.minUpvotes);
+    if (filters?.minUpvotes !== undefined) {
+      ideas = ideas.filter(idea => (idea.upvotes || 0) >= filters.minUpvotes!);
+    }
+
+    // Apply time range filter
+    if (filters?.timeRange && filters.timeRange !== 'all') {
+      const now = new Date();
+      let cutoffTime: Date;
+      
+      switch (filters.timeRange) {
+        case 'today':
+          cutoffTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'week':
+          cutoffTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          cutoffTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          cutoffTime = new Date(0);
+      }
+      
+      ideas = ideas.filter(idea => idea.createdAt && new Date(idea.createdAt) >= cutoffTime);
     }
 
     // Apply sorting
@@ -270,8 +294,8 @@ export class MemStorage implements IStorage {
       id,
       upvotes: insertStartupIdea.upvotes || 0,
       comments: insertStartupIdea.comments || 0,
-      keywords: insertStartupIdea.keywords || [],
-      redditPostUrls: insertStartupIdea.redditPostUrls || [],
+      keywords: Array.isArray(insertStartupIdea.keywords) ? insertStartupIdea.keywords : [],
+      redditPostUrls: Array.isArray(insertStartupIdea.redditPostUrls) ? insertStartupIdea.redditPostUrls : [],
       createdAt: now,
       updatedAt: now
     };
@@ -286,8 +310,8 @@ export class MemStorage implements IStorage {
       id,
       upvotes: insertStartupIdea.upvotes || 0,
       comments: insertStartupIdea.comments || 0,
-      keywords: insertStartupIdea.keywords || [],
-      redditPostUrls: insertStartupIdea.redditPostUrls || [],
+      keywords: Array.isArray(insertStartupIdea.keywords) ? insertStartupIdea.keywords : [],
+      redditPostUrls: Array.isArray(insertStartupIdea.redditPostUrls) ? insertStartupIdea.redditPostUrls : [],
       createdAt,
       updatedAt: createdAt
     };

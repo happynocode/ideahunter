@@ -6,6 +6,7 @@ interface UseIdeasFilters {
   keywords?: string;
   minUpvotes?: number;
   sortBy?: 'upvotes' | 'comments' | 'recent';
+  timeRange?: 'today' | 'week' | 'month' | 'all';
   page?: number;
   pageSize?: number;
 }
@@ -17,6 +18,7 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
   if (filters.keywords) queryParams.append('keywords', filters.keywords);
   if (filters.minUpvotes) queryParams.append('minUpvotes', filters.minUpvotes.toString());
   if (filters.sortBy) queryParams.append('sortBy', filters.sortBy);
+  if (filters.timeRange) queryParams.append('timeRange', filters.timeRange);
   if (filters.page) queryParams.append('page', filters.page.toString());
   if (filters.pageSize) queryParams.append('pageSize', filters.pageSize.toString());
 

@@ -34,6 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         keywords: z.string().optional(),
         minUpvotes: z.string().optional().transform(val => val ? parseInt(val) : undefined),
         sortBy: z.enum(['upvotes', 'comments', 'recent']).optional(),
+        timeRange: z.enum(['today', 'week', 'month', 'all']).optional(),
         page: z.string().optional().transform(val => val ? parseInt(val) : 1),
         pageSize: z.string().optional().transform(val => val ? parseInt(val) : 20),
       });

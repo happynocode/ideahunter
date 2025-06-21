@@ -11,6 +11,8 @@ interface SearchFiltersProps {
   onSortChange: (sort: 'upvotes' | 'comments' | 'recent') => void;
   minUpvotes?: number;
   onMinUpvotesChange: (minUpvotes?: number) => void;
+  timeRange: 'today' | 'week' | 'month' | 'all';
+  onTimeRangeChange: (timeRange: 'today' | 'week' | 'month' | 'all') => void;
 }
 
 export default function SearchFilters({
