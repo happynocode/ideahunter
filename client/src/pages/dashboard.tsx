@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<'upvotes' | 'comments' | 'recent'>('upvotes');
   const [minUpvotes, setMinUpvotes] = useState<number | undefined>();
+  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all'>('all');
   
   const { toast } = useToast();
 
@@ -25,6 +26,7 @@ export default function Dashboard() {
     keywords: searchQuery,
     sortBy,
     minUpvotes,
+    timeRange,
     page: 1,
     pageSize: 20
   });
@@ -103,6 +105,8 @@ export default function Dashboard() {
             onSortChange={setSortBy}
             minUpvotes={minUpvotes}
             onMinUpvotesChange={setMinUpvotes}
+            timeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
           />
 
           <StatsCards />

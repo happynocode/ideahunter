@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { ArrowUp, MessageSquare } from "lucide-react";
+import { ArrowUp, MessageSquare, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { StartupIdea } from "@/lib/types";
+import { formatRelativeTime } from "@/lib/utils";
 
 interface IdeaGridProps {
   ideas: StartupIdea[];
@@ -102,7 +103,13 @@ export default function IdeaGrid({ ideas, isLoading, onIdeaClick }: IdeaGridProp
               </div>
               
               <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>{idea.subreddit}</span>
+                <div className="flex items-center space-x-3">
+                  <span>{idea.subreddit}</span>
+                  <div className="flex items-center space-x-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{formatRelativeTime(idea.createdAt)}</span>
+                  </div>
+                </div>
                 <div className="flex items-center space-x-1">
                   <MessageSquare className="w-3 h-3" />
                   <span>{idea.comments} comments</span>

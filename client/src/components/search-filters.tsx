@@ -22,6 +22,8 @@ export default function SearchFilters({
   onSortChange,
   minUpvotes,
   onMinUpvotesChange,
+  timeRange,
+  onTimeRangeChange,
 }: SearchFiltersProps) {
   return (
     <motion.div
@@ -45,6 +47,18 @@ export default function SearchFilters({
               </div>
             </div>
             <div className="flex gap-3">
+              <Select value={timeRange} onValueChange={onTimeRangeChange}>
+                <SelectTrigger className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-400 min-w-32">
+                  <SelectValue placeholder="Time Range" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-white/20">
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select
                 value={minUpvotes?.toString() || "all"}
                 onValueChange={(value) => onMinUpvotesChange(value === "all" ? undefined : parseInt(value))}
