@@ -1,4 +1,7 @@
 import { users, industries, startupIdeas, dailyStats, type User, type InsertUser, type Industry, type InsertIndustry, type StartupIdea, type InsertStartupIdea, type DailyStats, type InsertDailyStats } from "@shared/schema";
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
+import { eq, desc, asc, and, gte, like, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -336,4 +339,193 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  private db: ReturnType<typeof drizzle>;
+
+  constructor() {
+    const sql = neon(process.env.DATABASE_URL!);
+    this.db = drizzle(sql);
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.username, username)).limit(1);
+    return result[0];
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const result = await this.db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  async getIndustries(): Promise<Industry[]> {
+    return await this.db.select().from(industries).orderBy(asc(industries.name));
+  }
+
+  async getIndustryById(id: number): Promise<Industry | undefined> {
+    const result = await this.db.select().from(industries).where(eq(industries.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createIndustry(industry: InsertIndustry): Promise<Industry> {
+    const result = await this.db.insert(industries).values(industry).returning();
+    return result[0];
+  }
+
+  async getStartupIdeas(filters?: {
+    industryId?: number;
+    keywords?: string;
+    minUpvotes?: number;
+    sortBy?: 'upvotes' | 'comments' | 'recent';
+    timeRange?: 'today' | 'week' | 'month' | 'all';
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ ideas: StartupIdea[]; total: number }> {
+    const conditions = [];
+
+    // Apply filters
+    if (filters?.industryId) {
+      conditions.push(eq(startupIdeas.industryId, filters.industryId));
+    }
+
+    if (filters?.keywords) {
+      const searchTerm = `%${filters.keywords.toLowerCase()}%`;
+      conditions.push(
+        sql`(
+          lower(${startupIdeas.title}) like ${searchTerm} OR 
+          lower(${startupIdeas.summary}) like ${searchTerm}
+        )`
+      );
+    }
+
+    if (filters?.minUpvotes !== undefined) {
+      conditions.push(gte(startupIdeas.upvotes, filters.minUpvotes));
+    }
+
+    // Apply time range filter
+    if (filters?.timeRange && filters.timeRange !== 'all') {
+      const now = new Date();
+      let cutoffTime: Date;
+      
+      switch (filters.timeRange) {
+        case 'today':
+          cutoffTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'week':
+          cutoffTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          cutoffTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          cutoffTime = new Date(0);
+      }
+      
+      conditions.push(gte(startupIdeas.createdAt, cutoffTime));
+    }
+
+    // Build base queries
+    let baseQuery = this.db.select().from(startupIdeas);
+    let countQuery = this.db.select({ count: sql<number>`count(*)` }).from(startupIdeas);
+
+    if (conditions.length > 0) {
+      const whereCondition = and(...conditions);
+      baseQuery = baseQuery.where(whereCondition);
+      countQuery = countQuery.where(whereCondition);
+    }
+
+    // Apply sorting
+    if (filters?.sortBy) {
+      switch (filters.sortBy) {
+        case 'upvotes':
+          baseQuery = baseQuery.orderBy(desc(startupIdeas.upvotes));
+          break;
+        case 'comments':
+          baseQuery = baseQuery.orderBy(desc(startupIdeas.comments));
+          break;
+        case 'recent':
+          baseQuery = baseQuery.orderBy(desc(startupIdeas.createdAt));
+          break;
+      }
+    } else {
+      baseQuery = baseQuery.orderBy(desc(startupIdeas.createdAt));
+    }
+
+    // Get total count
+    const totalResult = await countQuery;
+    const total = totalResult[0].count;
+
+    // Apply pagination
+    const page = filters?.page || 1;
+    const pageSize = filters?.pageSize || 20;
+    const offset = (page - 1) * pageSize;
+    
+    const ideas = await baseQuery.limit(pageSize).offset(offset);
+    return { ideas, total };
+  }
+
+  async getStartupIdeaById(id: number): Promise<StartupIdea | undefined> {
+    const result = await this.db.select().from(startupIdeas).where(eq(startupIdeas.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createStartupIdea(idea: InsertStartupIdea): Promise<StartupIdea> {
+    const result = await this.db.insert(startupIdeas).values(idea).returning();
+    return result[0];
+  }
+
+  async getDailyStats(): Promise<DailyStats | undefined> {
+    const today = new Date().toISOString().split('T')[0];
+    const result = await this.db.select().from(dailyStats).where(eq(dailyStats.date, today)).limit(1);
+    return result[0];
+  }
+
+  async updateDailyStats(stats: InsertDailyStats): Promise<DailyStats> {
+    const today = new Date().toISOString().split('T')[0];
+    const existing = await this.getDailyStats();
+    
+    if (existing) {
+      const result = await this.db
+        .update(dailyStats)
+        .set(stats)
+        .where(eq(dailyStats.date, today))
+        .returning();
+      return result[0];
+    } else {
+      const result = await this.db.insert(dailyStats).values({ ...stats, date: today }).returning();
+      return result[0];
+    }
+  }
+
+  // Initialize industries if they don't exist
+  async initializeIndustries(): Promise<void> {
+    const existingIndustries = await this.getIndustries();
+    if (existingIndustries.length > 0) return;
+
+    const industriesData: InsertIndustry[] = [
+      { name: "SaaS & Cloud", slug: "saas", icon: "fas fa-cloud", color: "neon-blue", description: "Software as a Service and Cloud Computing" },
+      { name: "AI & ML", slug: "ai", icon: "fas fa-brain", color: "neon-purple", description: "Artificial Intelligence and Machine Learning" },
+      { name: "E-commerce", slug: "ecommerce", icon: "fas fa-shopping-cart", color: "violet-400", description: "Electronic Commerce and Retail" },
+      { name: "Health & Fitness", slug: "health", icon: "fas fa-heart", color: "green-400", description: "Healthcare and Wellness" },
+      { name: "FinTech", slug: "fintech", icon: "fas fa-chart-line", color: "yellow-400", description: "Financial Technology" },
+      { name: "EdTech", slug: "edtech", icon: "fas fa-graduation-cap", color: "orange-400", description: "Educational Technology" },
+      { name: "Developer Tools", slug: "devtools", icon: "fas fa-code", color: "blue-400", description: "Development Tools and Platforms" },
+      { name: "Consumer Services", slug: "consumer", icon: "fas fa-users", color: "pink-400", description: "Consumer-facing Services" },
+      { name: "Enterprise", slug: "enterprise", icon: "fas fa-building", color: "indigo-400", description: "Enterprise Solutions" },
+      { name: "Media & Content", slug: "media", icon: "fas fa-play", color: "red-400", description: "Media and Content Creation" },
+      { name: "Travel & Mobility", slug: "travel", icon: "fas fa-plane", color: "cyan-400", description: "Travel and Transportation" },
+      { name: "Social & Community", slug: "social", icon: "fas fa-share-alt", color: "purple-400", description: "Social Platforms and Community Tools" },
+      { name: "Sustainability", slug: "sustainability", icon: "fas fa-leaf", color: "emerald-400", description: "Green and Sustainable Solutions" },
+    ];
+
+    await this.db.insert(industries).values(industriesData);
+  }
+}
+
+// Use database storage instead of memory storage
+export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
