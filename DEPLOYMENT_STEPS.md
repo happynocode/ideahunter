@@ -35,18 +35,28 @@ supabase secrets set \
   SUPABASE_SERVICE_ROLE_KEY="你的_service_role_key" \
   REDDIT_CLIENT_ID="你的_reddit_client_id" \
   REDDIT_CLIENT_SECRET="你的_reddit_client_secret" \
-  REDDIT_USER_AGENT="RedditScraper/1.0 by /u/你的用户名"
+  REDDIT_USER_AGENT="RedditScraper/1.0 by /u/你的用户名" \
+  DEEPSEEK_API_KEY="你的_deepseek_api_key"
 ```
 
-#### 获取 Reddit API 凭据：
+#### 获取 API 凭据：
+**Reddit API:**
 1. 访问 https://www.reddit.com/prefs/apps
 2. 点击 "Create App" 或 "Create Another App"
 3. 选择 "script" 类型
 4. 填写应用信息获取 client_id 和 client_secret
 
+**DeepSeek API:**
+1. 访问 https://platform.deepseek.com/
+2. 注册账户并获取 API key
+
 ### 5. 部署函数
 ```bash
+# 部署 Reddit 抓取函数
 supabase functions deploy reddit-scraper --no-verify-jwt
+
+# 部署 DeepSeek 分析函数
+supabase functions deploy deepseek-analyzer --no-verify-jwt
 ```
 
 ### 6. 测试部署

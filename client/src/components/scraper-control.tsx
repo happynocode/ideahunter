@@ -1,18 +1,55 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Download, RefreshCw } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Bot, Download, Loader2, Sparkles } from "lucide-react";
 
 export default function ScraperControl() {
-  const [isScrapingLoading, setIsScrapingLoading] = useState(false);
+  const [isTodayRunning, setIsTodayRunning] = useState(false);
+  const [isWeekRunning, setIsWeekRunning] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
-  const handleScrapeReddit = async () => {
-    setIsScrapingLoading(true);
+  const handleScraping = async (timeRange: 'today' | 'week') => {
+    const setRunning = timeRange === 'today' ? setIsTodayRunning : setIsWeekRunning;
+    setRunning(true);
+    
     try {
-      // Call the Supabase Edge Function
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reddit-scraper`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ timeRange }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "抓取成功",
+          description: `${data.message} (${data.totalScraped} 条)`,
+        });
+      } else {
+        throw new Error(data.error || 'Unknown error');
+      }
+    } catch (error) {
+      toast({
+        title: "抓取失败",
+        description: error instanceof Error ? error.message : '请检查网络连接',
+        variant: "destructive",
+      });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const handleAnalysis = async () => {
+    setIsAnalyzing(true);
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deepseek-analyzer`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
@@ -20,97 +57,110 @@ export default function ScraperControl() {
         },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Scraping failed: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
+      const data = await response.json();
       
-      if (!result.success) {
-        throw new Error(result.error || 'Unknown error occurred');
+      if (data.success) {
+        toast({
+          title: "分析完成",
+          description: data.message,
+        });
+      } else {
+        throw new Error(data.error || 'Unknown error');
       }
-
-      toast({
-        title: "Reddit Scraping Complete",
-        description: result.message || `成功抓取了 ${result.totalScraped} 个新的创业想法`,
-      });
-      
-      // Refresh the page to show new data
-      window.location.reload();
     } catch (error) {
       toast({
-        title: "Scraping Failed",
-        description: "Reddit 数据抓取失败，请检查网络连接和 API 配置",
+        title: "分析失败",
+        description: error instanceof Error ? error.message : '请检查 DeepSeek API 配置',
         variant: "destructive",
       });
     } finally {
-      setIsScrapingLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
-  const handleExportCSV = () => {
-    window.open('/api/export/csv', '_blank');
-  };
-
-  const handleExportJSON = () => {
-    window.open('/api/export/json', '_blank');
-  };
-
   return (
-    <Card className="bg-black/20 backdrop-blur-sm border-neon-blue/30 hover:border-neon-blue/50 transition-all duration-300">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          <RefreshCw className="h-5 w-5 text-neon-blue" />
-          数据管理
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <p className="text-gray-300 text-sm">从 Reddit 抓取最新的创业想法</p>
-          <Button
-            onClick={handleScrapeReddit}
-            disabled={isScrapingLoading}
-            className="w-full bg-neon-blue/20 hover:bg-neon-blue/30 border border-neon-blue/50 text-neon-blue"
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            Reddit 数据抓取
+          </CardTitle>
+          <CardDescription>
+            从 Reddit 抓取原始数据到数据库
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button 
+            onClick={() => handleScraping('today')} 
+            disabled={isTodayRunning || isWeekRunning}
+            className="w-full"
+            variant="outline"
           >
-            {isScrapingLoading ? (
+            {isTodayRunning ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                抓取中...
+                正在抓取今日数据...
               </>
             ) : (
               <>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                开始抓取
+                <Download className="mr-2 h-4 w-4" />
+                抓取今日 Reddit 数据
               </>
             )}
           </Button>
-        </div>
-        
-        <div className="border-t border-gray-700 pt-4">
-          <p className="text-gray-300 text-sm mb-2">导出数据</p>
-          <div className="flex gap-2">
-            <Button
-              onClick={handleExportCSV}
-              variant="outline"
-              size="sm"
-              className="flex-1 border-neon-purple/50 text-neon-purple hover:bg-neon-purple/20"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              CSV
-            </Button>
-            <Button
-              onClick={handleExportJSON}
-              variant="outline"
-              size="sm"
-              className="flex-1 border-neon-purple/50 text-neon-purple hover:bg-neon-purple/20"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              JSON
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          
+          <Button 
+            onClick={() => handleScraping('week')} 
+            disabled={isTodayRunning || isWeekRunning}
+            className="w-full"
+            variant="outline"
+          >
+            {isWeekRunning ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                正在抓取本周数据...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                抓取本周 Reddit 数据
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            AI 创业想法分析
+          </CardTitle>
+          <CardDescription>
+            使用 DeepSeek AI 分析 Reddit 数据生成创业想法
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            onClick={handleAnalysis} 
+            disabled={isAnalyzing}
+            className="w-full"
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                AI 分析中...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                生成 AI 创业想法
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

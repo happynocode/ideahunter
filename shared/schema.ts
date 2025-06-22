@@ -47,8 +47,8 @@ export const startupIdeas = pgTable("startup_ideas", {
   existingSolutions: text("existing_solutions"),
   solutionGaps: text("solution_gaps"),
   marketSize: text("market_size"),
-  confidenceScore: integer("confidence_score").default(0),
-  sourcePostIds: json("source_post_ids").$type<number[]>().default([]),
+  confidenceScore: integer("confidence_score").default(0).notNull(),
+  sourcePostIds: json("source_post_ids").$type<number[]>().default([]).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

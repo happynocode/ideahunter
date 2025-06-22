@@ -303,6 +303,8 @@ export class MemStorage implements IStorage {
       existingSolutions: insertStartupIdea.existingSolutions || null,
       solutionGaps: insertStartupIdea.solutionGaps || null,
       marketSize: insertStartupIdea.marketSize || null,
+      confidenceScore: insertStartupIdea.confidenceScore || 0,
+      sourcePostIds: (insertStartupIdea.sourcePostIds || []) as number[],
       createdAt: now,
       updatedAt: now
     };
@@ -322,6 +324,8 @@ export class MemStorage implements IStorage {
       existingSolutions: insertStartupIdea.existingSolutions || null,
       solutionGaps: insertStartupIdea.solutionGaps || null,
       marketSize: insertStartupIdea.marketSize || null,
+      confidenceScore: insertStartupIdea.confidenceScore || 0,
+      sourcePostIds: (insertStartupIdea.sourcePostIds || []) as number[],
       createdAt,
       updatedAt: createdAt
     };
@@ -483,6 +487,8 @@ export class DatabaseStorage implements IStorage {
         ...idea,
         keywords: Array.isArray(idea.keywords) ? idea.keywords : [],
         redditPostUrls: Array.isArray(idea.redditPostUrls) ? idea.redditPostUrls : [],
+        confidenceScore: idea.confidenceScore || 0,
+        sourcePostIds: Array.isArray(idea.sourcePostIds) ? idea.sourcePostIds : [],
         upvotes: idea.upvotes || 0,
         comments: idea.comments || 0,
         existingSolutions: idea.existingSolutions || null,

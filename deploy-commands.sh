@@ -21,11 +21,15 @@ supabase secrets set \
   SUPABASE_SERVICE_ROLE_KEY="你的_service_role_key" \
   REDDIT_CLIENT_ID="你的_reddit_client_id" \
   REDDIT_CLIENT_SECRET="你的_reddit_client_secret" \
-  REDDIT_USER_AGENT="RedditScraper/1.0 by /u/你的用户名"
+  REDDIT_USER_AGENT="RedditScraper/1.0 by /u/你的用户名" \
+  DEEPSEEK_API_KEY="你的_deepseek_api_key"
 
-echo "=== Step 5: 部署 Edge Function ==="
+echo "=== Step 5: 部署 Edge Functions ==="
 # 部署 reddit-scraper 函数
 supabase functions deploy reddit-scraper --no-verify-jwt
+
+# 部署 deepseek-analyzer 函数
+supabase functions deploy deepseek-analyzer --no-verify-jwt
 
 echo "=== Step 6: 测试部署 ==="
 # 测试函数是否正常工作
