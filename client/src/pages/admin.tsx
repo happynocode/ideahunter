@@ -31,33 +31,49 @@ export default function Admin() {
 
   // Fetch all ideas for admin management
   const { data: ideasData, isLoading } = useQuery({
-    queryKey: ['/api/ideas', { pageSize: 1000 }],
-    queryFn: getQueryFn({ on401: "throw" })
+    queryKey: ['ideas', { pageSize: 1000 }],
+    queryFn: async () => {
+      const { data, error, count } = await supabase
+        .from('startup_ideas')
+        .select(`
+          *,
+          industry:industries(*)
+        `, { count: 'exact' })
+        .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+
+      return {
+        ideas: data || [],
+        total: count || 0,
+        page: 1,
+        pageSize: 1000,
+        totalPages: 1
+      };
+    }
   });
 
   // Fetch stats
   const { data: stats } = useQuery({
-    queryKey: ['/api/stats'],
-    queryFn: getQueryFn({ on401: "throw" })
-  });
+    queryKey: ['stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('daily_stats')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(1)
+        .single();
 
-  // Delete idea mutation
-  const deleteMutation = useMutation({
-    mutationFn: (ideaId: number) => apiRequest(`/api/ideas/${ideaId}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/ideas'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      toast({
-        title: "删除成功",
-        description: "想法已成功删除",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "删除失败",
-        description: "无法删除想法，请稍后重试",
-        variant: "destructive",
-      });
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      return data || {
+        id: 1,
+        date: new Date().toISOString().split('T')[0],
+        totalIdeas: 0,
+        newIndustries: 13,
+        avgUpvotes: 0,
+        successRate: 0
+      };
     }
   });
 
