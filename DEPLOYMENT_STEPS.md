@@ -23,6 +23,11 @@ supabase login
 supabase link --project-ref niviihlfsqocuboafudh
 ```
 
+如果遇到配置文件错误，先运行：
+```bash
+rm -f supabase/.temp/project-ref
+```
+
 ### 4. 设置环境变量
 ```bash
 supabase secrets set \
