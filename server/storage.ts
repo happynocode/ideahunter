@@ -481,8 +481,8 @@ export class DatabaseStorage implements IStorage {
     try {
       const ideaWithDefaults = {
         ...idea,
-        keywords: Array.isArray(idea.keywords) ? idea.keywords : (idea.keywords ? [idea.keywords] : []),
-        redditPostUrls: Array.isArray(idea.redditPostUrls) ? idea.redditPostUrls : (idea.redditPostUrls ? [idea.redditPostUrls] : []),
+        keywords: Array.isArray(idea.keywords) ? idea.keywords : [],
+        redditPostUrls: Array.isArray(idea.redditPostUrls) ? idea.redditPostUrls : [],
         upvotes: idea.upvotes || 0,
         comments: idea.comments || 0,
         existingSolutions: idea.existingSolutions || null,
@@ -555,17 +555,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Try database first, fallback to memory if connection fails
-let storage: MemStorage | DatabaseStorage;
-try {
-  if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgresql://')) {
-    storage = new DatabaseStorage();
-  } else {
-    storage = new MemStorage();
-  }
-} catch (error) {
-  console.log('Database connection failed, using memory storage');
-  storage = new MemStorage();
-}
-
-export { storage };
+// Start with memory storage, will be switched to database if valid URL provided
+export let storage: MemStorage | DatabaseStorage = new MemStorage();
