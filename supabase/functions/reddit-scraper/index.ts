@@ -357,13 +357,14 @@ async function processPost(post: RedditPost, industryId: number) {
   return {
     title: post.title,
     summary: summary,
-    industryId: industryId,
+    industry_id: industryId,
     upvotes: post.score,
     comments: post.num_comments,
     keywords: keywords,
     subreddit: post.subreddit,
-    redditPostUrls: [`https://reddit.com${post.permalink}`],
-    createdAt: new Date(post.created_utc * 1000).toISOString()
+    reddit_post_urls: [`https://reddit.com${post.permalink}`],
+    created_at: new Date(post.created_utc * 1000).toISOString(),
+    updated_at: new Date().toISOString()
   };
 }
 
