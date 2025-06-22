@@ -48,7 +48,9 @@ supabase secrets set \
 
 **DeepSeek API:**
 1. 访问 https://platform.deepseek.com/
-2. 注册账户并获取 API key
+2. 注册账户并完成认证
+3. 在 API 管理页面创建 API Key
+4. 复制生成的密钥（格式：sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx）
 
 ### 5. 部署函数
 ```bash

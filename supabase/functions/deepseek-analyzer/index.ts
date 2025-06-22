@@ -50,7 +50,8 @@ async function callDeepSeekAPI(prompt: string): Promise<string> {
     throw new Error('DEEPSEEK_API_KEY not configured');
   }
 
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+  // DeepSeek API 调用格式
+  const response = await fetch('https://api.deepseek.com/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -61,7 +62,7 @@ async function callDeepSeekAPI(prompt: string): Promise<string> {
       messages: [
         {
           role: 'system',
-          content: 'You are a startup analyst expert. Analyze Reddit posts and generate comprehensive startup ideas with market insights.'
+          content: 'You are a startup analyst expert. Analyze Reddit posts and generate comprehensive startup ideas with market insights. Always respond in valid JSON format.'
         },
         {
           role: 'user',
@@ -69,15 +70,21 @@ async function callDeepSeekAPI(prompt: string): Promise<string> {
         }
       ],
       max_tokens: 4000,
-      temperature: 0.7
+      temperature: 0.7,
+      stream: false
     })
   });
 
   if (!response.ok) {
-    throw new Error(`DeepSeek API error: ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    throw new Error('Invalid response format from DeepSeek API');
+  }
+  
   return data.choices[0].message.content;
 }
 

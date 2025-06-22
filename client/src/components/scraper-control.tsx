@@ -31,6 +31,15 @@ export default function ScraperControl() {
           title: "抓取成功",
           description: `${data.message} (${data.totalScraped} 条)`,
         });
+        
+        // 自动触发 AI 分析
+        if (data.totalScraped > 0) {
+          toast({
+            title: "正在启动 AI 分析",
+            description: "抓取完成，开始分析数据生成创业想法...",
+          });
+          handleAnalysis();
+        }
       } else {
         throw new Error(data.error || 'Unknown error');
       }
@@ -131,36 +140,25 @@ export default function ScraperControl() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            AI 创业想法分析
-          </CardTitle>
-          <CardDescription>
-            使用 DeepSeek AI 分析 Reddit 数据生成创业想法
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            onClick={handleAnalysis} 
-            disabled={isAnalyzing}
-            className="w-full"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                AI 分析中...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                生成 AI 创业想法
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+      {isAnalyzing && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              AI 分析进行中
+            </CardTitle>
+            <CardDescription>
+              DeepSeek AI 正在分析 Reddit 数据生成创业想法
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+              <span>AI 分析中，请稍候...</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
