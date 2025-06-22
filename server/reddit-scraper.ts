@@ -173,7 +173,7 @@ class RedditScraper {
           };
 
           try {
-            await storage.createStartupIdea(idea);
+            await getStorage().createStartupIdea(idea);
             console.log(`Saved idea: ${post.title.substring(0, 50)}...`);
           } catch (error) {
             console.error(`Failed to save idea: ${error}`);

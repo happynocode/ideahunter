@@ -556,4 +556,4 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Start with memory storage, will be switched to database if valid URL provided
-export let storage: MemStorage | DatabaseStorage = new MemStorage();
+export let storage: MemStorage | DatabaseStorage | any = new MemStorage();

@@ -1,25 +1,29 @@
-import { neon } from '@neondatabase/serverless';
-import { DatabaseStorage } from './storage.js';
+import { SupabaseStorage } from './supabase-storage.js';
+
+let currentStorage: any = null;
 
 export async function switchToSupabase(): Promise<boolean> {
   try {
-    if (!process.env.DATABASE_URL) {
-      console.log('No DATABASE_URL found');
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
       return false;
     }
 
-    console.log('Testing Supabase connection...');
-    const sql = neon(process.env.DATABASE_URL);
-    await sql`SELECT 1`;
+    console.log('Switching to Supabase storage...');
+    const storage = new SupabaseStorage(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
     
-    console.log('Connection successful, initializing database...');
-    const dbStorage = new DatabaseStorage();
-    await dbStorage.initializeIndustries();
+    // Test connection
+    await storage.getIndustries();
+    await storage.initializeIndustries();
     
-    console.log('Database initialized successfully');
+    currentStorage = storage;
+    console.log('Successfully switched to Supabase storage');
     return true;
   } catch (error) {
-    console.error('Supabase connection failed:', error.message);
+    console.error('Failed to switch to Supabase:', error.message);
     return false;
   }
+}
+
+export function getCurrentStorage() {
+  return currentStorage;
 }
