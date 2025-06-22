@@ -11,41 +11,29 @@ export default function ScraperControl() {
   const handleScrapeReddit = async () => {
     setIsScrapingLoading(true);
     try {
-      // For demo purposes, use mock data since Edge Functions require additional setup
-      const mockIdeas = [
-        {
-          title: "FinTech Mobile Payment Solution",
-          summary: "A revolutionary mobile payment app that uses biometric authentication and supports multiple cryptocurrencies.",
-          industryId: 3, // Fintech
-          upvotes: 178,
-          comments: 45,
-          keywords: ["fintech", "mobile payments", "crypto", "biometric"],
-          subreddit: "fintech",
-          redditPostUrls: ["https://reddit.com/r/fintech/example1"]
+      // Call the Supabase Edge Function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reddit-scraper`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
         },
-        {
-          title: "Healthcare Telemedicine Platform",
-          summary: "An AI-powered telemedicine platform that connects patients with specialists and provides real-time health monitoring.",
-          industryId: 5, // Healthcare Tech
-          upvotes: 234,
-          comments: 78,
-          keywords: ["healthcare", "telemedicine", "ai", "monitoring"],
-          subreddit: "healthcare",
-          redditPostUrls: ["https://reddit.com/r/healthcare/example2"]
-        }
-      ];
+      });
 
-      // Insert into Supabase
-      const { supabase } = await import('@/lib/queryClient');
-      const { error } = await supabase
-        .from('startup_ideas')
-        .insert(mockIdeas);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Scraping failed: ${response.status} - ${errorText}`);
+      }
 
-      if (error) throw error;
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Unknown error occurred');
+      }
 
       toast({
         title: "Reddit Scraping Complete",
-        description: `成功抓取了 ${mockIdeas.length} 个新的创业想法并保存到数据库`,
+        description: result.message || `成功抓取了 ${result.totalScraped} 个新的创业想法`,
       });
       
       // Refresh the page to show new data
