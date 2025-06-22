@@ -481,8 +481,8 @@ export class DatabaseStorage implements IStorage {
     try {
       const ideaWithDefaults = {
         ...idea,
-        keywords: Array.isArray(idea.keywords) ? idea.keywords : [],
-        redditPostUrls: Array.isArray(idea.redditPostUrls) ? idea.redditPostUrls : [],
+        keywords: Array.isArray(idea.keywords) ? idea.keywords : (idea.keywords ? [idea.keywords] : []),
+        redditPostUrls: Array.isArray(idea.redditPostUrls) ? idea.redditPostUrls : (idea.redditPostUrls ? [idea.redditPostUrls] : []),
         upvotes: idea.upvotes || 0,
         comments: idea.comments || 0,
         existingSolutions: idea.existingSolutions || null,
@@ -555,5 +555,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Try to use database storage, fallback to memory if connection fails
-export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
+// Use memory storage until valid DATABASE_URL is provided
+export const storage = new MemStorage();

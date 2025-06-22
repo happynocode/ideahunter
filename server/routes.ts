@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { testDatabaseConnection } from "./test-db";
 import { redditScraper } from "./reddit-scraper";
 import { taskScheduler } from "./scheduler";
 import { z } from "zod";
