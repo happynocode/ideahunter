@@ -17,6 +17,23 @@ export const industries = pgTable("industries", {
   description: text("description"),
 });
 
+// Raw Reddit posts table - stores original scraped data
+export const rawRedditPosts = pgTable("raw_reddit_posts", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content"),
+  author: text("author").notNull(),
+  subreddit: text("subreddit").notNull(),
+  upvotes: integer("upvotes").default(0),
+  comments: integer("comments").default(0),
+  permalink: text("permalink").notNull(),
+  redditId: text("reddit_id").notNull().unique(),
+  industryId: integer("industry_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  scrapedAt: timestamp("scraped_at").defaultNow(),
+});
+
+// Processed startup ideas table - stores AI-analyzed results
 export const startupIdeas = pgTable("startup_ideas", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -30,6 +47,8 @@ export const startupIdeas = pgTable("startup_ideas", {
   existingSolutions: text("existing_solutions"),
   solutionGaps: text("solution_gaps"),
   marketSize: text("market_size"),
+  confidenceScore: integer("confidence_score").default(0),
+  sourcePostIds: json("source_post_ids").$type<number[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -52,6 +71,12 @@ export const insertIndustrySchema = createInsertSchema(industries).omit({
   id: true,
 });
 
+export const insertRawRedditPostSchema = createInsertSchema(rawRedditPosts).omit({
+  id: true,
+  createdAt: true,
+  scrapedAt: true,
+});
+
 export const insertStartupIdeaSchema = createInsertSchema(startupIdeas).omit({
   id: true,
   createdAt: true,
@@ -66,6 +91,8 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Industry = typeof industries.$inferSelect;
 export type InsertIndustry = z.infer<typeof insertIndustrySchema>;
+export type RawRedditPost = typeof rawRedditPosts.$inferSelect;
+export type InsertRawRedditPost = z.infer<typeof insertRawRedditPostSchema>;
 export type StartupIdea = typeof startupIdeas.$inferSelect;
 export type InsertStartupIdea = z.infer<typeof insertStartupIdeaSchema>;
 export type DailyStats = typeof dailyStats.$inferSelect;

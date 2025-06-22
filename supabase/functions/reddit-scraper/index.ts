@@ -141,7 +141,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    console.log('Starting Reddit scraping process...');
+    // Get time range from request body
+    const body = await req.json().catch(() => ({}));
+    const timeRange = body.timeRange || 'today'; // 'today' or 'week'
+    
+    console.log(`Starting Reddit scraping process for ${timeRange}...`);
     
     // Get Reddit access token
     let accessToken: string;
@@ -190,16 +194,16 @@ serve(async (req) => {
           const processedIdea = await processPost(post, industryId);
           
           if (processedIdea) {
-            // Check for duplicates
+            // Check for duplicates using reddit_id
             const { data: existing } = await supabaseClient
-              .from('startup_ideas')
+              .from('raw_reddit_posts')
               .select('id')
-              .ilike('title', `%${processedIdea.title.substring(0, 20)}%`)
+              .eq('reddit_id', processedIdea.reddit_id)
               .limit(1);
 
             if (!existing || existing.length === 0) {
               const { error } = await supabaseClient
-                .from('startup_ideas')
+                .from('raw_reddit_posts')
                 .insert(processedIdea);
 
               if (!error) {
@@ -233,8 +237,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Successfully scraped ${totalScraped} startup ideas from ${SUBREDDIT_TARGETS.length} subreddits`,
+        message: `Successfully scraped ${totalScraped} Reddit posts (${timeRange}) from ${SUBREDDIT_TARGETS.length} subreddits`,
         totalScraped,
+        timeRange,
         results: results.slice(0, 10), // Show first 10 for preview
         errors: errors.length > 0 ? errors : undefined
       }),
@@ -351,20 +356,18 @@ function generateSummary(title: string, content: string): string {
 }
 
 async function processPost(post: RedditPost, industryId: number) {
-  const keywords = extractKeywords(post.title, post.selftext);
-  const summary = generateSummary(post.title, post.selftext);
-  
   return {
     title: post.title,
-    summary: summary,
-    industry_id: industryId,
+    content: post.selftext || '',
+    author: post.author,
+    subreddit: post.subreddit,
     upvotes: post.score,
     comments: post.num_comments,
-    keywords: keywords,
-    subreddit: post.subreddit,
-    reddit_post_urls: [`https://reddit.com${post.permalink}`],
+    permalink: post.permalink,
+    reddit_id: post.url.split('/')[6] || `${Date.now()}_${Math.random()}`, // Extract Reddit ID
+    industry_id: industryId,
     created_at: new Date(post.created_utc * 1000).toISOString(),
-    updated_at: new Date().toISOString()
+    scraped_at: new Date().toISOString()
   };
 }
 
