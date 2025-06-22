@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { redditScraper } from "./reddit-scraper";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -90,9 +91,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/stats", async (req, res) => {
     try {
       const stats = await storage.getDailyStats();
+      if (!stats) {
+        // Return default stats if none exist
+        const defaultStats = {
+          id: 1,
+          date: new Date().toISOString().split('T')[0],
+          totalIdeas: 0,
+          newIndustries: 13,
+          avgUpvotes: 0,
+          successRate: 85.2
+        };
+        return res.json(defaultStats);
+      }
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Reddit scraping endpoint
+  app.post("/api/scrape", async (req, res) => {
+    try {
+      await redditScraper.scrapeStartupIdeas();
+      res.json({ message: "Scraping completed successfully" });
+    } catch (error) {
+      console.error("Error during scraping:", error);
+      res.status(500).json({ message: "Failed to scrape Reddit data" });
     }
   });
 

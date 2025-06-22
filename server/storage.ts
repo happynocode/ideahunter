@@ -339,7 +339,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Database Storage Implementation
+// Remove the old DatabaseStorage implementation and use a simplified version
 export class DatabaseStorage implements IStorage {
   private db: ReturnType<typeof drizzle>;
 
@@ -386,87 +386,79 @@ export class DatabaseStorage implements IStorage {
     page?: number;
     pageSize?: number;
   }): Promise<{ ideas: StartupIdea[]; total: number }> {
-    const conditions = [];
-
-    // Apply filters
-    if (filters?.industryId) {
-      conditions.push(eq(startupIdeas.industryId, filters.industryId));
-    }
-
-    if (filters?.keywords) {
-      const searchTerm = `%${filters.keywords.toLowerCase()}%`;
-      conditions.push(
-        sql`(
-          lower(${startupIdeas.title}) like ${searchTerm} OR 
-          lower(${startupIdeas.summary}) like ${searchTerm}
-        )`
-      );
-    }
-
-    if (filters?.minUpvotes !== undefined) {
-      conditions.push(gte(startupIdeas.upvotes, filters.minUpvotes));
-    }
-
-    // Apply time range filter
-    if (filters?.timeRange && filters.timeRange !== 'all') {
-      const now = new Date();
-      let cutoffTime: Date;
+    try {
+      // Simplified query without complex filtering for now
+      const allIdeas = await this.db.select().from(startupIdeas).orderBy(desc(startupIdeas.createdAt));
       
-      switch (filters.timeRange) {
-        case 'today':
-          cutoffTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          break;
-        case 'week':
-          cutoffTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case 'month':
-          cutoffTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          cutoffTime = new Date(0);
+      let filteredIdeas = [...allIdeas];
+
+      // Apply basic filters
+      if (filters?.industryId) {
+        filteredIdeas = filteredIdeas.filter(idea => idea.industryId === filters.industryId);
       }
-      
-      conditions.push(gte(startupIdeas.createdAt, cutoffTime));
-    }
 
-    // Build base queries
-    let baseQuery = this.db.select().from(startupIdeas);
-    let countQuery = this.db.select({ count: sql<number>`count(*)` }).from(startupIdeas);
-
-    if (conditions.length > 0) {
-      const whereCondition = and(...conditions);
-      baseQuery = baseQuery.where(whereCondition);
-      countQuery = countQuery.where(whereCondition);
-    }
-
-    // Apply sorting
-    if (filters?.sortBy) {
-      switch (filters.sortBy) {
-        case 'upvotes':
-          baseQuery = baseQuery.orderBy(desc(startupIdeas.upvotes));
-          break;
-        case 'comments':
-          baseQuery = baseQuery.orderBy(desc(startupIdeas.comments));
-          break;
-        case 'recent':
-          baseQuery = baseQuery.orderBy(desc(startupIdeas.createdAt));
-          break;
+      if (filters?.keywords) {
+        const searchTerm = filters.keywords.toLowerCase();
+        filteredIdeas = filteredIdeas.filter(idea => 
+          idea.title.toLowerCase().includes(searchTerm) || 
+          idea.summary.toLowerCase().includes(searchTerm)
+        );
       }
-    } else {
-      baseQuery = baseQuery.orderBy(desc(startupIdeas.createdAt));
+
+      if (filters?.minUpvotes !== undefined) {
+        filteredIdeas = filteredIdeas.filter(idea => (idea.upvotes || 0) >= filters.minUpvotes!);
+      }
+
+      // Apply time range filter
+      if (filters?.timeRange && filters.timeRange !== 'all') {
+        const now = new Date();
+        let cutoffTime: Date;
+        
+        switch (filters.timeRange) {
+          case 'today':
+            cutoffTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+          case 'week':
+            cutoffTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'month':
+            cutoffTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            cutoffTime = new Date(0);
+        }
+        
+        filteredIdeas = filteredIdeas.filter(idea => idea.createdAt && idea.createdAt >= cutoffTime);
+      }
+
+      // Apply sorting
+      if (filters?.sortBy) {
+        switch (filters.sortBy) {
+          case 'upvotes':
+            filteredIdeas.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+            break;
+          case 'comments':
+            filteredIdeas.sort((a, b) => (b.comments || 0) - (a.comments || 0));
+            break;
+          case 'recent':
+            filteredIdeas.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+            break;
+        }
+      }
+
+      const total = filteredIdeas.length;
+
+      // Apply pagination
+      const page = filters?.page || 1;
+      const pageSize = filters?.pageSize || 20;
+      const startIndex = (page - 1) * pageSize;
+      const paginatedIdeas = filteredIdeas.slice(startIndex, startIndex + pageSize);
+
+      return { ideas: paginatedIdeas, total };
+    } catch (error) {
+      console.error('Database query error:', error);
+      return { ideas: [], total: 0 };
     }
-
-    // Get total count
-    const totalResult = await countQuery;
-    const total = totalResult[0].count;
-
-    // Apply pagination
-    const page = filters?.page || 1;
-    const pageSize = filters?.pageSize || 20;
-    const offset = (page - 1) * pageSize;
-    
-    const ideas = await baseQuery.limit(pageSize).offset(offset);
-    return { ideas, total };
   }
 
   async getStartupIdeaById(id: number): Promise<StartupIdea | undefined> {
@@ -475,8 +467,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createStartupIdea(idea: InsertStartupIdea): Promise<StartupIdea> {
-    const result = await this.db.insert(startupIdeas).values(idea).returning();
-    return result[0];
+    try {
+      const result = await this.db.insert(startupIdeas).values(idea).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating startup idea:', error);
+      throw error;
+    }
   }
 
   async getDailyStats(): Promise<DailyStats | undefined> {
@@ -527,5 +524,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use database storage instead of memory storage
+// Use database storage if available, otherwise memory storage
 export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();

@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
+import { redditScraper } from "./reddit-scraper";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +39,27 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize database if using DatabaseStorage
+  if (storage && typeof (storage as any).initializeIndustries === 'function') {
+    try {
+      await (storage as any).initializeIndustries();
+      log("Database initialized successfully");
+    } catch (error) {
+      log(`Database initialization failed: ${error}`);
+    }
+  }
+
+  // Start Reddit scraping in background (run once on startup)
+  if (process.env.NODE_ENV === 'development') {
+    setTimeout(async () => {
+      try {
+        await redditScraper.scrapeStartupIdeas();
+      } catch (error) {
+        log(`Reddit scraping failed: ${error}`);
+      }
+    }, 5000); // Wait 5 seconds after startup
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
