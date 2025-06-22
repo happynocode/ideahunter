@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,11 @@ import {
   Search,
   Loader2,
   Settings,
-  BarChart3
+  BarChart3,
+  ArrowLeft,
+  Play,
+  Square,
+  Clock
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -157,11 +162,22 @@ export default function Admin() {
       
       <div className="relative z-10 container mx-auto p-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent mb-2">
-            后台管理
-          </h1>
-          <p className="text-gray-400">管理 Reddit 数据抓取和想法数据库</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent mb-2">
+              后台管理
+            </h1>
+            <p className="text-gray-400">管理 Reddit 数据抓取和想法数据库</p>
+          </div>
+          <Link href="/">
+            <Button
+              variant="outline"
+              className="border-neon-blue/50 text-neon-blue hover:bg-neon-blue/20"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              返回首页
+            </Button>
+          </Link>
         </div>
 
         {/* Stats Cards */}
@@ -223,43 +239,55 @@ export default function Admin() {
               控制面板
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-4">
-              <Button
-                onClick={handleScrapeReddit}
-                disabled={isScrapingLoading}
-                className="bg-neon-blue/20 hover:bg-neon-blue/30 border border-neon-blue/50 text-neon-blue"
-              >
-                {isScrapingLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    抓取中...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    开始抓取 Reddit
-                  </>
-                )}
-              </Button>
+          <CardContent className="space-y-6">
+            {/* Manual Scraping */}
+            <div className="space-y-2">
+              <h3 className="text-white font-medium">手动抓取</h3>
+              <div className="flex flex-wrap gap-4">
+                <Button
+                  onClick={handleScrapeReddit}
+                  disabled={isScrapingLoading}
+                  className="bg-neon-blue/20 hover:bg-neon-blue/30 border border-neon-blue/50 text-neon-blue"
+                >
+                  {isScrapingLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      抓取中...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      开始抓取 Reddit
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
 
-              <Button
-                onClick={() => window.open('/api/export/csv', '_blank')}
-                variant="outline"
-                className="border-neon-purple/50 text-neon-purple hover:bg-neon-purple/20"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                导出 CSV
-              </Button>
+            <Separator className="bg-gray-700" />
 
-              <Button
-                onClick={() => window.open('/api/export/json', '_blank')}
-                variant="outline"
-                className="border-neon-purple/50 text-neon-purple hover:bg-neon-purple/20"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                导出 JSON
-              </Button>
+            {/* Data Export */}
+            <div className="space-y-2">
+              <h3 className="text-white font-medium">数据导出</h3>
+              <div className="flex flex-wrap gap-4">
+                <Button
+                  onClick={() => window.open('/api/export/csv', '_blank')}
+                  variant="outline"
+                  className="border-neon-purple/50 text-neon-purple hover:bg-neon-purple/20"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  导出 CSV
+                </Button>
+
+                <Button
+                  onClick={() => window.open('/api/export/json', '_blank')}
+                  variant="outline"
+                  className="border-neon-purple/50 text-neon-purple hover:bg-neon-purple/20"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  导出 JSON
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

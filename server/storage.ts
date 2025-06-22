@@ -330,13 +330,14 @@ export class MemStorage implements IStorage {
   async updateDailyStats(insertDailyStats: InsertDailyStats): Promise<DailyStats> {
     this.dailyStats = { 
       id: 1, 
-      ...insertDailyStats,
-      totalIdeas: insertDailyStats.totalIdeas || 0,
-      newIndustries: insertDailyStats.newIndustries || 0,
-      avgUpvotes: insertDailyStats.avgUpvotes || 0,
-      successRate: insertDailyStats.successRate || 0
+      date: new Date().toISOString().split('T')[0],
+      ...insertDailyStats
     };
     return this.dailyStats;
+  }
+
+  async deleteStartupIdea(id: number): Promise<boolean> {
+    return this.startupIdeas.delete(id);
   }
 }
 
