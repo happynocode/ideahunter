@@ -300,6 +300,9 @@ export class MemStorage implements IStorage {
       comments: insertStartupIdea.comments || 0,
       keywords: (insertStartupIdea.keywords || []) as string[],
       redditPostUrls: (insertStartupIdea.redditPostUrls || []) as string[],
+      existingSolutions: insertStartupIdea.existingSolutions || null,
+      solutionGaps: insertStartupIdea.solutionGaps || null,
+      marketSize: insertStartupIdea.marketSize || null,
       createdAt: now,
       updatedAt: now
     };
@@ -316,6 +319,9 @@ export class MemStorage implements IStorage {
       comments: insertStartupIdea.comments || 0,
       keywords: (insertStartupIdea.keywords || []) as string[],
       redditPostUrls: (insertStartupIdea.redditPostUrls || []) as string[],
+      existingSolutions: insertStartupIdea.existingSolutions || null,
+      solutionGaps: insertStartupIdea.solutionGaps || null,
+      marketSize: insertStartupIdea.marketSize || null,
       createdAt,
       updatedAt: createdAt
     };
@@ -473,7 +479,17 @@ export class DatabaseStorage implements IStorage {
 
   async createStartupIdea(idea: InsertStartupIdea): Promise<StartupIdea> {
     try {
-      const result = await this.db.insert(startupIdeas).values(idea).returning();
+      const ideaWithDefaults = {
+        ...idea,
+        keywords: Array.isArray(idea.keywords) ? idea.keywords : [],
+        redditPostUrls: Array.isArray(idea.redditPostUrls) ? idea.redditPostUrls : [],
+        upvotes: idea.upvotes || 0,
+        comments: idea.comments || 0,
+        existingSolutions: idea.existingSolutions || null,
+        solutionGaps: idea.solutionGaps || null,
+        marketSize: idea.marketSize || null
+      };
+      const result = await this.db.insert(startupIdeas).values([ideaWithDefaults]).returning();
       return result[0];
     } catch (error) {
       console.error('Error creating startup idea:', error);
@@ -539,5 +555,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use database storage if available, otherwise memory storage
+// Try to use database storage, fallback to memory if connection fails
 export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
