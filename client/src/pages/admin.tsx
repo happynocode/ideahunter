@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import AdminHeader from "@/components/admin-header";
 import { 
   RefreshCw, 
   Trash2, 
@@ -15,11 +15,7 @@ import {
   Search,
   Loader2,
   Settings,
-  BarChart3,
-  ArrowLeft,
-  Play,
-  Square,
-  Clock
+  BarChart3
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -35,11 +31,11 @@ export default function Admin() {
 
   // Fetch all ideas for admin management
   const { data: ideasData, isLoading } = useQuery({
-    queryKey: ['/api/ideas', { pageSize: 1000 }],
+    queryKey: ['/api/ideas'],
     queryFn: ({ queryKey }) => {
-      const [url, params] = queryKey;
+      const url = queryKey[0];
       const searchParams = new URLSearchParams();
-      if (params?.pageSize) searchParams.set('pageSize', params.pageSize.toString());
+      searchParams.set('pageSize', '1000');
       return apiRequest(`${url}?${searchParams.toString()}`);
     }
   });
@@ -141,19 +137,19 @@ export default function Admin() {
   };
 
   const handleSelectAll = () => {
-    if (!ideasData?.ideas) return;
+    if (!filteredIdeas || filteredIdeas.length === 0) return;
     
-    if (selectedIdeas.size === ideasData.ideas.length) {
+    if (selectedIdeas.size === filteredIdeas.length) {
       setSelectedIdeas(new Set());
     } else {
-      setSelectedIdeas(new Set(ideasData.ideas.map((idea: StartupIdea) => idea.id)));
+      setSelectedIdeas(new Set(filteredIdeas.map((idea: StartupIdea) => idea.id)));
     }
   };
 
-  const filteredIdeas = ideasData?.ideas?.filter((idea: StartupIdea) =>
-    idea.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    idea.summary.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const filteredIdeas = ideasData?.ideas ? ideasData.ideas.filter((idea: StartupIdea) =>
+    idea.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    idea.summary?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -161,24 +157,7 @@ export default function Admin() {
       <div className="fixed inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-black pointer-events-none" />
       
       <div className="relative z-10 container mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent mb-2">
-              后台管理
-            </h1>
-            <p className="text-gray-400">管理 Reddit 数据抓取和想法数据库</p>
-          </div>
-          <Link href="/">
-            <Button
-              variant="outline"
-              className="border-neon-blue/50 text-neon-blue hover:bg-neon-blue/20"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              返回首页
-            </Button>
-          </Link>
-        </div>
+        <AdminHeader />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -365,19 +344,19 @@ export default function Admin() {
                           />
                           <div className="flex-1">
                             <h3 className="text-white font-medium mb-2">{idea.title}</h3>
-                            <p className="text-gray-400 text-sm mb-3 line-clamp-2">{idea.summary}</p>
+                            <p className="text-gray-400 text-sm mb-3 line-clamp-2">{idea.summary || 'No summary available'}</p>
                             <div className="flex items-center gap-4 text-xs text-gray-500">
                               <Badge variant="outline" className="border-neon-purple/50 text-neon-purple">
                                 {idea.industry?.name || '未分类'}
                               </Badge>
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                {formatRelativeTime(idea.createdAt)}
+                                {idea.createdAt ? formatRelativeTime(idea.createdAt) : 'Unknown date'}
                               </span>
                               <span>👍 {idea.upvotes || 0}</span>
                               <span>💬 {idea.comments || 0}</span>
                               <Badge variant="secondary" className="bg-gray-700 text-gray-300">
-                                r/{idea.subreddit}
+                                r/{idea.subreddit || 'unknown'}
                               </Badge>
                             </div>
                           </div>

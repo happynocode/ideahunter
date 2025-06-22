@@ -331,7 +331,10 @@ export class MemStorage implements IStorage {
     this.dailyStats = { 
       id: 1, 
       date: new Date().toISOString().split('T')[0],
-      ...insertDailyStats
+      totalIdeas: insertDailyStats.totalIdeas || 0,
+      newIndustries: insertDailyStats.newIndustries || 0,
+      avgUpvotes: insertDailyStats.avgUpvotes || 0,
+      successRate: insertDailyStats.successRate || 0
     };
     return this.dailyStats;
   }
