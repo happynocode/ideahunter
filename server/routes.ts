@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { redditScraper } from "./reddit-scraper";
+import { taskScheduler } from "./scheduler";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -112,11 +113,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reddit scraping endpoint
   app.post("/api/scrape", async (req, res) => {
     try {
-      await redditScraper.scrapeStartupIdeas();
-      res.json({ message: "Scraping completed successfully" });
+      const result = await taskScheduler.triggerManualScraping();
+      if (result.success) {
+        res.json({ message: result.message });
+      } else {
+        res.status(500).json({ message: result.message });
+      }
     } catch (error) {
       console.error("Error during scraping:", error);
       res.status(500).json({ message: "Failed to scrape Reddit data" });
+    }
+  });
+
+  // Scheduler control endpoints
+  app.post("/api/scheduler/start", async (req, res) => {
+    try {
+      taskScheduler.startDailyScrapingSchedule();
+      res.json({ message: "Daily scraping scheduler started" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to start scheduler" });
+    }
+  });
+
+  app.post("/api/scheduler/stop", async (req, res) => {
+    try {
+      taskScheduler.stopAllSchedules();
+      res.json({ message: "All schedulers stopped" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to stop scheduler" });
     }
   });
 

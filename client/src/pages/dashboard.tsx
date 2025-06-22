@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import IdeaGrid from "@/components/idea-grid";
 import IdeaDetailModal from "@/components/idea-detail-modal";
@@ -8,7 +9,7 @@ import SearchFilters from "@/components/search-filters";
 import ParticleBackground from "@/components/particle-background";
 import { useIdeas } from "@/hooks/use-ideas";
 import { Button } from "@/components/ui/button";
-import { Download, FileCode } from "lucide-react";
+import { Download, FileCode, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
@@ -81,6 +82,14 @@ export default function Dashboard() {
               <p className="text-gray-400">Discover trending opportunities from Reddit communities</p>
             </div>
             <div className="flex space-x-4">
+              <Link href="/admin">
+                <Button
+                  className="glass-card rounded-lg px-4 py-2 text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 border border-neon-blue/50"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Admin Panel
+                </Button>
+              </Link>
               <Button 
                 onClick={() => handleExport('csv')}
                 className="glass-card rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-all duration-200 neon-glow border-0"
