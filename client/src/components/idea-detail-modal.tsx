@@ -17,8 +17,22 @@ interface IdeaDetailModalProps {
 export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDetailModalProps) {
   const { toast } = useToast();
 
-  const { data: idea, isLoading } = useQuery({
-    queryKey: ['/api/ideas', ideaId],
+  const { data: idea, isLoading } = useQuery<StartupIdea>({
+    queryKey: ['idea', ideaId],
+    queryFn: async () => {
+      const { supabase } = await import('@/lib/queryClient');
+      const { data, error } = await supabase
+        .from('startup_ideas')
+        .select(`
+          *,
+          industry:industries(*)
+        `)
+        .eq('id', ideaId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
     enabled: !!ideaId && open,
   });
 

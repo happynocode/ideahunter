@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Download, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ScraperControl() {
   const [isScrapingLoading, setIsScrapingLoading] = useState(false);
@@ -12,13 +12,23 @@ export default function ScraperControl() {
   const handleScrapeReddit = async () => {
     setIsScrapingLoading(true);
     try {
-      await apiRequest('/api/scrape', {
-        method: 'POST'
+      // Call Supabase Edge Function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reddit-scraper`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
       });
-      
+
+      if (!response.ok) {
+        throw new Error('Failed to trigger scraping');
+      }
+
+      const result = await response.json();
       toast({
         title: "Reddit Scraping Complete",
-        description: "新的创业想法已成功从 Reddit 抓取并保存到数据库",
+        description: result.message || "新的创业想法已成功从 Reddit 抓取并保存到数据库",
       });
       
       // Refresh the page to show new data

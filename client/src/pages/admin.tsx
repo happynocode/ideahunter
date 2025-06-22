@@ -86,16 +86,28 @@ export default function Admin() {
   const handleScrapeReddit = async () => {
     setIsScrapingLoading(true);
     try {
-      await apiRequest('/api/scrape', { method: 'POST' });
-      
+      // Call Supabase Edge Function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reddit-scraper`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to trigger scraping');
+      }
+
+      const result = await response.json();
       toast({
         title: "抓取完成",
-        description: "Reddit 数据抓取已完成，正在刷新数据...",
+        description: result.message || "Reddit 数据抓取已完成，正在刷新数据...",
       });
       
       // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/ideas'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     } catch (error) {
       toast({
         title: "抓取失败",

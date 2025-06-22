@@ -103,12 +103,12 @@ serve(async (req) => {
             .insert({
               title: post.title,
               summary: summary,
-              industryId: industryId,
+              "industryId": industryId,
               upvotes: post.score,
               comments: post.num_comments,
               keywords: keywords,
               subreddit: post.subreddit,
-              redditPostUrls: [`https://reddit.com${post.permalink}`]
+              "redditPostUrls": [`https://reddit.com${post.permalink}`]
             });
 
           if (!error) {
@@ -134,10 +134,10 @@ serve(async (req) => {
       .from('daily_stats')
       .upsert({
         date: today,
-        totalIdeas: newTotal,
-        newIndustries: 13,
-        avgUpvotes: 150,
-        successRate: 85
+        "totalIdeas": newTotal,
+        "newIndustries": 13,
+        "avgUpvotes": 150,
+        "successRate": 85
       });
 
     return new Response(
