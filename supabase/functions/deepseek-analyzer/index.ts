@@ -62,7 +62,7 @@ async function callDeepSeekAPI(prompt: string): Promise<string> {
       messages: [
         {
           role: 'system',
-          content: 'You are a startup analyst expert. Analyze Reddit posts and generate comprehensive startup ideas with market insights. Always respond in valid JSON format.'
+          content: 'You are a startup analyst expert. Analyze Reddit posts and generate comprehensive startup ideas with market insights. IMPORTANT: Return ONLY valid JSON without any markdown formatting, code blocks, or extra text.'
         },
         {
           role: 'user',
@@ -99,35 +99,38 @@ function createAnalysisPrompt(industry: string, posts: RawRedditPost[]): string 
   }));
 
   return `
-请分析以下来自 Reddit 的 ${industry} 行业相关帖子，生成 5-7 个最有潜力的创业想法。
+Analyze the following Reddit posts from the ${industry} industry and generate 3-5 high-potential startup ideas.
 
-Reddit 数据：
+Reddit Data:
 ${JSON.stringify(postsData, null, 2)}
 
-请为每个创业想法提供以下信息（JSON 格式）：
+Return ONLY valid JSON in this exact format (no markdown, no code blocks, no extra text):
+
 {
   "ideas": [
     {
-      "title": "创业想法标题",
-      "summary": "简要概述（2-3句话）",
-      "market_opportunity": "市场机会分析",
-      "target_audience": "目标用户群体",
-      "competitive_analysis": "竞争对手分析",
-      "implementation_roadmap": "实施路线图",
-      "revenue_model": "盈利模式",
-      "risk_assessment": "风险评估",
+      "title": "Startup idea title",
+      "summary": "Brief overview (2-3 sentences)",
+      "market_opportunity": "Market opportunity analysis",
+      "target_audience": "Target user groups",
+      "competitive_analysis": "Competitor analysis",
+      "implementation_roadmap": "Implementation roadmap",
+      "revenue_model": "Revenue model",
+      "risk_assessment": "Risk assessment",
       "confidence_score": 85,
-      "source_posts": ["相关帖子标题1", "相关帖子标题2"]
+      "source_posts": ["related_post_title_1", "related_post_title_2"]
     }
   ]
 }
 
-要求：
-1. 基于真实的 Reddit 讨论数据
-2. 确保每个想法都有明确的市场需求
-3. 提供实用的商业洞察
-4. 置信度评分（1-100）
-5. 按照市场潜力排序
+Requirements:
+1. Based on real Reddit discussion data
+2. Each idea must have clear market demand
+3. Provide practical business insights
+4. Confidence score (1-100)
+5. Sort by market potential
+
+Return JSON only.
 `;
 }
 
@@ -180,12 +183,21 @@ serve(async (req) => {
         // Call DeepSeek API
         const analysisResponse = await callDeepSeekAPI(prompt);
         
-        // Parse response
+        // Parse response and handle markdown code blocks
         let analysisData;
         try {
-          analysisData = JSON.parse(analysisResponse);
+          // Clean the response by removing markdown code blocks if present
+          let cleanResponse = analysisResponse.trim();
+          if (cleanResponse.startsWith('```json')) {
+            cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+          } else if (cleanResponse.startsWith('```')) {
+            cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+          }
+          
+          analysisData = JSON.parse(cleanResponse);
         } catch (parseError) {
           console.error(`Failed to parse DeepSeek response for ${industryName}:`, parseError);
+          console.error('Raw response:', analysisResponse);
           continue;
         }
 
