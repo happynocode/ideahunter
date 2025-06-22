@@ -232,6 +232,7 @@ serve(async (req) => {
     const forceAnalyze = body.forceAnalyze || false;
     const timeRange = body.timeRange || '24h'; // '1h', '24h', '7d', '30d'
     const autoTriggered = body.autoTriggered || false;
+    const reanalyze = body.reanalyze || false; // 🆕 添加重新分析选项
     
     console.log(`🧠 DeepSeek Analyzer Starting - Request Body:`, JSON.stringify(body, null, 2));
     
@@ -241,7 +242,7 @@ serve(async (req) => {
       console.log(`🧠 Manually triggered DeepSeek analysis for ${timeRange} timeframe...`);
     }
     
-    console.log(`🕐 Analysis timeframe: ${timeRange}, Force analyze: ${forceAnalyze}`);
+    console.log(`🕐 Analysis timeframe: ${timeRange}, Force analyze: ${forceAnalyze}, Reanalyze: ${reanalyze}`);
 
     const results = [];
     const errors = [];
@@ -279,12 +280,20 @@ serve(async (req) => {
         const cutoffTime = getTimeRangeCutoff(timeRange);
         console.log(`📅 Cutoff time for ${industryName}: ${cutoffTime.toISOString()}`);
 
-        const { data: posts, error: fetchError } = await supabaseClient
+        // 🆕 修改查询条件，支持分析状态过滤
+        let query = supabaseClient
           .from('raw_reddit_posts')
           .select('*')
           .eq('industry_id', parseInt(industryId))
           .gte('created_at', cutoffTime.toISOString())
           .order('upvotes', { ascending: false });
+
+        // 只有非重新分析时才过滤已分析的posts
+        if (!reanalyze) {
+          query = query.eq('analyzed', false);
+        }
+
+        const { data: posts, error: fetchError } = await query;
 
         if (fetchError) {
           console.error(`❌ Database error for ${industryName}:`, fetchError);
@@ -389,6 +398,26 @@ serve(async (req) => {
               } catch (ideaError) {
                 console.error(`Error processing individual idea for ${industryName}:`, ideaError);
               }
+            }
+            
+            // 🆕 分析完成后标记这些posts为已分析
+            try {
+              const postIds = batchPosts.map(post => post.id);
+              const { error: updateError } = await supabaseClient
+                .from('raw_reddit_posts')
+                .update({ 
+                  analyzed: true, 
+                  analyzed_at: new Date().toISOString() 
+                })
+                .in('id', postIds);
+              
+              if (updateError) {
+                console.error(`Failed to mark posts as analyzed for ${industryName}:`, updateError);
+              } else {
+                console.log(`✅ Marked ${postIds.length} posts as analyzed for ${industryName}`);
+              }
+            } catch (markError) {
+              console.error(`Error marking posts as analyzed for ${industryName}:`, markError);
             }
             
             // Rate limiting between API calls

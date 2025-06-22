@@ -28,6 +28,11 @@ interface RedditResponse {
   };
 }
 
+interface RedditEndpoint {
+  path: string;
+  params: string;
+}
+
 // Industry mapping based on updated PRD (20 industries)
 const INDUSTRY_MAPPING = {
   'SaaS & 云服务': {
@@ -203,140 +208,191 @@ async function fetchRedditPosts(subreddit: string, accessToken: string, timeRang
   let maxPostsLimit = 25; // Default for 1 hour and 1 day
   switch (timeRange) {
     case '1h':
+      maxPostsLimit = 30; // 1 hour: 30 posts per subreddit
+      break;
     case '24h':
     case '1d':
-      maxPostsLimit = 25;
+      maxPostsLimit = 100; // 1 day: 100 posts per subreddit
       break;
     case '7d':
     case '1w':
-      maxPostsLimit = 100; // 7 days limit: 100 posts per subreddit
+      maxPostsLimit = 300; // 7 days: 300 posts per subreddit  
       break;
     case '30d':
     case '1m':
-      maxPostsLimit = 400; // 30 days limit: 400 posts per subreddit
+      maxPostsLimit = 500; // 30 days: 500 posts per subreddit
       break;
     default:
-      maxPostsLimit = 25;
+      maxPostsLimit = 100;
   }
   
   const cutoffTime = getTimeRangeCutoff(timeRange);
   const allPosts: RedditPost[] = [];
-  let after: string | null = null;
-  let hasMorePosts = true;
-  let pageCount = 0;
-  const maxPages = Math.ceil(maxPostsLimit / 100); // Calculate pages needed based on limit
   
   console.log(`Fetching up to ${maxPostsLimit} posts from r/${subreddit} for ${timeRange}`);
   
-  while (hasMorePosts && pageCount < maxPages) {
-    pageCount++;
-    let success = false;
+  // For longer time ranges, use multiple endpoints to get more comprehensive data
+  const endpoints: RedditEndpoint[] = [];
+  
+  if (timeRange === '1h' || timeRange === '24h' || timeRange === '1d') {
+    // For recent posts, prioritize hot and new
+    endpoints.push(
+      { path: 'hot', params: `limit=100` },
+      { path: 'new', params: `limit=100` },
+      { path: 'top', params: `t=${timeParam}&limit=100` }
+    );
+  } else {
+    // For longer periods, use top with different time parameters and rising
+    endpoints.push(
+      { path: 'top', params: `t=${timeParam}&limit=100` },
+      { path: 'new', params: `limit=100` }, // New posts regardless of time
+      { path: 'hot', params: `limit=100` }, // Currently hot posts
+      { path: 'rising', params: `limit=100` } // Rising posts
+    );
+  }
+  
+  const seenPostIds = new Set<string>();
+  
+  // Fetch from multiple endpoints
+  for (const endpoint of endpoints) {
+    if (allPosts.length >= maxPostsLimit) break;
     
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        // Build URL with pagination
-        let url = `https://oauth.reddit.com/r/${subreddit}/top?t=${timeParam}&limit=100`;
-        if (after) {
-          url += `&after=${after}`;
-        }
-        
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'User-Agent': userAgent,
+    console.log(`Fetching from r/${subreddit}/${endpoint.path} with params: ${endpoint.params}`);
+    
+    let after: string | null = null;
+    let hasMorePosts = true;
+    let pageCount = 0;
+    const maxPagesPerEndpoint = Math.ceil(maxPostsLimit / (endpoints.length * 100));
+    
+    while (hasMorePosts && pageCount < maxPagesPerEndpoint && allPosts.length < maxPostsLimit) {
+      pageCount++;
+      let success = false;
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          // Build URL with pagination
+          let url = `https://oauth.reddit.com/r/${subreddit}/${endpoint.path}?${endpoint.params}`;
+          if (after) {
+            url += `&after=${after}`;
           }
-        });
+          
+          const response = await fetch(url, {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'User-Agent': userAgent,
+            }
+          });
 
-        if (response.status === 429) {
-          // Rate limited, wait and retry
-          const retryAfter = parseInt(response.headers.get('retry-after') || '60');
-          console.log(`Rate limited on r/${subreddit} page ${pageCount}, waiting ${retryAfter}s...`);
-          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-          continue;
-        }
+          if (response.status === 429) {
+            // Rate limited, wait and retry
+            const retryAfter = parseInt(response.headers.get('retry-after') || '60');
+            console.log(`Rate limited on r/${subreddit}/${endpoint.path} page ${pageCount}, waiting ${retryAfter}s...`);
+            await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+            continue;
+          }
 
-        if (!response.ok) {
+          if (!response.ok) {
+            if (response.status === 404 || response.status === 403) {
+              console.log(`Subreddit r/${subreddit} not accessible (${response.status}), skipping endpoint ${endpoint.path}`);
+              hasMorePosts = false;
+              break;
+            }
+            if (attempt === maxRetries) {
+              console.error(`Failed to fetch r/${subreddit}/${endpoint.path} page ${pageCount}: ${response.status} after ${maxRetries} attempts`);
+              hasMorePosts = false;
+              break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            continue;
+          }
+
+          const data: RedditResponse = await response.json();
+          const posts = data.data.children.map(child => child.data).filter(post => post.id);
+          
+          if (posts.length === 0) {
+            console.log(`No more posts found for r/${subreddit}/${endpoint.path} at page ${pageCount}`);
+            hasMorePosts = false;
+            break;
+          }
+          
+          // Filter posts by time and remove duplicates
+          const newPosts: RedditPost[] = [];
+          let oldPostCount = 0;
+          
+          for (const post of posts) {
+            // Skip if we've already seen this post
+            if (seenPostIds.has(post.id)) continue;
+            
+            const postTime = new Date(post.created_utc * 1000);
+            if (postTime >= cutoffTime) {
+              newPosts.push(post);
+              seenPostIds.add(post.id);
+            } else {
+              oldPostCount++;
+            }
+          }
+          
+          allPosts.push(...newPosts);
+          console.log(`Added ${newPosts.length} new posts from r/${subreddit}/${endpoint.path} (${oldPostCount} were too old or duplicates)`);
+          
+          // For 'new' and 'hot' endpoints, we don't need to worry about time filtering as much
+          // But for 'top' with time parameters, stop if we get too many old posts
+          const shouldStopForOldPosts = endpoint.path === 'top' && oldPostCount > posts.length * 0.7;
+          
+          // Check if we've reached our post limit or found too many old posts
+          if (allPosts.length >= maxPostsLimit) {
+            console.log(`Reached post limit of ${maxPostsLimit} for r/${subreddit}/${endpoint.path}`);
+            hasMorePosts = false;
+          } else if (shouldStopForOldPosts) {
+            console.log(`Too many old posts for r/${subreddit}/${endpoint.path}, moving to next endpoint`);
+            hasMorePosts = false;
+          } else if (posts.length < 100) {
+            console.log(`Fewer than 100 posts returned for r/${subreddit}/${endpoint.path}, likely reached end`);
+            hasMorePosts = false;
+          } else {
+            // Set up for next page
+            after = data.data.after;
+            if (!after) {
+              console.log(`No more pages available for r/${subreddit}/${endpoint.path}`);
+              hasMorePosts = false;
+            }
+          }
+          
+          success = true;
+          break;
+          
+        } catch (error) {
+          console.error(`Error fetching r/${subreddit}/${endpoint.path} page ${pageCount} (attempt ${attempt}):`, error);
           if (attempt === maxRetries) {
-            console.error(`Failed to fetch r/${subreddit} page ${pageCount}: ${response.status} after ${maxRetries} attempts`);
             hasMorePosts = false;
             break;
           }
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-          continue;
         }
-
-        const data: RedditResponse = await response.json();
-        const posts = data.data.children.map(child => child.data).filter(post => post.id);
-        
-        if (posts.length === 0) {
-          console.log(`No more posts found for r/${subreddit} at page ${pageCount}`);
-          hasMorePosts = false;
-          break;
-        }
-        
-        // Filter posts by time - but don't stop pagination early
-        // Reddit's "top" sorting mixes posts by popularity, not strict chronological order
-        const timeFilteredPosts = [];
-        let oldPostCount = 0;
-        
-        for (const post of posts) {
-          const postTime = new Date(post.created_utc * 1000);
-          if (postTime >= cutoffTime) {
-            timeFilteredPosts.push(post);
-          } else {
-            oldPostCount++;
-          }
-        }
-        
-        // Only stop if we get too many consecutive old posts (indicating we've moved into older content)
-        const foundTooManyOldPosts = oldPostCount > posts.length * 0.8; // 80% of posts are old
-        
-                 allPosts.push(...timeFilteredPosts);
-         
-         // Check if we've reached our post limit
-         if (allPosts.length >= maxPostsLimit) {
-           console.log(`Reached post limit of ${maxPostsLimit} for r/${subreddit}`);
-           // Trim to exact limit if we went over
-           if (allPosts.length > maxPostsLimit) {
-             allPosts.splice(maxPostsLimit);
-           }
-           hasMorePosts = false;
-         } else if (foundTooManyOldPosts || posts.length < 100) {
-           console.log(`Reached end of relevant posts for r/${subreddit} (${foundTooManyOldPosts ? 'too many old posts' : 'end of posts'})`);
-           hasMorePosts = false;
-         } else {
-           // Set up for next page
-           after = data.data.after;
-           if (!after) {
-             console.log(`No more pages available for r/${subreddit}`);
-             hasMorePosts = false;
-           }
-         }
-        
-        success = true;
+      }
+      
+      if (!success) {
         break;
-        
-      } catch (error) {
-        console.error(`Error fetching r/${subreddit} page ${pageCount} (attempt ${attempt}):`, error);
-        if (attempt === maxRetries) {
-          hasMorePosts = false;
-          break;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+      
+      // Small delay between pages to be respectful to Reddit API
+      if (hasMorePosts) {
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
     
-    if (!success) {
-      break;
-    }
-    
-    // Small delay between pages to be respectful to Reddit API
-    if (hasMorePosts) {
+    // Delay between different endpoints
+    if (allPosts.length < maxPostsLimit) {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
   
-  console.log(`Collected ${allPosts.length} posts from r/${subreddit} across ${pageCount} pages (${timeRange})`);
+  // Trim to exact limit if we went over
+  if (allPosts.length > maxPostsLimit) {
+    allPosts.splice(maxPostsLimit);
+  }
+  
+  console.log(`Collected ${allPosts.length} unique posts from r/${subreddit} across ${endpoints.length} endpoints (${timeRange})`);
   return allPosts;
 }
 
@@ -436,6 +492,9 @@ async function processPosts(posts: RedditPost[], supabaseClient: any): Promise<n
       permalink: `https://reddit.com${post.permalink}`,
       reddit_id: post.id,
       industry_id: industryId,
+      // 🆕 新posts默认为未分析状态
+      analyzed: false,
+      analyzed_at: null,
     };
     
     processedPosts.push(processedPost);
@@ -468,280 +527,135 @@ async function triggerDeepSeekAnalyzer(timeRange: string): Promise<{ success: bo
       throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for analyzer trigger');
     }
     
-    console.log(`📡 Calling deepseek-analyzer: ${supabaseUrl}/functions/v1/deepseek-analyzer`);
-    
-    // Set a short timeout just to verify the call can be initiated
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
     const response = await fetch(`${supabaseUrl}/functions/v1/deepseek-analyzer`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${serviceRoleKey}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ 
         timeRange,
-        forceAnalyze: false,
-        autoTriggered: true
-      }),
-      signal: controller.signal
+        autoTriggered: true 
+      })
     });
     
-    clearTimeout(timeoutId);
-    console.log(`📡 DeepSeek analyzer response status: ${response.status}`);
+    const result = await response.json();
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ DeepSeek analyzer HTTP error: ${response.status} - ${errorText}`);
-      return {
-        success: false,
-        message: `DeepSeek analyzer call failed: HTTP ${response.status}`,
-        data: null
-      };
+    if (response.ok) {
+      console.log(`✅ DeepSeek analyzer triggered successfully: ${result.message}`);
+      return { success: true, message: result.message, data: result };
+    } else {
+      console.error(`❌ DeepSeek analyzer trigger failed: ${result.error}`);
+      return { success: false, message: result.error };
     }
-    
-    // Don't wait for the full response, just confirm it started successfully
-    console.log(`✅ DeepSeek analyzer successfully triggered and running in background`);
-    return {
-      success: true,
-      message: `DeepSeek analyzer successfully triggered and running in background`,
-      data: { status: 'started' }
-    };
     
   } catch (error) {
-    if (error.name === 'AbortError') {
-      console.log(`⏱️ DeepSeek analyzer call initiated (timed out waiting for response, but this is expected)`);
-      return {
-        success: true,
-        message: `DeepSeek analyzer successfully triggered (running in background)`,
-        data: { status: 'timeout_expected' }
-      };
-    }
-    
-    console.error(`💥 Error triggering DeepSeek analyzer:`, error);
-    return {
-      success: false,
-      message: `Error triggering DeepSeek analyzer: ${error.message}`,
-      data: null
-    };
+    console.error(`❌ Error triggering DeepSeek analyzer:`, error);
+    return { success: false, message: error.message };
   }
 }
 
-// Update daily stats
-async function updateDailyStats(supabaseClient: any, newIdeasCount: number) {
-  const today = new Date().toISOString().split('T')[0];
-  
-  const { data: existing } = await supabaseClient
-    .from('daily_stats')
-    .select('*')
-    .eq('date', today)
-    .single();
-  
-  if (existing) {
-    await supabaseClient
-      .from('daily_stats')
-      .update({
-        totalIdeas: existing.totalIdeas + newIdeasCount,
-        updatedAt: new Date().toISOString()
-      })
-      .eq('id', existing.id);
-  } else {
-    await supabaseClient
-      .from('daily_stats')
-      .insert({
-        date: today,
-        totalIdeas: newIdeasCount,
-        newIndustries: 0,
-        avgUpvotes: 0,
-        successRate: 85
-      });
-  }
-}
-
+// Main serve function
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-    }
-
-    // JWT Verification: Allow both authenticated users and service role calls
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Missing authorization header'
-        }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    // Extract token from "Bearer <token>"
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Create supabase client with the provided token for verification
-    let supabaseClient;
-    
-    if (token === Deno.env.get('SUPABASE_ANON_KEY')) {
-      // If using anon key, verify if there's a valid JWT in the request
-      const jwt = req.headers.get('authorization');
-      if (jwt && jwt.includes('Bearer ')) {
-        // Try to create client with anon key first
-        const anonClient = createClient(supabaseUrl, token);
-        // Check if we can access user info (this validates the JWT)
-        try {
-          const { data: { user }, error } = await anonClient.auth.getUser(jwt.replace('Bearer ', ''));
-          if (error || !user) {
-            // If no valid user JWT, fall back to service role for scheduled/admin operations
-            supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-          } else {
-            supabaseClient = anonClient;
-          }
-        } catch {
-          // Fall back to service role
-          supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-        }
-      } else {
-        supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-      }
-    } else if (token === serviceRoleKey) {
-      // Direct service role access (from scheduler or internal calls)
-      supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-    } else {
-      // Assume it's a user JWT token
-      try {
-        supabaseClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!);
-        const { data: { user }, error } = await supabaseClient.auth.getUser(token);
-        if (error || !user) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: 'Invalid JWT token'
-            }),
-            {
-              status: 401,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          );
-        }
-        // For authenticated users, still use service role for database operations
-        supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-      } catch (error) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'JWT verification failed'
-          }),
-          {
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-    }
-
-    // Get parameters from request body
     const body = await req.json().catch(() => ({}));
-    const timeRange = body.timeRange || '24h'; // '1h', '24h', '7d', '30d'
+    const timeRange = body.timeRange || '24h';
     
-    console.log(`Starting concurrent Reddit scraping process for ${timeRange}...`);
+    console.log(`🔍 Starting Reddit scraping for ${timeRange}...`);
     
-    // Get Reddit access token
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const accessToken = await getRedditAccessToken();
-    console.log('Successfully authenticated with Reddit API');
-    
-    // Get all subreddits to scrape
+    console.log('✅ Reddit access token obtained');
+
     const subreddits = getAllSubreddits();
-    console.log(`Scraping ${subreddits.length} subreddits concurrently for ${timeRange} timeframe...`);
-    
-    // Scrape all subreddits concurrently with rate limiting
-    const concurrencyLimit = 5; // Limit concurrent requests to avoid rate limits
-    let totalScraped = 0;
+    console.log(`📝 Processing ${subreddits.length} subreddits for ${timeRange}...`);
+
+    let totalProcessed = 0;
     const results = [];
-    
-    for (let i = 0; i < subreddits.length; i += concurrencyLimit) {
-      const batch = subreddits.slice(i, i + concurrencyLimit);
+
+    // Process subreddits in batches to avoid rate limits
+    const batchSize = 5;
+    for (let i = 0; i < subreddits.length; i += batchSize) {
+      const batch = subreddits.slice(i, i + batchSize);
       
-      const batchPromises = batch.map(async (subreddit) => {
+      for (const subreddit of batch) {
         try {
-          console.log(`Scraping r/${subreddit} for ${timeRange}...`);
+          console.log(`📊 Fetching posts from r/${subreddit}...`);
           const posts = await fetchRedditPosts(subreddit, accessToken, timeRange);
           
           if (posts.length > 0) {
             const processed = await processPosts(posts, supabaseClient);
-            console.log(`Processed ${processed} posts from r/${subreddit} (${timeRange})`);
-            return { subreddit, processed, error: null };
+            totalProcessed += processed;
+            results.push({
+              subreddit,
+              fetched: posts.length,
+              processed,
+              success: true
+            });
+            console.log(`✅ r/${subreddit}: ${processed} posts processed (${posts.length} fetched)`);
+          } else {
+            results.push({
+              subreddit,
+              fetched: 0,
+              processed: 0,
+              success: true,
+              message: 'No posts found'
+            });
           }
-          
-          return { subreddit, processed: 0, error: null };
         } catch (error) {
-          console.error(`Error processing r/${subreddit}:`, error);
-          return { subreddit, processed: 0, error: error.message };
+          console.error(`❌ Error processing r/${subreddit}:`, error);
+          results.push({
+            subreddit,
+            fetched: 0,
+            processed: 0,
+            success: false,
+            error: error.message
+          });
         }
-      });
+        
+        // Rate limiting between subreddits
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
-      const batchResults = await Promise.all(batchPromises);
-      results.push(...batchResults);
-      
-      // Add delay between batches to respect rate limits
-      if (i + concurrencyLimit < subreddits.length) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      // Rate limiting between batches
+      if (i + batchSize < subreddits.length) {
+        console.log(`⏸️ Batch completed, waiting before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
-    
-    // Calculate totals
-    totalScraped = results.reduce((sum, result) => sum + result.processed, 0);
-    const errors = results.filter(r => r.error).map(r => ({ subreddit: r.subreddit, error: r.error }));
-    
-    console.log(`Scraping completed. Total posts processed: ${totalScraped} (${timeRange})`);
-    
-    // Update daily stats
-    await updateDailyStats(supabaseClient, totalScraped);
 
-    // Auto-trigger DeepSeek analyzer after successful scraping
-    let analyzerResult = null;
-    if (totalScraped > 0) {
-      console.log('🤖 Triggering DeepSeek analyzer...');
-      // Start analyzer asynchronously but wait for startup confirmation
-      analyzerResult = await triggerDeepSeekAnalyzer(timeRange);
-      console.log(`🤖 DeepSeek analyzer ${analyzerResult.success ? '✅ Started successfully' : '❌ Failed to start'} - ${analyzerResult.message}`);
-    }
-    
+    console.log(`🎉 Reddit scraping completed! Total posts processed: ${totalProcessed}`);
+
+    // Auto-trigger DeepSeek analyzer
+    const analyzerResult = await triggerDeepSeekAnalyzer(timeRange);
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Successfully scraped ${totalScraped} posts from ${subreddits.length} subreddits (${timeRange}). ${
-          totalScraped > 0 
-            ? `DeepSeek analyzer ${analyzerResult?.success ? 'started successfully (running in background)' : 'failed to start'}: ${analyzerResult?.message || 'Unknown result'}`
-            : 'DeepSeek analyzer skipped (no new posts)'
-        }`,
-        totalScraped,
+        message: `Successfully scraped and processed ${totalProcessed} posts`,
+        totalScraped: totalProcessed,
         timeRange,
-        subredditsProcessed: subreddits.length,
-        errors: errors.length,
-        errorDetails: errors.slice(0, 5), // Only return first 5 errors
-        analyzerTriggered: totalScraped > 0,
-        analyzerResult: analyzerResult
+        subredditsProcessed: results.length,
+        results,
+        analyzerTriggered: analyzerResult.success,
+        analyzerMessage: analyzerResult.message
       }),
       {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
-    
+
   } catch (error) {
-    console.error('Reddit scraping failed:', error);
+    console.error('❌ Reddit scraping failed:', error);
     return new Response(
       JSON.stringify({
         success: false,

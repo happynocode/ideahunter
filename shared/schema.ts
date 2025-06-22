@@ -31,6 +31,8 @@ export const rawRedditPosts = pgTable("raw_reddit_posts", {
   industryId: integer("industry_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   scrapedAt: timestamp("scraped_at").defaultNow(),
+  analyzed: boolean("analyzed").default(false),
+  analyzedAt: timestamp("analyzed_at"),
 });
 
 // Processed startup ideas table - stores AI-analyzed results
