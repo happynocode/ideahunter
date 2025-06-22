@@ -17,7 +17,7 @@ import {
   Settings,
   BarChart3
 } from "lucide-react";
-import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { queryClient, supabase } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatRelativeTime } from "@/lib/utils";
 import type { StartupIdea } from "@/lib/types";
@@ -26,7 +26,7 @@ export default function Admin() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIdeas, setSelectedIdeas] = useState<Set<number>>(new Set());
   const [isScrapingLoading, setIsScrapingLoading] = useState(false);
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   const { toast } = useToast();
 
   // Fetch all ideas for admin management
@@ -63,11 +63,17 @@ export default function Admin() {
 
   // Bulk delete mutation
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ideaIds: number[]) => 
-      Promise.all(ideaIds.map(id => apiRequest(`/api/ideas/${id}`, { method: 'DELETE' }))),
+    mutationFn: async (ideaIds: number[]) => {
+      const { error } = await supabase
+        .from('startup_ideas')
+        .delete()
+        .in('id', ideaIds);
+      
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/ideas'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
       setSelectedIdeas(new Set());
       toast({
         title: "批量删除成功",
@@ -106,8 +112,8 @@ export default function Admin() {
       });
       
       // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['ideas'] });
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      qc.invalidateQueries({ queryKey: ['ideas'] });
+      qc.invalidateQueries({ queryKey: ['stats'] });
     } catch (error) {
       toast({
         title: "抓取失败",
@@ -119,9 +125,30 @@ export default function Admin() {
     }
   };
 
-  const handleDeleteIdea = (ideaId: number) => {
+  const handleDeleteIdea = async (ideaId: number) => {
     if (confirm("确认删除这个想法吗？此操作不可撤销。")) {
-      deleteMutation.mutate(ideaId);
+      try {
+        const { error } = await supabase
+          .from('startup_ideas')
+          .delete()
+          .eq('id', ideaId);
+        
+        if (error) throw error;
+        
+        qc.invalidateQueries({ queryKey: ['ideas'] });
+        qc.invalidateQueries({ queryKey: ['stats'] });
+        
+        toast({
+          title: "删除成功",
+          description: "想法已删除",
+        });
+      } catch (error) {
+        toast({
+          title: "删除失败",
+          description: "无法删除想法，请稍后重试",
+          variant: "destructive",
+        });
+      }
     }
   };
 
