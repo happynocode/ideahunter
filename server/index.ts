@@ -49,16 +49,7 @@ app.use((req, res, next) => {
     }
   }
 
-  // Start Reddit scraping in background (run once on startup)
-  if (process.env.NODE_ENV === 'development') {
-    setTimeout(async () => {
-      try {
-        await redditScraper.scrapeStartupIdeas();
-      } catch (error) {
-        log(`Reddit scraping failed: ${error}`);
-      }
-    }, 5000); // Wait 5 seconds after startup
-  }
+  // Skip automatic scraping on startup to avoid database connection issues
 
   const server = await registerRoutes(app);
 

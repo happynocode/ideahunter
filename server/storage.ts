@@ -23,6 +23,7 @@ export interface IStorage {
   }): Promise<{ ideas: StartupIdea[]; total: number }>;
   getStartupIdeaById(id: number): Promise<StartupIdea | undefined>;
   createStartupIdea(idea: InsertStartupIdea): Promise<StartupIdea>;
+  deleteStartupIdea(id: number): Promise<boolean>;
   
   getDailyStats(): Promise<DailyStats | undefined>;
   updateDailyStats(stats: InsertDailyStats): Promise<DailyStats>;
@@ -496,6 +497,16 @@ export class DatabaseStorage implements IStorage {
     } else {
       const result = await this.db.insert(dailyStats).values({ ...stats, date: today }).returning();
       return result[0];
+    }
+  }
+
+  async deleteStartupIdea(id: number): Promise<boolean> {
+    try {
+      await this.db.delete(startupIdeas).where(eq(startupIdeas.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting startup idea:', error);
+      return false;
     }
   }
 

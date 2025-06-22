@@ -120,6 +120,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete idea endpoint
+  app.delete("/api/ideas/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const idea = await storage.getStartupIdeaById(id);
+      
+      if (!idea) {
+        return res.status(404).json({ message: "Idea not found" });
+      }
+
+      const deleted = await storage.deleteStartupIdea(id);
+      
+      if (deleted) {
+        res.json({ message: "Idea deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete idea" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete idea" });
+    }
+  });
+
   // Export ideas as CSV
   app.get("/api/export/csv", async (req, res) => {
     try {
