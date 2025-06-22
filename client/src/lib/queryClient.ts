@@ -8,10 +8,10 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+  options: { method?: string; data?: unknown } = {}
+): Promise<any> {
+  const { method = 'GET', data } = options;
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -20,7 +20,17 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res;
+  
+  if (method === 'DELETE') {
+    return res.ok;
+  }
+  
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return await res.json();
+  }
+  
+  return await res.text();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -29,7 +39,22 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const [url, params] = queryKey;
+    let fullUrl = url as string;
+    
+    if (params && typeof params === 'object') {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.set(key, String(value));
+        }
+      });
+      if (searchParams.toString()) {
+        fullUrl += '?' + searchParams.toString();
+      }
+    }
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
 

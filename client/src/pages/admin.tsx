@@ -17,7 +17,7 @@ import {
   Settings,
   BarChart3
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatRelativeTime } from "@/lib/utils";
 import type { StartupIdea } from "@/lib/types";
@@ -31,19 +31,14 @@ export default function Admin() {
 
   // Fetch all ideas for admin management
   const { data: ideasData, isLoading } = useQuery({
-    queryKey: ['/api/ideas'],
-    queryFn: ({ queryKey }) => {
-      const url = queryKey[0];
-      const searchParams = new URLSearchParams();
-      searchParams.set('pageSize', '1000');
-      return apiRequest(`${url}?${searchParams.toString()}`);
-    }
+    queryKey: ['/api/ideas', { pageSize: 1000 }],
+    queryFn: getQueryFn({ on401: "throw" })
   });
 
   // Fetch stats
   const { data: stats } = useQuery({
     queryKey: ['/api/stats'],
-    queryFn: ({ queryKey }) => apiRequest(queryKey[0])
+    queryFn: getQueryFn({ on401: "throw" })
   });
 
   // Delete idea mutation
