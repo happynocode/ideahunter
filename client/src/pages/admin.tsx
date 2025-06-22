@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import AdminHeader from "@/components/admin-header";
+import ScraperControl from "@/components/scraper-control";
 import { 
   RefreshCw, 
   Trash2, 
@@ -267,65 +268,9 @@ export default function Admin() {
         </div>
 
         {/* Control Panel */}
-        <Card className="bg-black/40 backdrop-blur-sm border-neon-blue/30 mb-8">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Settings className="h-5 w-5 text-neon-blue" />
-              控制面板
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Manual Scraping */}
-            <div className="space-y-2">
-              <h3 className="text-white font-medium">手动抓取</h3>
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  onClick={handleScrapeReddit}
-                  disabled={isScrapingLoading}
-                  className="bg-neon-blue/20 hover:bg-neon-blue/30 border border-neon-blue/50 text-neon-blue"
-                >
-                  {isScrapingLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      抓取中...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      开始抓取 Reddit
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <Separator className="bg-gray-700" />
-
-            {/* Data Export */}
-            <div className="space-y-2">
-              <h3 className="text-white font-medium">数据导出</h3>
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  onClick={() => window.open('/api/export/csv', '_blank')}
-                  variant="outline"
-                  className="border-neon-purple/50 text-neon-purple hover:bg-neon-purple/20"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  导出 CSV
-                </Button>
-
-                <Button
-                  onClick={() => window.open('/api/export/json', '_blank')}
-                  variant="outline"
-                  className="border-neon-purple/50 text-neon-purple hover:bg-neon-purple/20"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  导出 JSON
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mb-8">
+          <ScraperControl />
+        </div>
 
         {/* Ideas Management */}
         <Card className="bg-black/40 backdrop-blur-sm border-neon-blue/30">
