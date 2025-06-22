@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import AdminHeader from "@/components/admin-header";
 import ScraperControl from "@/components/scraper-control";
+import StatsCards from "@/components/stats-cards";
 import { 
   RefreshCw, 
   Trash2, 
@@ -16,31 +17,52 @@ import {
   Search,
   Loader2,
   Settings,
-  BarChart3
+  BarChart3,
+  Clock,
+  Bot,
+  Zap,
+  Brain,
+  PlayCircle,
+  Activity
 } from "lucide-react";
 import { queryClient, supabase } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatRelativeTime } from "@/lib/utils";
 import type { StartupIdea } from "@/lib/types";
+// Edge Functions are not deployed yet, using direct fetch calls
+import ParticleBackground from "@/components/particle-background";
+
+// Constants
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export default function Admin() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIdeas, setSelectedIdeas] = useState<Set<number>>(new Set());
   const [isScrapingLoading, setIsScrapingLoading] = useState(false);
+  const [isAnalyzingLoading, setIsAnalyzingLoading] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRunning, setIsRunning] = useState({ scraper: false, analyzer: false });
+  const [lastActivity, setLastActivity] = useState<string | null>(null);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'24h' | '7d' | '30d'>('24h');
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
   const qc = useQueryClient();
   const { toast } = useToast();
+  
+  // Edge Functions are commented out for now
 
   // Fetch all ideas for admin management
-  const { data: ideasData, isLoading } = useQuery({
+  const { data: ideasData, isLoading: ideasLoading } = useQuery({
     queryKey: ['ideas', { pageSize: 1000 }],
     queryFn: async () => {
       const { data, error, count } = await supabase
         .from('startup_ideas')
         .select(`
           *,
-          industry:industries(*)
+          industries!industry_id(*)
         `, { count: 'exact' })
-        .order('createdAt', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -55,7 +77,7 @@ export default function Admin() {
   });
 
   // Fetch stats
-  const { data: stats } = useQuery({
+  const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -106,45 +128,34 @@ export default function Admin() {
     }
   });
 
-  const handleScrapeReddit = async () => {
-    setIsScrapingLoading(true);
+  const handleScrapeReddit = async (timeRange: string = selectedTimeRange) => {
+    setIsRunning({ ...isRunning, scraper: true });
     try {
-      // Call the Supabase Edge Function
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reddit-scraper`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/reddit-scraper`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ timeRange })
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Reddit scraping failed: ${response.status} - ${errorText}`);
-      }
 
       const result = await response.json();
       
-      if (!result.success) {
-        throw new Error(result.error || 'Unknown error occurred');
+      if (result.success) {
+        const analyzerStatus = result.analyzerTriggered ? ' (analyzer auto-triggered)' : ' (no new posts to analyze)';
+        setLastActivity(`Successfully scraped ${result.totalScraped} posts (${result.timeRange})${analyzerStatus}`);
+        await fetchStats();
+        // Refresh ideas data to see newly generated ideas
+        qc.invalidateQueries({ queryKey: ['ideas'] });
+      } else {
+        setLastActivity(`Scraping failed: ${result.error}`);
       }
-
-      toast({
-        title: "Reddit 抓取完成",
-        description: result.message || `成功抓取了 ${result.totalScraped} 个创业想法`,
-      });
-      
-      // Refresh data
-      qc.invalidateQueries({ queryKey: ['ideas'] });
-      qc.invalidateQueries({ queryKey: ['stats'] });
     } catch (error) {
-      toast({
-        title: "抓取失败",
-        description: "Reddit 数据抓取失败，请检查 API 配置",
-        variant: "destructive",
-      });
+      console.error('Scraping error:', error);
+      setLastActivity(`Scraping error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setIsScrapingLoading(false);
+      setIsRunning({ ...isRunning, scraper: false });
     }
   };
 
@@ -208,183 +219,282 @@ export default function Admin() {
     idea.summary?.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
-  return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Background effects */}
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-black pointer-events-none" />
+  const fetchStats = async () => {
+    const { data, error } = await supabase
+      .from('daily_stats')
+      .select('*')
+      .order('date', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    
+    setStats(data || {
+      id: 1,
+      date: new Date().toISOString().split('T')[0],
+      totalIdeas: 0,
+      newIndustries: 13,
+      avgUpvotes: 0,
+      successRate: 0
+    });
+  };
+
+  const handleDeleteAllData = async () => {
+    // First confirmation
+    const firstConfirm = confirm("WARNING: This will delete ALL data including startup ideas, reddit posts and stats. This action cannot be undone! Click OK to continue or Cancel to abort.");
+    
+    if (!firstConfirm) return;
+    
+    // Second confirmation with typing requirement
+    const confirmText = prompt("Please type 'DELETE ALL DATA' to confirm deletion:");
+    
+    if (confirmText !== 'DELETE ALL DATA') {
+      toast({
+        title: "操作已取消",
+        description: "确认文本不正确，数据未被删除",
+      });
+      return;
+    }
+
+    setIsDeletingAll(true);
+    
+    try {
+      let deletedIdeas = 0;
+      let deletedPosts = 0;
+      let resetStats = 0;
+
+      // Delete all startup ideas
+      const { error: ideasError, count: ideasCount } = await supabase
+        .from('startup_ideas')
+        .delete()
+        .neq('id', 0); // Delete all records
+
+      if (ideasError) {
+        console.error('Error deleting ideas:', ideasError);
+      } else {
+        deletedIdeas = ideasCount || 0;
+      }
+
+      // Delete all raw reddit posts
+      const { error: postsError, count: postsCount } = await supabase
+        .from('raw_reddit_posts')
+        .delete()
+        .neq('id', 0); // Delete all records
+
+      if (postsError) {
+        console.error('Error deleting posts:', postsError);
+      } else {
+        deletedPosts = postsCount || 0;
+      }
+
+      // Reset daily stats (delete all and let it recreate)
+      const { error: statsError, count: statsCount } = await supabase
+        .from('daily_stats')
+        .delete()
+        .neq('id', 0); // Delete all records
+
+      if (statsError) {
+        console.error('Error resetting stats:', statsError);
+      } else {
+        resetStats = statsCount || 0;
+      }
+
+      // Refresh all queries
+      qc.invalidateQueries({ queryKey: ['ideas'] });
+      qc.invalidateQueries({ queryKey: ['stats'] });
       
-      <div className="relative z-10 container mx-auto p-6">
+      // Clear selected ideas
+      setSelectedIdeas(new Set());
+      
+      // Update last activity
+      setLastActivity(`🗑️ 全部数据已删除 - Ideas: ${deletedIdeas}, Posts: ${deletedPosts}, Stats: ${resetStats}`);
+
+      toast({
+        title: "数据删除完成",
+        description: `已删除 ${deletedIdeas} 个想法，${deletedPosts} 个帖子，重置了 ${resetStats} 个统计记录`,
+      });
+
+      console.log(`Data deletion completed - Ideas: ${deletedIdeas}, Posts: ${deletedPosts}, Stats: ${resetStats}`);
+
+    } catch (error) {
+      console.error('Error during data deletion:', error);
+      setLastActivity(`❌ 删除数据时出错: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      toast({
+        title: "删除失败",
+        description: "删除数据时出现错误，请检查控制台日志",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingAll(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <ParticleBackground />
+      
+      <div className="relative z-10 container mx-auto px-4 py-8">
         <AdminHeader />
+        
+        <div className="mt-8 space-y-8">
+          {/* Stats Cards */}
+          <StatsCards />
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-black/40 backdrop-blur-sm border-neon-blue/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">总想法数</p>
-                  <p className="text-2xl font-bold text-neon-blue">{stats?.totalIdeas || 0}</p>
-                </div>
-                <Database className="h-8 w-8 text-neon-blue" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-black/40 backdrop-blur-sm border-neon-purple/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">行业分类</p>
-                  <p className="text-2xl font-bold text-neon-purple">{stats?.newIndustries || 0}</p>
-                </div>
-                <BarChart3 className="h-8 w-8 text-neon-purple" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-black/40 backdrop-blur-sm border-green-400/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">平均热度</p>
-                  <p className="text-2xl font-bold text-green-400">{stats?.avgUpvotes || 0}</p>
-                </div>
-                <RefreshCw className="h-8 w-8 text-green-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-black/40 backdrop-blur-sm border-yellow-400/30">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">成功率</p>
-                  <p className="text-2xl font-bold text-yellow-400">{stats?.successRate || 0}%</p>
-                </div>
-                <Settings className="h-8 w-8 text-yellow-400" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Control Panel */}
-        <div className="mb-8">
-          <ScraperControl />
-        </div>
-
-        {/* Ideas Management */}
-        <Card className="bg-black/40 backdrop-blur-sm border-neon-blue/30">
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          {/* Time Range Selection */}
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <Database className="h-5 w-5 text-neon-blue" />
-                想法管理
+                <Clock className="h-5 w-5" />
+                Time Range Selection
               </CardTitle>
-              <div className="flex items-center gap-4">
-                {selectedIdeas.size > 0 && (
-                  <Button
-                    onClick={handleBulkDelete}
-                    variant="destructive"
-                    size="sm"
-                    disabled={bulkDeleteMutation.isPending}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    删除选中 ({selectedIdeas.size})
-                  </Button>
-                )}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="搜索想法..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64 bg-black/20 border-gray-700 text-white placeholder-gray-400"
-                  />
-                </div>
+              <CardDescription className="text-slate-300">
+                Choose the time range for scraping and analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Button
+                  variant={selectedTimeRange === '24h' ? 'default' : 'outline'}
+                  onClick={() => setSelectedTimeRange('24h')}
+                  className={selectedTimeRange === '24h' 
+                    ? 'bg-purple-600 hover:bg-purple-700' 
+                    : 'border-purple-600 text-purple-400 hover:bg-purple-600/20'
+                  }
+                >
+                  Last 24 Hours
+                </Button>
+                <Button
+                  variant={selectedTimeRange === '7d' ? 'default' : 'outline'}
+                  onClick={() => setSelectedTimeRange('7d')}
+                  className={selectedTimeRange === '7d' 
+                    ? 'bg-purple-600 hover:bg-purple-700' 
+                    : 'border-purple-600 text-purple-400 hover:bg-purple-600/20'
+                  }
+                >
+                  Last 7 Days
+                </Button>
+                <Button
+                  variant={selectedTimeRange === '30d' ? 'default' : 'outline'}
+                  onClick={() => setSelectedTimeRange('30d')}
+                  className={selectedTimeRange === '30d' 
+                    ? 'bg-purple-600 hover:bg-purple-700' 
+                    : 'border-purple-600 text-purple-400 hover:bg-purple-600/20'
+                  }
+                >
+                  Last 30 Days
+                </Button>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-neon-blue" />
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-4 mb-4">
-                  <Button
-                    onClick={handleSelectAll}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-600 text-gray-300"
-                  >
-                    {selectedIdeas.size === filteredIdeas.length ? '取消全选' : '全选'}
-                  </Button>
-                  <span className="text-gray-400 text-sm">
-                    共 {filteredIdeas.length} 条记录
-                  </span>
-                </div>
+              <p className="text-sm text-slate-400 mt-2">
+                Selected: <span className="text-purple-400 font-medium">
+                  {selectedTimeRange === '24h' ? 'Last 24 Hours' : 
+                   selectedTimeRange === '7d' ? 'Last 7 Days' : 'Last 30 Days'}
+                </span>
+              </p>
+            </CardContent>
+          </Card>
 
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {filteredIdeas.map((idea: StartupIdea) => (
-                    <div
-                      key={idea.id}
-                      className={`p-4 rounded-lg border transition-all duration-200 ${
-                        selectedIdeas.has(idea.id)
-                          ? 'border-neon-blue bg-neon-blue/10'
-                          : 'border-gray-700 bg-black/20 hover:border-gray-600'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3 flex-1">
-                          <input
-                            type="checkbox"
-                            checked={selectedIdeas.has(idea.id)}
-                            onChange={() => handleSelectIdea(idea.id)}
-                            className="mt-1 h-4 w-4 rounded border-gray-600 text-neon-blue focus:ring-neon-blue"
-                          />
-                          <div className="flex-1">
-                            <h3 className="text-white font-medium mb-2">{idea.title}</h3>
-                            <p className="text-gray-400 text-sm mb-3 line-clamp-2">{idea.summary || 'No summary available'}</p>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              <Badge variant="outline" className="border-neon-purple/50 text-neon-purple">
-                                {idea.industry?.name || '未分类'}
-                              </Badge>
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {idea.createdAt ? formatRelativeTime(idea.createdAt) : 'Unknown date'}
-                              </span>
-                              <span>👍 {idea.upvotes || 0}</span>
-                              <span>💬 {idea.comments || 0}</span>
-                              <Badge variant="secondary" className="bg-gray-700 text-gray-300">
-                                r/{idea.subreddit || 'unknown'}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => handleDeleteIdea(idea.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {filteredIdeas.length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      {searchQuery ? '未找到匹配的想法' : '暂无数据'}
-                    </div>
+          {/* Scraper Control */}
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                Reddit Scraper Control
+              </CardTitle>
+              <CardDescription className="text-slate-300">
+                Scrape Reddit posts from all subreddits for the selected time range
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => handleScrapeReddit()}
+                  disabled={isRunning.scraper}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isRunning.scraper ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scraping ({selectedTimeRange})...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Start Scraping ({selectedTimeRange})
+                    </>
                   )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Activity Log */}
+          {lastActivity && (
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Last Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-300 font-mono text-sm">{lastActivity}</p>
+                <p className="text-slate-500 text-xs mt-1">
+                  {new Date().toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Danger Zone */}
+          <Card className="bg-red-900/20 border-red-500/50">
+            <CardHeader>
+              <CardTitle className="text-red-400 flex items-center gap-2">
+                <Trash2 className="h-5 w-5" />
+                ⚠️ 危险操作区域
+              </CardTitle>
+              <CardDescription className="text-red-300">
+                不可逆转的危险操作，请谨慎使用
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 bg-red-900/30 border border-red-500/30 rounded-lg">
+                  <h4 className="text-red-400 font-semibold mb-2">删除所有数据</h4>
+                  <p className="text-red-300 text-sm mb-4">
+                    这将删除数据库中的所有数据，包括：
+                  </p>
+                  <ul className="text-red-300 text-sm list-disc list-inside mb-4 space-y-1">
+                    <li>所有创业想法 (startup_ideas 表)</li>
+                    <li>所有原始Reddit帖子 (raw_reddit_posts 表)</li>
+                    <li>所有统计数据 (daily_stats 表)</li>
+                  </ul>
+                  <p className="text-red-400 text-sm font-semibold mb-4">
+                    ⚠️ 此操作不可撤销！请确保你真的需要删除所有数据。
+                  </p>
+                  <Button
+                    onClick={handleDeleteAllData}
+                    disabled={isDeletingAll}
+                    variant="destructive"
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {isDeletingAll ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        正在删除所有数据...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        删除所有数据
+                      </>
+                    )}
+                  </Button>
                 </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

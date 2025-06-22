@@ -6,20 +6,23 @@ export function useIndustries() {
   return useQuery<Industry[]>({
     queryKey: ['industries'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fallback to direct database query instead of Edge Function
+      const { data: industries, error } = await supabase
         .from('industries')
         .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      
-      // Add idea count to each industry
+        .order('id');
+
+      if (error) {
+        throw new Error(`Failed to fetch industries: ${error.message}`);
+      }
+
+      // Get idea counts for each industry
       const industriesWithCounts = await Promise.all(
-        (data || []).map(async (industry: any) => {
+        (industries || []).map(async (industry) => {
           const { count } = await supabase
             .from('startup_ideas')
             .select('*', { count: 'exact', head: true })
-            .eq('industryId', industry.id);
+            .eq('industry_id', industry.id);
           
           return {
             ...industry,
@@ -27,7 +30,7 @@ export function useIndustries() {
           };
         })
       );
-      
+
       return industriesWithCounts;
     },
   });

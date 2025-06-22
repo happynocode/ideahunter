@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { TrendingUp, CheckCircle, BarChart3, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDailyStats } from "@/hooks/use-ideas";
@@ -49,35 +48,24 @@ export default function StatsCards() {
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
-    >
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       {statsData.map((stat, index) => (
-        <motion.div
-          key={stat.title}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
-        >
-          <Card className={`glass-card rounded-xl p-6 border-white/20 bg-transparent ${index === 0 ? 'neon-glow' : ''}`}>
-            <CardContent className="p-0">
-              <div className="flex items-center justify-between mb-4">
-                <stat.icon className="w-8 h-8 text-gray-400" />
-                <div className="text-right">
-                  <div className="text-2xl font-bold stats-counter">{stat.value}</div>
-                  <div className="text-gray-400 text-sm">{stat.title}</div>
-                </div>
+        <Card key={stat.title} className={`glass-card rounded-xl p-6 border-white/20 bg-transparent ${index === 0 ? 'neon-glow' : ''}`}>
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between mb-4">
+              <stat.icon className="w-8 h-8 text-gray-400" />
+              <div className="text-right">
+                <div className="text-2xl font-bold stats-counter">{stat.value}</div>
+                <div className="text-gray-400 text-sm">{stat.title}</div>
               </div>
-              <div className={`text-xs ${stat.changeColor} flex items-center`}>
-                <TrendingUp className="w-3 h-3 mr-1" />
-                {stat.change}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            </div>
+            <div className={`text-xs ${stat.changeColor} flex items-center`}>
+              <TrendingUp className="w-3 h-3 mr-1" />
+              {stat.change}
+            </div>
+          </CardContent>
+        </Card>
       ))}
-    </motion.div>
+    </div>
   );
 }

@@ -82,12 +82,8 @@
   }
   
   .idea-card {
-    transition: all 0.3s ease;
-    transform: translateY(0);
-  }
-  
-  .idea-card:hover {
-    transform: translateY(-5px);
+    transition: background-color 0.2s ease;
+    will-change: auto;
   }
   
   .loading-skeleton {

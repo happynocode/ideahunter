@@ -89,7 +89,7 @@ export class SupabaseStorage implements IStorage {
       .from('startup_ideas')
       .select(`
         *,
-        industry:industries(*)
+        industry:industries!industry_id(*)
       `, { count: 'exact' });
 
     // Apply filters
@@ -158,7 +158,7 @@ export class SupabaseStorage implements IStorage {
       .from('startup_ideas')
       .select(`
         *,
-        industry:industries(*)
+        industry:industries!industry_id(*)
       `)
       .eq('id', id)
       .single();
@@ -177,7 +177,7 @@ export class SupabaseStorage implements IStorage {
       })
       .select(`
         *,
-        industry:industries(*)
+        industry:industries!industry_id(*)
       `)
       .single();
     
