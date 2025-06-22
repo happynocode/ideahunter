@@ -555,5 +555,17 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use memory storage until valid DATABASE_URL is provided
-export const storage = new MemStorage();
+// Try database first, fallback to memory if connection fails
+let storage: MemStorage | DatabaseStorage;
+try {
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgresql://')) {
+    storage = new DatabaseStorage();
+  } else {
+    storage = new MemStorage();
+  }
+} catch (error) {
+  console.log('Database connection failed, using memory storage');
+  storage = new MemStorage();
+}
+
+export { storage };
