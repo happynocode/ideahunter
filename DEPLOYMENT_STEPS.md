@@ -32,9 +32,17 @@ rm -f supabase/.temp/project-ref
 ```bash
 supabase secrets set \
   SUPABASE_URL="https://niviihlfsqocuboafudh.supabase.co" \
-  SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  SUPABASE_SERVICE_ROLE_KEY="你的_service_role_key" \
+  REDDIT_CLIENT_ID="你的_reddit_client_id" \
+  REDDIT_CLIENT_SECRET="你的_reddit_client_secret" \
+  REDDIT_USER_AGENT="RedditScraper/1.0 by /u/你的用户名"
 ```
-注意：将 `SUPABASE_SERVICE_ROLE_KEY` 替换为你的实际 service role key
+
+#### 获取 Reddit API 凭据：
+1. 访问 https://www.reddit.com/prefs/apps
+2. 点击 "Create App" 或 "Create Another App"
+3. 选择 "script" 类型
+4. 填写应用信息获取 client_id 和 client_secret
 
 ### 5. 部署函数
 ```bash

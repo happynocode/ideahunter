@@ -81,6 +81,55 @@ const SUBREDDIT_TARGETS = [
   'startup_ideas', 'businessideas', 'Entrepreneur', 'innovation'
 ];
 
+// Reddit API authentication
+async function getRedditAccessToken(): Promise<string> {
+  const clientId = Deno.env.get('REDDIT_CLIENT_ID');
+  const clientSecret = Deno.env.get('REDDIT_CLIENT_SECRET');
+  const userAgent = Deno.env.get('REDDIT_USER_AGENT');
+
+  if (!clientId || !clientSecret || !userAgent) {
+    throw new Error('Reddit API credentials not configured');
+  }
+
+  const auth = btoa(`${clientId}:${clientSecret}`);
+  
+  const response = await fetch('https://www.reddit.com/api/v1/access_token', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${auth}`,
+      'User-Agent': userAgent,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Reddit auth failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+async function fetchRedditPosts(subreddit: string, accessToken: string, limit: number = 25): Promise<RedditPost[]> {
+  const userAgent = Deno.env.get('REDDIT_USER_AGENT') ?? 'RedditScraper/1.0';
+  
+  const response = await fetch(`https://oauth.reddit.com/r/${subreddit}/hot?limit=${limit}`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'User-Agent': userAgent,
+    }
+  });
+
+  if (!response.ok) {
+    console.error(`Failed to fetch r/${subreddit}: ${response.status}`);
+    return [];
+  }
+
+  const data: RedditResponse = await response.json();
+  return data.data.children.map(child => child.data);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -94,6 +143,25 @@ serve(async (req) => {
 
     console.log('Starting Reddit scraping process...');
     
+    // Get Reddit access token
+    let accessToken: string;
+    try {
+      accessToken = await getRedditAccessToken();
+      console.log('Successfully authenticated with Reddit API');
+    } catch (error) {
+      console.error('Reddit authentication failed:', error.message);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Reddit authentication failed: ' + error.message 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
     const results = [];
     let totalScraped = 0;
     const errors = [];
@@ -103,21 +171,14 @@ serve(async (req) => {
       try {
         console.log(`Scraping r/${subreddit}...`);
         
-        const response = await fetch(`https://www.reddit.com/r/${subreddit}/hot.json?limit=25`, {
-          headers: {
-            'User-Agent': 'RedditScraper/1.0.0 (by /u/startup_scraper)',
-          }
-        });
-
-        if (!response.ok) {
-          console.error(`Failed to fetch r/${subreddit}: ${response.status}`);
+        const posts = await fetchRedditPosts(subreddit, accessToken, 25);
+        
+        if (posts.length === 0) {
+          console.log(`No posts found in r/${subreddit}`);
           continue;
         }
-
-        const data: RedditResponse = await response.json();
         
-        for (const child of data.data.children) {
-          const post = child.data;
+        for (const post of posts) {
           
           // Pre-filter based on PRD criteria
           if (!isValidPost(post)) continue;

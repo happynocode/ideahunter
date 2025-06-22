@@ -18,7 +18,10 @@ echo "=== Step 4: 设置环境变量 ==="
 # 设置 Edge Function 需要的环境变量
 supabase secrets set \
   SUPABASE_URL="https://niviihlfsqocuboafudh.supabase.co" \
-  SUPABASE_SERVICE_ROLE_KEY="你的_service_role_key"
+  SUPABASE_SERVICE_ROLE_KEY="你的_service_role_key" \
+  REDDIT_CLIENT_ID="你的_reddit_client_id" \
+  REDDIT_CLIENT_SECRET="你的_reddit_client_secret" \
+  REDDIT_USER_AGENT="RedditScraper/1.0 by /u/你的用户名"
 
 echo "=== Step 5: 部署 Edge Function ==="
 # 部署 reddit-scraper 函数
