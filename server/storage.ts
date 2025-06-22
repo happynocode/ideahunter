@@ -298,8 +298,8 @@ export class MemStorage implements IStorage {
       id,
       upvotes: insertStartupIdea.upvotes || 0,
       comments: insertStartupIdea.comments || 0,
-      keywords: Array.isArray(insertStartupIdea.keywords) ? insertStartupIdea.keywords : [],
-      redditPostUrls: Array.isArray(insertStartupIdea.redditPostUrls) ? insertStartupIdea.redditPostUrls : [],
+      keywords: (insertStartupIdea.keywords || []) as string[],
+      redditPostUrls: (insertStartupIdea.redditPostUrls || []) as string[],
       createdAt: now,
       updatedAt: now
     };
@@ -314,8 +314,8 @@ export class MemStorage implements IStorage {
       id,
       upvotes: insertStartupIdea.upvotes || 0,
       comments: insertStartupIdea.comments || 0,
-      keywords: Array.isArray(insertStartupIdea.keywords) ? insertStartupIdea.keywords : [],
-      redditPostUrls: Array.isArray(insertStartupIdea.redditPostUrls) ? insertStartupIdea.redditPostUrls : [],
+      keywords: (insertStartupIdea.keywords || []) as string[],
+      redditPostUrls: (insertStartupIdea.redditPostUrls || []) as string[],
       createdAt,
       updatedAt: createdAt
     };
@@ -539,5 +539,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use memory storage for now due to database connection issues
-export const storage = new MemStorage();
+// Use database storage if available, otherwise memory storage
+export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
