@@ -222,12 +222,16 @@ function createAnalysisPrompt(industry: string, posts: RawRedditPost[], targetDa
     priority_score: post.priority_score
   }));
 
-  const dateContext = getDateContextDescription(targetDate);
+  // Calculate 5-day range for context
+  const targetDateObj = new Date(targetDate);
+  const startDate = new Date(targetDateObj.getFullYear(), targetDateObj.getMonth(), targetDateObj.getDate() - 4);
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const dateContext = `from ${startDateStr} to ${targetDate} (5-day range)`;
 
   return `
-Analyze the following high-priority Reddit posts from the ${industry} industry from ${timeContext} and generate 3-5 high-potential startup ideas based on user pain points and unmet needs.
+Analyze the following high-priority Reddit posts from the ${industry} industry from ${dateContext} and generate 1-10 high-potential startup ideas based on user pain points and unmet needs.
 
-Reddit Discussion Data (${timeContext}, sorted by priority):
+Reddit Discussion Data (${dateContext}, sorted by priority):
 ${JSON.stringify(postsData, null, 2)}
 
 Return ONLY valid JSON in this exact format (no markdown, no code blocks, no extra text):
@@ -249,14 +253,14 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks, no ext
 }
 
 Analysis Requirements:
-1. Focus on ${timeContext} trends and emerging user pain points
+1. Focus on ${dateContext} trends and emerging user pain points
 2. Identify specific problems that lack adequate solutions
-3. Consider the urgency and recency of the discussions (${timeContext})
+3. Consider the urgency and recency of the discussions over this 5-day period
 4. Provide realistic market sizing based on the discussion volume and engagement
 5. Include confidence scores (1-100) based on market demand indicators
 6. Include innovation scores (1-100) based on solution uniqueness
 7. Reference specific Reddit posts that inspired each idea
-8. Ensure each idea addresses genuine market needs from ${timeContext}
+8. Ensure each idea addresses genuine market needs from ${dateContext}
 9. Consider the priority scores when evaluating market potential
 10. Keywords should be SEO-friendly and relevant to the startup idea
 11. Focus on the highest priority posts for the most promising ideas
@@ -266,43 +270,7 @@ Return JSON only, no other text.
 `;
 }
 
-function getTimeContextDescription(timeRange: string): string {
-  switch (timeRange) {
-    case '1h':
-      return 'the last hour';
-    case '24h':
-    case '1d':
-      return 'the last 24 hours';
-    case '7d':
-    case '1w':
-      return 'the last week';
-    case '30d':
-    case '1m':
-      return 'the last month';
-    default:
-      return 'the last 24 hours';
-  }
-}
-
-function getTimeRangeCutoff(timeRange: string): Date {
-  const now = new Date();
-  
-  switch (timeRange) {
-    case '1h':
-      return new Date(now.getTime() - 1 * 60 * 60 * 1000);
-    case '24h':
-    case '1d':
-      return new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    case '7d':
-    case '1w':
-      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    case '30d':
-    case '1m':
-      return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    default:
-      return new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  }
-}
+// 这些函数已经不再需要，因为我们现在使用具体的目标日期而不是时间范围
 
 // Update task status and statistics
 async function updateTaskStatus(
@@ -427,12 +395,18 @@ async function analyzeIndustry(
   targetDate: string
 ): Promise<{ ideasGenerated: number; postsAnalyzed: number; postsSkipped: number; error?: string }> {
   try {
-    console.log(`🔍 Analyzing ${industryName} (ID: ${industryId}) industry for ${targetDate}...`);
+    console.log(`🔍 Analyzing ${industryName} (ID: ${industryId}) industry for 5-day range ending ${targetDate}...`);
 
-    // 获取未处理的帖子，按目标日期过滤
-    const targetDateStart = new Date(targetDate + 'T00:00:00.000Z');
-    const targetDateEnd = new Date(targetDate + 'T23:59:59.999Z');
-    console.log(`📅 Target date range for ${industryName}: ${targetDateStart.toISOString()} to ${targetDateEnd.toISOString()}`);
+    // 获取未处理的帖子，按5天日期范围过滤
+    const targetDateObj = new Date(targetDate + 'T00:00:00.000Z');
+    // Start from 5 days ago (targetDate - 4 days) at 00:00:00
+    const targetDateStart = new Date(targetDateObj.getFullYear(), targetDateObj.getMonth(), targetDateObj.getDate() - 4, 0, 0, 0);
+    // End at target date at 23:59:59
+    const targetDateEnd = new Date(targetDateObj.getFullYear(), targetDateObj.getMonth(), targetDateObj.getDate(), 23, 59, 59);
+    
+    const startDateStr = targetDateStart.toISOString().split('T')[0];
+    const endDateStr = targetDateEnd.toISOString().split('T')[0];
+    console.log(`📅 Target 5-day range for ${industryName}: ${startDateStr} to ${endDateStr}`);
 
     const { data: allPosts, error: fetchError } = await supabaseClient
       .from('raw_reddit_posts')
@@ -512,26 +486,13 @@ async function analyzeIndustry(
       }
     }
 
-    if (postsToAnalyze.length < 5) {
-      // 标记所有帖子为已分析
-      const allPostIds = postsToAnalyze.map(post => post.id);
-      if (allPostIds.length > 0) {
-        await supabaseClient
-          .from('raw_reddit_posts')
-          .update({ 
-            processing_status: 'skipped_insufficient_data',
-            analyzed: true,
-            analyzed_at: new Date().toISOString()
-          })
-          .in('id', allPostIds);
-      }
-      
-      console.log(`⚠️ Insufficient data for ${industryName} (${postsToAnalyze.length} posts, need at least 5)`);
+    if (postsToAnalyze.length === 0) {
+      console.log(`⚠️ No posts to analyze for ${industryName}`);
       return { 
         ideasGenerated: 0, 
         postsAnalyzed: 0, 
-        postsSkipped: postsToSkip.length + postsToAnalyze.length, 
-        error: 'Insufficient data' 
+        postsSkipped: postsToSkip.length, 
+        error: 'No posts to analyze' 
       };
     }
 

@@ -62,8 +62,15 @@ export default function IdeaGrid({ ideas, isLoading, onIdeaClick }: IdeaGridProp
         >
           <CardContent className="p-0">
             <div className="flex items-start justify-between mb-4">
-              <Badge className={`${getIndustryColor(idea.industry?.color || 'gray-400')} px-3 py-1 rounded-full text-xs font-medium`}>
-                {idea.industry?.name || 'Unknown'}
+              <Badge 
+                className="px-3 py-1 rounded-full text-xs font-medium"
+                style={{ 
+                  backgroundColor: `${(idea.industry as any)?.color || '#6b7280'}20`, 
+                  color: (idea.industry as any)?.color || '#6b7280',
+                  border: `1px solid ${(idea.industry as any)?.color || '#6b7280'}40`
+                }}
+              >
+                {(idea.industry as any)?.name || '未分类'}
               </Badge>
               <div className="flex items-center space-x-2 text-gray-400 text-sm">
                 <ArrowUp className="w-4 h-4" />

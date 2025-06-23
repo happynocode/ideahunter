@@ -100,6 +100,7 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
         existingSolutions: idea.existing_solutions,
         solutionGaps: idea.solution_gaps,
         marketSize: idea.market_size,
+        targetDate: idea.target_date,
         createdAt: idea.created_at,
         updatedAt: idea.updated_at,
         confidenceScore: idea.confidence_score,

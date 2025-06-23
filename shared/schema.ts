@@ -52,6 +52,7 @@ export const startupIdeas = pgTable("startup_ideas", {
   targetDate: text("target_date"), // YYYY-MM-DD format - the date this idea was based on
   confidenceScore: integer("confidence_score").default(0).notNull(),
   sourcePostIds: json("source_post_ids").$type<number[]>().default([]).notNull(),
+  innovationScore: integer("innovation_score").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

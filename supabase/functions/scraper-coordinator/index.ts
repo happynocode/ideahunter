@@ -16,7 +16,7 @@ interface ScraperTask {
   max_retries: number;
 }
 
-const BATCH_SIZE = 2; // 每次处理2个任务
+const BATCH_SIZE = 1; // 每次处理1个任务（优化后）
 const LOCK_TIMEOUT = 300000; // 5分钟锁定超时
 const TASK_TIMEOUT = 300000; // 5分钟任务超时 (优化后缩短，原来是10分钟)
 const MAX_TASK_RETRIES = 3; // 最大重试次数

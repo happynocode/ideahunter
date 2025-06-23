@@ -53,130 +53,188 @@ interface ScraperResponse {
   }>;
 }
 
-// Industry mapping based on updated PRD (20 industries)
+// 6. 移除无效subreddit - 用户要求最大化post数量，所以不过滤任何subreddit
+const PROBLEMATIC_SUBREDDITS = new Set<string>([
+  // 用户要求最大化数据，所以不过滤任何subreddit
+]);
+
+// Industry mapping based on updated PRD (25 industries) - 根据文档完善版本
 const INDUSTRY_MAPPING = {
   'SaaS & 云服务': {
     id: 1,
-    subreddits: ['SaaS', 'SaaSgrowth', 'cloud', 'aws', 'azure', 'googlecloud', 'kubernetes', 'docker', 'CloudComputing', 'SaaSSales', 'techsales', 'saastools', 'cloudnative', 'serverless'],
+    subreddits: ['SaaS', 'cloud', 'aws', 'azure', 'googlecloud', 'SaaSMarketing', 'Entrepreneur', 'Startups', 'Tech', 'growthhacking', 'IndieHackers', 'marketing', 'Productivity'],
     keywords: ['saas', 'software as a service', 'cloud', 'platform', 'subscription', 'api', 'service', 'kubernetes', 'docker', 'serverless', 'microservices']
-  },
-  'AI & 机器学习': {
-    id: 2,
-    subreddits: ['MachineLearning', 'artificial', 'ArtificialIntelligence', 'deeplearning', 'datascience', 'LocalLLaMA', 'LangChain', 'OpenAI', 'MLOps', 'tensorflow', 'pytorch', 'NLP', 'computervision', 'AIforEveryone', 'science', 'dataisbeautiful'],
-    keywords: ['ai', 'artificial intelligence', 'machine learning', 'deep learning', 'neural network', 'llm', 'nlp', 'computer vision', 'data science', 'mlops']
-  },
-  '金融科技': {
-    id: 3,
-    subreddits: ['fintech', 'PersonalFinance', 'investing', 'CryptoCurrency', 'financialindependence', 'OpenBanking', 'CreditCards', 'FIRE', 'StockMarket', 'RobinHood', 'DeFi', 'blockchain', 'bitcoin', 'crypto'],
-    keywords: ['fintech', 'finance', 'payment', 'banking', 'cryptocurrency', 'crypto', 'investment', 'trading', 'money', 'blockchain', 'defi']
-  },
-  '电商 & 零售': {
-    id: 4,
-    subreddits: ['ecommerce', 'Shopify', 'ShopifyDev', 'woocommerce', 'magento', 'dropship', 'FulfillmentByAmazon', 'EtsySellers', 'PPC', 'AmazonSeller', 'ecommercetips', 'onlinestore', 'retail'],
-    keywords: ['ecommerce', 'e-commerce', 'retail', 'shop', 'marketplace', 'online store', 'dropshipping', 'amazon', 'shopify', 'payment']
-  },
-  '健康 & 健身科技': {
-    id: 5,
-    subreddits: ['health', 'healthIT', 'fitness', 'running', 'bodyweightfitness', 'nutrition', 'WearOS', 'QuantifiedSelf', 'Telehealth', 'MedTech', 'DigitalHealth', 'mhealth', 'fitbit', 'AppleWatch'],
-    keywords: ['health', 'healthcare', 'medical', 'fitness', 'wellness', 'telemedicine', 'nutrition', 'mental health', 'wearable', 'health tech']
-  },
-  '教育科技': {
-    id: 6,
-    subreddits: ['education', 'edtech', 'learnprogramming', 'teachingresources', 'Teachers', 'LanguageLearning', 'OnlineTutoring', 'coursera', 'udemy', 'skillshare', 'LMS', 'elearning', 'studytips', 'books'],
-    keywords: ['education', 'edtech', 'learning', 'teaching', 'course', 'training', 'skill', 'knowledge', 'school', 'university', 'lms', 'e-learning']
   },
   '开发者工具 & 平台': {
     id: 7,
-    subreddits: ['Programming', 'devops', 'git', 'github', 'vscode', 'IntelliJIDEA', 'vim', 'tooling', 'opensource', 'ExperiencedDevs', 'SoftwareArchitecture', 'codereview', 'devtools', 'technology'],
+    subreddits: ['Programming', 'devops', 'opensource', 'sysadmin', 'AskProgramming', 'Technology', 'coding', 'compsci', 'algorithms', 'SideProject'],
     keywords: ['development', 'programming', 'code', 'developer', 'tool', 'framework', 'library', 'ide', 'editor', 'version control', 'devops', 'ci/cd']
-  },
-  '低/无代码平台': {
-    id: 8,
-    subreddits: ['NoCode', 'LowCode', 'automate', 'zapier', 'Bubble', 'Webflow', 'Airtable', 'notion', 'integrations', 'workflow', 'automation', 'IFTTT', 'make'],
-    keywords: ['nocode', 'no code', 'low code', 'automation', 'workflow', 'integration', 'zapier', 'bubble', 'webflow', 'airtable', 'citizen developer']
-  },
-  '社交 & 社区': {
-    id: 9,
-    subreddits: ['socialmedia', 'communitymanagement', 'onlinecommunities', 'socialplatforms', 'ModSupport', 'CommunityManager', 'discord', 'slack', 'reddit', 'networking', 'dating', 'relationships'],
-    keywords: ['social', 'community', 'networking', 'communication', 'collaboration', 'forum', 'chat', 'messaging', 'relationship', 'connection']
-  },
-  '游戏 & 娱乐': {
-    id: 10,
-    subreddits: ['gaming', 'gamedev', 'IndieGaming', 'Unity3D', 'unrealengine', 'godot', 'MobileGaming', 'VirtualReality', 'AR', 'streaming', 'twitch', 'youtube', 'entertainment'],
-    keywords: ['gaming', 'game', 'entertainment', 'streaming', 'content', 'video game', 'mobile game', 'vr', 'ar', 'unity', 'unreal']
-  },
-  '绿色 & 可持续科技': {
-    id: 11,
-    subreddits: ['sustainability', 'zerowaste', 'environment', 'solar', 'renewable', 'climatechange', 'greentech', 'cleanenergy', 'recycling', 'composting', 'upcycling', 'carbonfootprint', 'ESG'],
-    keywords: ['sustainability', 'green', 'eco', 'environment', 'renewable', 'climate', 'carbon', 'energy', 'waste', 'recycling', 'clean tech']
   },
   'API & 后端服务': {
     id: 12,
-    subreddits: ['api', 'backend', 'node', 'golang', 'rust', 'python', 'java', 'microservices', 'Database', 'PostgreSQL', 'mongodb', 'redis', 'APIDesign', 'graphql', 'RESTful'],
+    subreddits: ['api', 'backend', 'microservices', 'coding', 'SoftwareArchitecture', 'Kubernetes', 'docker', 'node', 'django'],
     keywords: ['api', 'backend', 'server', 'database', 'microservices', 'rest', 'graphql', 'sql', 'nosql', 'performance', 'scaling', 'architecture']
-  },
-  '网络安全 & 隐私': {
-    id: 13,
-    subreddits: ['cybersecurity', 'netsec', 'AskNetsec', 'privacy', 'security', 'hacking', 'malware', 'cryptography', 'InfoSec', 'penetrationtesting', 'blueteam', 'redteam', 'OSINT'],
-    keywords: ['security', 'cybersecurity', 'privacy', 'encryption', 'protection', 'vulnerability', 'penetration testing', 'malware', 'firewall', 'authentication']
   },
   '移动应用开发': {
     id: 222,
-    subreddits: ['androiddev', 'iOSProgramming', 'flutter', 'reactnative', 'swift', 'kotlin', 'xamarin', 'ionic', 'AppBusiness', 'UXDesign', 'MobileGaming', 'mobiledev', 'crossplatform'],
+    subreddits: ['androiddev', 'iOSProgramming', 'flutter', 'UIUX', 'FlutterDev', 'reactnative', 'ionic'],
     keywords: ['mobile', 'app', 'android', 'ios', 'flutter', 'react native', 'swift', 'kotlin', 'cross platform', 'mobile ui', 'app store']
   },
   'Web & 前端开发': {
     id: 223,
-    subreddits: ['webdev', 'javascript', 'reactjs', 'vuejs', 'angular', 'svelte', 'nextjs', 'css', 'html', 'typescript', 'Frontend', 'WebPerf', 'jamstack', 'pwa', 'InternetIsBeautiful'],
+    subreddits: ['webdev', 'javascript', 'reactjs', 'webassembly', 'Frontend', 'web_design'],
     keywords: ['web', 'frontend', 'javascript', 'react', 'vue', 'angular', 'css', 'html', 'typescript', 'responsive', 'performance', 'ui/ux']
+  },
+  '低/无代码平台': {
+    id: 8,
+    subreddits: ['NoCode', 'LowCode', 'Bubble', 'Makerpad', 'nocode', 'Airtable', 'zapier'],
+    keywords: ['nocode', 'no code', 'low code', 'automation', 'workflow', 'integration', 'zapier', 'bubble', 'webflow', 'airtable', 'citizen developer']
+  },
+  '网络安全 & 隐私': {
+    id: 13,
+    subreddits: ['cybersecurity', 'netsec', 'cryptography', 'privacytoolsio', 'malware', 'computerforensics', 'reverseengineering', 'ethicalhacking', 'Cybersecurity101', 'CyberSecurityJobs'],
+    keywords: ['security', 'cybersecurity', 'privacy', 'encryption', 'protection', 'vulnerability', 'penetration testing', 'malware', 'firewall', 'authentication']
+  },
+  'AI & 机器学习': {
+    id: 2,
+    subreddits: ['MachineLearning', 'datascience', 'OpenAI', 'LLM', 'LanguageTechnology', 'DeepLearning', 'NeuralNetworks', 'ArtificialIntelligence', 'AI'],
+    keywords: ['ai', 'artificial intelligence', 'machine learning', 'deep learning', 'neural network', 'llm', 'nlp', 'computer vision', 'data science', 'mlops']
+  },
+  '电商 & 零售': {
+    id: 4,
+    subreddits: ['ecommerce', 'Shopify', 'AmazonSeller', 'AmazonFBA', 'SEO', 'advertising', 'marketing', 'dropship'],
+    keywords: ['ecommerce', 'e-commerce', 'retail', 'shop', 'marketplace', 'online store', 'dropshipping', 'amazon', 'shopify', 'payment']
+  },
+  '健康 & 健身科技': {
+    id: 5,
+    subreddits: ['fitness', 'DigitalHealth', 'WearOS', 'healthtech', 'MedTech', 'QuantifiedSelf', 'sleephackers', 'Biohackers', 'healthIT'],
+    keywords: ['health', 'healthcare', 'medical', 'fitness', 'wellness', 'telemedicine', 'nutrition', 'mental health', 'wearable', 'health tech']
+  },
+  '教育科技': {
+    id: 6,
+    subreddits: ['edtech', 'learnprogramming', 'OnlineTutoring', 'education', 'instructionaldesign', 'Elearning', 'teachers'],
+    keywords: ['education', 'edtech', 'learning', 'teaching', 'course', 'training', 'skill', 'knowledge', 'school', 'university', 'lms', 'e-learning']
+  },
+  '金融科技': {
+    id: 3,
+    subreddits: ['fintech', 'CryptoCurrency', 'blockchain', 'InsurTech', 'CryptoMarkets', 'Altcoin', 'NFT', 'BitcoinBeginners'],
+    keywords: ['fintech', 'finance', 'payment', 'banking', 'cryptocurrency', 'crypto', 'investment', 'trading', 'money', 'blockchain', 'defi']
   },
   '消费者服务': {
     id: 224,
-    subreddits: ['SideHustle', 'smallbusiness', 'freelance', 'gig', 'food', 'cooking', 'DIY', 'homeimprovement', 'FieldService', 'Contractor', 'cleaning', 'delivery', 'services', 'handyman'],
+    subreddits: ['SideHustle', 'smallbusiness', 'freelance', 'BeerMoney', 'DigitalNomad', 'Fiverr'],
     keywords: ['service', 'consumer', 'local', 'home', 'food', 'delivery', 'cleaning', 'repair', 'maintenance', 'gig economy', 'freelance']
   },
   '企业服务 & B2B': {
     id: 225,
-    subreddits: ['b2b', 'businessdev', 'sales', 'marketing', 'CRM', 'ERP', 'HumanResources', 'accounting', 'projectmanagement', 'workflow', 'collaboration', 'communication', 'remotework', 'entrepreneur', 'startups', 'business'],
+    subreddits: ['b2b', 'CRM', 'startups', 'Procurement', 'Entrepreneurship'],
     keywords: ['b2b', 'enterprise', 'business', 'crm', 'erp', 'workflow', 'collaboration', 'hr', 'sales', 'marketing', 'project management']
   },
   '媒体 & 内容创作': {
     id: 226,
-    subreddits: ['contentcreation', 'blogging', 'podcasting', 'youtubers', 'graphic_design', 'VideoEditing', 'photography', 'streaming', 'writing', 'copywriting', 'socialmediamarketing', 'CreatorEconomy', 'news', 'memes', 'movies', 'music', 'aww'],
+    subreddits: ['youtubers', 'podcasting', 'CreatorEconomy', 'SEO', 'vlogging', 'NewTubers', 'ContentCreators', 'photography', 'blogging'],
     keywords: ['content', 'media', 'video', 'audio', 'podcast', 'blog', 'design', 'editing', 'streaming', 'creator', 'influencer', 'social media']
   },
   '旅游 & 出行': {
     id: 227,
-    subreddits: ['travel', 'digitalnomad', 'backpacking', 'solotravel', 'travelhacks', 'onebag', 'awardtravel', 'flights', 'hotels', 'airbnb', 'uber', 'lyft', 'transportation', 'wanderlust'],
+    subreddits: ['travel', 'solotravel', 'airbnb', 'wanderlust', 'shoestring', 'travelhacks', 'backpacking', 'DigitalNomad'],
     keywords: ['travel', 'trip', 'vacation', 'hotel', 'flight', 'transportation', 'booking', 'tourism', 'nomad', 'journey']
+  },
+  '社交 & 社区': {
+    id: 9,
+    subreddits: ['socialmedia', 'discord', 'communitymanagement', 'SocialMediaMarketing', 'digital_marketing', 'marketing'],
+    keywords: ['social', 'community', 'networking', 'communication', 'collaboration', 'forum', 'chat', 'messaging', 'relationship', 'connection']
+  },
+  '绿色 & 可持续科技': {
+    id: 11,
+    subreddits: ['sustainability', 'renewable', 'cleantech', 'RenewableEnergy', 'Envirotech', 'solar'],
+    keywords: ['sustainability', 'green', 'eco', 'environment', 'renewable', 'climate', 'carbon', 'energy', 'waste', 'recycling', 'clean tech']
   },
   '物流 & 供应链': {
     id: 228,
-    subreddits: ['logistics', 'supplychain', 'freight', 'warehouse', 'FreightBrokers', 'SupplyChainLogistics', '3PL', 'shipping', 'inventory', 'procurement', 'manufacturing', 'operations', 'lean'],
+    subreddits: ['logistics', 'warehouse', 'operations', 'supplychain', 'inventory'],
     keywords: ['logistics', 'supply chain', 'shipping', 'warehouse', 'inventory', 'freight', 'delivery', 'procurement', 'operations', 'manufacturing']
+  },
+  '游戏 & 娱乐': {
+    id: 10,
+    subreddits: ['gaming', 'gamedev', 'VirtualReality', 'GamingIndustry', 'eSports', 'VRGaming', 'boardgames'],
+    keywords: ['gaming', 'game', 'entertainment', 'streaming', 'content', 'video game', 'mobile game', 'vr', 'ar', 'unity', 'unreal']
+  },
+  '硬件 & IoT': {
+    id: 231,
+    subreddits: ['hardware', 'IOT', 'homeautomation', 'arduino', 'raspberrypi'],
+    keywords: ['hardware', 'iot', 'internet of things', 'embedded', 'sensors', 'automation', 'arduino', 'raspberry pi', 'electronics', 'microcontroller']
+  },
+  'AR/VR & 元宇宙': {
+    id: 238,
+    subreddits: ['virtualreality', 'oculus', 'augmentedreality', 'Metaverse'],
+    keywords: ['ar', 'vr', 'augmented reality', 'virtual reality', 'metaverse', 'oculus', 'quest', 'immersive', '3d', 'spatial computing']
+  },
+  '生物科技 & MedTech': {
+    id: 239,
+    subreddits: ['biotech', 'biotechnology', 'bioinformatics', 'genomics', 'labrats'],
+    keywords: ['biotech', 'biotechnology', 'medical technology', 'genomics', 'bioinformatics', 'pharmaceuticals', 'lab', 'research', 'clinical', 'diagnosis']
+  },
+  '法律科技': {
+    id: 235,
+    subreddits: ['legaltech', 'law', 'legaladvice'],
+    keywords: ['legal tech', 'law', 'legal', 'compliance', 'contract', 'attorney', 'lawyer', 'paralegal', 'court', 'litigation']
+  },
+  '房产科技 PropTech': {
+    id: 234,
+    subreddits: ['PropTech', 'RealEstate', 'SmartHome'],
+    keywords: ['proptech', 'real estate', 'property', 'rental', 'smart home', 'mortgage', 'real estate investment', 'home automation', 'construction', 'architecture']
+  },
+  '数据科学与分析': {
+    id: 229,
+    subreddits: ['datascience', 'analytics', 'MachineLearning', 'statistics', 'tableau', 'PowerBI', 'bigdata'],
+    keywords: ['data science', 'analytics', 'business intelligence', 'big data', 'statistics', 'visualization', 'dashboard', 'reporting', 'insights', 'data mining']
+  },
+  '区块链与加密货币': {
+    id: 230,
+    subreddits: ['CryptoCurrency', 'blockchain', 'ethereum', 'Bitcoin', 'DeFi', 'NFT', 'Web3'],
+    keywords: ['blockchain', 'cryptocurrency', 'bitcoin', 'ethereum', 'defi', 'nft', 'web3', 'smart contracts', 'crypto trading', 'digital assets']
+  },
+  '音频与播客': {
+    id: 232,
+    subreddits: ['podcasting', 'podcasts', 'audio', 'spotify', 'audioengineering', 'voiceover', 'audiobooks'],
+    keywords: ['podcast', 'audio', 'music', 'sound', 'radio', 'voice', 'audiobook', 'streaming', 'recording', 'editing']
+  },
+  '设计与创意工具': {
+    id: 233,
+    subreddits: ['design', 'graphic_design', 'web_design', 'UI_Design', 'Adobe', 'Figma', 'creativity'],
+    keywords: ['design', 'creative', 'graphic design', 'ui/ux', 'adobe', 'figma', 'photoshop', 'illustration', 'branding', 'visual design']
+  },
+  '农业科技': {
+    id: 236,
+    subreddits: ['agriculture', 'farming', 'AgTech', 'sustainability', 'food', 'permaculture', 'gardening'],
+    keywords: ['agriculture', 'farming', 'agtech', 'food production', 'sustainable farming', 'precision agriculture', 'vertical farming', 'greenhouse', 'crop monitoring', 'livestock']
+  },
+  '通用/热门话题': {
+    id: 240,
+    subreddits: [
+      'AskReddit', 'IAMA', 'funny', 'gaming', 'worldnews', 'todayilearned', 
+      'aww', 'Music', 'movies', 'memes', 'Showerthoughts', 'science', 
+      'pics', 'Jokes', 'news', 'explainlikeimfive', 'books', 'food', 
+      'LifeProTips', 'DIY', 'GetMotivated', 'askscience'
+    ],
+    keywords: [
+      'general', 'popular', 'trending', 'viral', 'community', 'discussion',
+      'entertainment', 'humor', 'advice', 'life', 'culture', 'current events',
+      'learning', 'tips', 'motivation', 'science', 'lifestyle', 'social'
+    ]
   }
 };
 
-// 6. 移除无效subreddit - 已知问题subreddit黑名单
-const PROBLEMATIC_SUBREDDITS = new Set([
-  'memes', 'aww', 'movies', 'music', 'news', // 非创业相关
-  'InternetIsBeautiful', // 经常timeout
-  'wanderlust', // 低质量内容
-]);
-
-// Get subreddits for specific industries
+// Get subreddits for specific industries - 移除限制
 function getSubredditsForIndustries(industryIds: number[]): string[] {
   const subreddits = new Set<string>();
   
   industryIds.forEach(industryId => {
     const industry = Object.values(INDUSTRY_MAPPING).find(ind => ind.id === industryId);
     if (industry) {
-      industry.subreddits.forEach(sub => {
-        // 6. 过滤问题subreddit
-        if (!PROBLEMATIC_SUBREDDITS.has(sub)) {
-          subreddits.add(sub);
-        }
-      });
+      // 使用所有subreddit，不进行任何过滤和限制
+      industry.subreddits.forEach(sub => subreddits.add(sub));
     }
   });
   
@@ -228,34 +286,44 @@ async function getRedditAccessToken(): Promise<string> {
   return cachedAccessToken!;
 }
 
-// 1. Fetch posts from a subreddit with top and hot sorting (去掉new)
+// 1. Fetch posts from a subreddit with top and hot sorting (去掉new) - 大幅优化
 async function fetchRedditPosts(subreddit: string, accessToken: string, targetDate: string): Promise<RedditPost[]> {
   const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'ScraperDash/1.0';
-  const maxRetries = 3;
+  const maxRetries = 2; // 减少重试次数
   
-  // Convert target date to Unix timestamps for filtering
+  // Convert target date to Unix timestamps for filtering - NOW COVERS 5 DAYS RANGE
   const targetDateObj = new Date(targetDate);
-  const startOfDay = new Date(targetDateObj.getFullYear(), targetDateObj.getMonth(), targetDateObj.getDate(), 0, 0, 0);
-  const endOfDay = new Date(targetDateObj.getFullYear(), targetDateObj.getMonth(), targetDateObj.getDate(), 23, 59, 59);
-  const startTimestamp = Math.floor(startOfDay.getTime() / 1000);
-  const endTimestamp = Math.floor(endOfDay.getTime() / 1000);
+  // Start from 5 days ago (targetDate - 4 days) at 00:00:00
+  const startOfRange = new Date(targetDateObj.getFullYear(), targetDateObj.getMonth(), targetDateObj.getDate() - 4, 0, 0, 0);
+  // End at target date at 23:59:59
+  const endOfRange = new Date(targetDateObj.getFullYear(), targetDateObj.getMonth(), targetDateObj.getDate(), 23, 59, 59);
+  const startTimestamp = Math.floor(startOfRange.getTime() / 1000);
+  const endTimestamp = Math.floor(endOfRange.getTime() / 1000);
   
-  console.log(`📅 Filtering posts for date: ${targetDate} (${startTimestamp} - ${endTimestamp})`);
+  const startDateStr = startOfRange.toISOString().split('T')[0];
+  const endDateStr = endOfRange.toISOString().split('T')[0];
+  console.log(`📅 Filtering posts for 5-day range: ${startDateStr} to ${endDateStr} (${startTimestamp} - ${endTimestamp})`);
   
-  // Use 'all' time parameter to get broader results, then filter by date
-  const timeParam = 'all';
-
   const allPosts: RedditPost[] = [];
   
-  // 1. 只抓取top和hot，去掉new
-  const sortMethods = ['top', 'hot'];
+  // 使用所有Reddit API支持的排序方法以最大化数据抓取
+  const sortMethods = [
+    { method: 'hot', timeParam: null, maxPages: 2 },      // 热门帖子
+    { method: 'top', timeParam: 'day', maxPages: 3 },     // 当日最高评分
+    { method: 'top', timeParam: 'week', maxPages: 2 },    // 本周最高评分
+    { method: 'top', timeParam: 'month', maxPages: 2 },   // 本月最高评分
+    { method: 'new', timeParam: null, maxPages: 4 },      // 最新帖子（最可能有目标日期的内容）
+    { method: 'rising', timeParam: null, maxPages: 2 },   // 上升趋势帖子
+    { method: 'controversial', timeParam: 'day', maxPages: 2 },  // 当日争议性帖子
+    { method: 'controversial', timeParam: 'week', maxPages: 1 }  // 本周争议性帖子
+  ];
   
-  for (const sortMethod of sortMethods) {
+  for (const sortConfig of sortMethods) {
+    const { method: sortMethod, timeParam, maxPages } = sortConfig;
     let after: string | null = null;
     let totalFetched = 0;
-    let lowQualityPages = 0; // 5. 智能分页限制
-    const maxPages = sortMethod === 'top' ? 6 : 3; // top抓取更多页面
-    const maxLowQualityPages = 2; // 连续低质量页面限制
+    let emptyPages = 0; // 空页面计数
+    const maxEmptyPages = 1; // 最多1个空页面就停止
 
     console.log(`📊 Fetching ${sortMethod} posts from r/${subreddit}...`);
 
@@ -264,11 +332,11 @@ async function fetchRedditPosts(subreddit: string, accessToken: string, targetDa
       while (retries < maxRetries) {
         try {
           const params = new URLSearchParams({
-            limit: '100',
+            limit: '50', // 减少单页数量，更快处理
             raw_json: '1'
           });
           
-          if (sortMethod === 'top') {
+          if (timeParam) {
             params.set('t', timeParam);
           }
           
@@ -277,6 +345,8 @@ async function fetchRedditPosts(subreddit: string, accessToken: string, targetDa
           }
 
           const url = `https://oauth.reddit.com/r/${subreddit}/${sortMethod}?${params}`;
+          console.log(`🔗 Fetching: ${url}`);
+          
           const response = await fetch(url, {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
@@ -285,7 +355,7 @@ async function fetchRedditPosts(subreddit: string, accessToken: string, targetDa
           });
 
           if (response.status === 429) {
-            const retryAfter = parseInt(response.headers.get('retry-after') || '60', 10);
+            const retryAfter = Math.min(parseInt(response.headers.get('retry-after') || '30', 10), 30); // 限制最大等待时间
             console.log(`Rate limited for r/${subreddit}, waiting ${retryAfter}s...`);
             await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
             retries++;
@@ -304,28 +374,79 @@ async function fetchRedditPosts(subreddit: string, accessToken: string, targetDa
 
           const posts = data.data.children.map(child => child.data);
           
-          // Filter posts by target date
-          const datePosts = posts.filter(post => {
-            const postTimestamp = post.created_utc;
-            return postTimestamp >= startTimestamp && postTimestamp <= endTimestamp;
+          console.log(`📥 原始获取到 ${posts.length} 个帖子来自 r/${subreddit}`);
+          
+          // 提前过滤 - 预过滤低质量帖子
+          const preFiltedPosts = posts.filter(post => {
+            if (!post.title || post.title === '[deleted]' || post.title === '[removed]') return false;
+            if (!post.author || post.author === '[deleted]') return false;
+            if (post.score < 3 || post.num_comments < 1) return false; // 降低质量门槛
+            return true;
           });
           
-          console.log(`📅 Filtered ${posts.length} -> ${datePosts.length} posts by date for r/${subreddit}`);
+          console.log(`🔍 质量预过滤: ${posts.length} -> ${preFiltedPosts.length} (过滤掉 ${posts.length - preFiltedPosts.length} 个低质量帖子)`);
           
-          // 5. 智能分页限制 - 检查这一页的质量
-          const validPosts = datePosts.filter(post => isValidPost(post));
-          const qualityRatio = validPosts.length / Math.max(datePosts.length, 1);
+          // 详细的日期过滤日志
+          let dateFilteredCount = 0;
+          let samplePostDates: Array<{
+            title: string;
+            timestamp: number;
+            date: string;
+            isInRange: boolean;
+          }> = [];
           
-          if (qualityRatio < 0.1) { // 低于10%的有效帖子
-            lowQualityPages++;
-            console.log(`⚠️ Low quality page ${page + 1} for r/${subreddit} ${sortMethod}: ${validPosts.length}/${posts.length} valid posts`);
+          // Filter posts by target date
+          const datePosts = preFiltedPosts.filter(post => {
+            const postTimestamp = post.created_utc;
+            const postDate = new Date(postTimestamp * 1000);
+            const isInRange = postTimestamp >= startTimestamp && postTimestamp <= endTimestamp;
             
-            if (lowQualityPages >= maxLowQualityPages) {
-              console.log(`🛑 Stopping ${sortMethod} fetch for r/${subreddit} due to consecutive low quality pages`);
+            // 收集样本数据用于调试
+            if (samplePostDates.length < 3) {
+              samplePostDates.push({
+                title: post.title.substring(0, 50) + '...',
+                timestamp: postTimestamp,
+                date: postDate.toISOString(),
+                isInRange: isInRange
+              });
+            }
+            
+            if (isInRange) dateFilteredCount++;
+            return isInRange;
+          });
+          
+          console.log(`📅 日期过滤详情 for r/${subreddit} (5天范围):`);
+          console.log(`   目标日期范围: ${new Date(startTimestamp * 1000).toISOString()} 到 ${new Date(endTimestamp * 1000).toISOString()}`);
+          console.log(`   过滤前: ${preFiltedPosts.length} 个帖子`);
+          console.log(`   过滤后: ${datePosts.length} 个帖子`);
+          if (samplePostDates.length > 0) {
+            console.log(`   样本帖子时间:`);
+            samplePostDates.forEach((sample, i) => {
+              console.log(`     ${i+1}. ${sample.title}`);
+              console.log(`        时间: ${sample.date} (${sample.isInRange ? '✅' : '❌'})`);
+            });
+          }
+          
+          // 进一步的内容质量检查
+          const validPosts = datePosts.filter(post => isValidPost(post));
+          console.log(`📝 内容质量过滤: ${datePosts.length} -> ${validPosts.length} (过滤掉 ${datePosts.length - validPosts.length} 个低质量内容)`);
+          
+          console.log(`📊 r/${subreddit} 最终统计: ${posts.length} -> ${preFiltedPosts.length} -> ${datePosts.length} -> ${validPosts.length}`);
+          
+          if (datePosts.length === 0) {
+            emptyPages++;
+            if (emptyPages >= maxEmptyPages) {
+              console.log(`🛑 Stopping fetch for r/${subreddit} due to empty pages`);
               break;
             }
           } else {
-            lowQualityPages = 0; // 重置计数器
+            emptyPages = 0; // 重置空页面计数
+          }
+          
+          // 更激进的质量检查 - 如果这页质量太低就停止
+          if (datePosts.length > 0 && validPosts.length / datePosts.length < 0.2) {
+            console.log(`⚠️ Low quality ratio for r/${subreddit}, stopping early`);
+            break;
           }
           
           allPosts.push(...datePosts);
@@ -337,7 +458,7 @@ async function fetchRedditPosts(subreddit: string, accessToken: string, targetDa
             break;
           }
 
-          await new Promise(resolve => setTimeout(resolve, 800)); // 稍微减少延迟
+          await new Promise(resolve => setTimeout(resolve, 500)); // 减少延迟
           break;
           
         } catch (error) {
@@ -349,11 +470,11 @@ async function fetchRedditPosts(subreddit: string, accessToken: string, targetDa
             break;
           }
           
-          await new Promise(resolve => setTimeout(resolve, 3000 * retries)); // 减少重试延迟
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries)); // 减少重试延迟
         }
       }
       
-      if (retries >= maxRetries || lowQualityPages >= maxLowQualityPages) break;
+      if (retries >= maxRetries || emptyPages >= maxEmptyPages) break;
     }
     
     console.log(`📊 Fetched ${totalFetched} ${sortMethod} posts from r/${subreddit}`);
@@ -373,11 +494,11 @@ async function fetchRedditPosts(subreddit: string, accessToken: string, targetDa
   return uniquePosts;
 }
 
-// 4. Enhanced post validation with more precise filtering
+// 4. Enhanced post validation with more precise filtering - 更严格的过滤
 function isValidPost(post: RedditPost): boolean {
   if (!post.title || post.title === '[deleted]' || post.title === '[removed]') return false;
   if (!post.author || post.author === '[deleted]') return false;
-  if (post.score < 5 || post.num_comments < 2) return false;
+  if (post.score < 3 || post.num_comments < 1) return false; // 降低质量门槛
   
   const title = post.title.toLowerCase();
   const content = (post.selftext || '').toLowerCase();
@@ -399,13 +520,18 @@ function isValidPost(post: RedditPost): boolean {
     'meme', 'funny', 'joke', 'lol', 'roast me', 'ama',
     
     // 个人求助
-    'how do i', 'should i', 'am i the only one', 'does anyone else'
+    'how do i', 'should i', 'am i the only one', 'does anyone else',
+    
+    // 新增过滤词
+    'showerthought', 'shower thought', 'rant', 'confession',
+    'unpopular', 'change my mind', 'cmv', 'meta',
+    'circlejerk', 'satire', 'parody'
   ];
   
   if (noiseKeywords.some(keyword => title.includes(keyword))) return false;
   
   // 标题过短或过于模糊
-  if (post.title.length < 15) return false;
+  if (post.title.length < 20) return false; // 提高最小长度
   
   // 过滤纯链接帖子（通常质量较低）
   if (post.selftext === '' && post.url && !post.url.includes('reddit.com')) {
@@ -484,6 +610,8 @@ async function processPosts(posts: RedditPost[], industryId: number, supabaseCli
       created_at: redditCreatedAt,  // 使用Reddit帖子的原始创建时间
       analyzed: false,
       analyzed_at: null,
+      processing_status: 'unprocessed', // 确保新posts设置为unprocessed状态
+      priority_score: 0 // 初始化优先级分数
     };
     
     processedPosts.push(processedPost);
@@ -567,6 +695,43 @@ async function updateTaskStatus(
   }
 }
 
+// 并发处理subreddit - 新增函数
+async function fetchRedditPostsConcurrently(subreddits: string[], accessToken: string, targetDate: string): Promise<RedditPost[]> {
+  const maxConcurrency = 10; // 提高并发数到10
+  const allPosts: RedditPost[] = [];
+  
+  // 分批处理subreddit
+  for (let i = 0; i < subreddits.length; i += maxConcurrency) {
+    const batch = subreddits.slice(i, i + maxConcurrency);
+    
+    console.log(`🔄 Processing batch ${Math.floor(i/maxConcurrency) + 1}: ${batch.join(', ')}`);
+    
+    const batchPromises = batch.map(subreddit => 
+      Promise.race([
+        fetchRedditPosts(subreddit, accessToken, targetDate),
+        new Promise<RedditPost[]>((_, reject) => 
+          setTimeout(() => reject(new Error(`Timeout: ${subreddit}`)), 10000) // 10秒超时
+        )
+      ]).catch(error => {
+        console.error(`❌ Failed to fetch from r/${subreddit}:`, error.message);
+        return []; // 返回空数组而不是失败
+      })
+    );
+    
+    const batchResults = await Promise.all(batchPromises);
+    
+    // 合并结果
+    batchResults.forEach(posts => allPosts.push(...posts));
+    
+    // 批次间延迟减少到0.5秒
+    if (i + maxConcurrency < subreddits.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  
+  return allPosts;
+}
+
 // Main serve function
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -638,26 +803,22 @@ serve(async (req) => {
         let industryProcessed = 0;
         let industryScraped = 0;
         
-        // Process subreddits for this industry (filtered)
-        const filteredSubreddits = industryConfig.subreddits.filter(sub => !PROBLEMATIC_SUBREDDITS.has(sub));
-        for (const subreddit of filteredSubreddits) {
-          try {
-            console.log(`📊 Fetching posts from r/${subreddit} for industry ${industryId}...`);
-            const posts = await fetchRedditPosts(subreddit, accessToken, target_date);
-            industryScraped += posts.length;
-            
-            if (posts.length > 0) {
-              const processed = await processPosts(posts, industryId, supabaseClient);
-              industryProcessed += processed;
-              console.log(`✅ r/${subreddit}: ${processed} posts processed (${posts.length} fetched)`);
-            }
-            
-            // Rate limiting between subreddits
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-          } catch (error) {
-            console.error(`❌ Error processing r/${subreddit} for industry ${industryId}:`, error);
-          }
+        // 使用并发处理获取所有帖子 - 使用全部subreddit
+        const allSubreddits = industryConfig.subreddits; // 使用所有subreddit
+          
+        console.log(`📊 Fetching posts from ${allSubreddits.length} subreddits for industry ${industryId}: ${allSubreddits.join(', ')}`);
+        
+        // 并发获取所有帖子
+        const allPosts = await fetchRedditPostsConcurrently(allSubreddits, accessToken, target_date);
+        industryScraped = allPosts.length;
+        
+        if (allPosts.length > 0) {
+          // 批量处理所有帖子
+          const processed = await processPosts(allPosts, industryId, supabaseClient);
+          industryProcessed = processed;
+          console.log(`✅ Industry ${industryId}: ${processed} posts processed (${allPosts.length} fetched)`);
+        } else {
+          console.log(`⚠️ No posts found for industry ${industryId}`);
         }
         
         // Update task status to complete_scrape

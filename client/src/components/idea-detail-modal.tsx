@@ -37,6 +37,7 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
           existing_solutions,
           solution_gaps,
           market_size,
+          target_date,
           confidence_score,
           source_post_ids,
           created_at,
@@ -123,8 +124,15 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
-                          <Badge className={`${getIndustryColor(idea.industry?.[0]?.color || 'gray-400')} px-3 py-1 rounded-full text-sm`}>
-                            {idea.industry?.[0]?.name || 'Unknown'}
+                          <Badge 
+                            className="px-3 py-1 rounded-full text-sm"
+                            style={{ 
+                              backgroundColor: `${(idea.industry as any)?.color || '#6b7280'}20`, 
+                              color: (idea.industry as any)?.color || '#6b7280',
+                              border: `1px solid ${(idea.industry as any)?.color || '#6b7280'}40`
+                            }}
+                          >
+                            {(idea.industry as any)?.name || '未分类'}
                           </Badge>
                           <div className="flex items-center space-x-4 text-gray-400 text-sm">
                             <span className="flex items-center space-x-1">
@@ -137,9 +145,7 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
                             </span>
                             <span className="flex items-center space-x-1">
                               <Clock className="w-4 h-4" />
-                              <span>{idea.created_at && !isNaN(new Date(idea.created_at).getTime()) 
-                                ? new Date(idea.created_at).toLocaleDateString() 
-                                : 'Date not available'}</span>
+                              <span>基于 {(idea as any).target_date ? new Date((idea as any).target_date).toLocaleDateString('zh-CN') : '未知日期'}</span>
                             </span>
                           </div>
                         </div>
