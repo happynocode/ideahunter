@@ -40,7 +40,7 @@ async function getRedditAccessToken(): Promise<string> {
   console.log('🔑 Fetching new Reddit access token');
   const clientId = Deno.env.get('REDDIT_CLIENT_ID');
   const clientSecret = Deno.env.get('REDDIT_CLIENT_SECRET');
-  const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'ScraperDash/1.0';
+  const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'IdeaHunter/1.0';
 
   if (!clientId || !clientSecret) {
     throw new Error('Reddit API credentials not configured');
@@ -73,7 +73,7 @@ async function getRedditAccessToken(): Promise<string> {
 }
 
 async function fetchTrendingSubreddits(endpoint: string, accessToken: string, limit: number = 50): Promise<SubredditInfo[]> {
-  const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'ScraperDash/1.0';
+  const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'IdeaHunter/1.0';
   
   try {
     const url = `https://oauth.reddit.com${endpoint}?limit=${limit}&raw_json=1`;

@@ -59,8 +59,8 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
             <Rocket className="text-white text-lg" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">StartupScraper</h1>
-            <p className="text-sm text-gray-400">Reddit Ideas AI</p>
+                          <h1 className="text-xl font-bold text-white">IdeaHunter</h1>
+              <p className="text-sm text-gray-400">AI-Powered Reddit Trend Discovery</p>
           </div>
         </motion.div>
         

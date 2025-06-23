@@ -85,7 +85,7 @@ export default function Dashboard() {
             className="flex justify-between items-center mb-8"
           >
             <div>
-              <h2 className="text-3xl font-bold text-white mb-2">Startup Ideas Dashboard</h2>
+              <h2 className="text-3xl font-bold text-white mb-2">Trending Ideas</h2>
               <p className="text-gray-400">Discover trending opportunities from Reddit communities</p>
             </div>
             <div className="flex space-x-4 items-center">

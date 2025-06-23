@@ -254,7 +254,7 @@ async function getRedditAccessToken(): Promise<string> {
   console.log('🔑 Fetching new Reddit access token');
   const clientId = Deno.env.get('REDDIT_CLIENT_ID');
   const clientSecret = Deno.env.get('REDDIT_CLIENT_SECRET');
-  const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'ScraperDash/1.0';
+  const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'IdeaHunter/1.0';
 
   if (!clientId || !clientSecret) {
     throw new Error('Reddit API credentials not configured');
@@ -288,7 +288,7 @@ async function getRedditAccessToken(): Promise<string> {
 
 // 1. Fetch posts from a subreddit with top and hot sorting (去掉new) - 大幅优化
 async function fetchRedditPosts(subreddit: string, accessToken: string, targetDate: string): Promise<RedditPost[]> {
-  const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'ScraperDash/1.0';
+  const userAgent = Deno.env.get('REDDIT_USER_AGENT') || 'IdeaHunter/1.0';
   const maxRetries = 2; // 减少重试次数
   
   // Convert target date to Unix timestamps for filtering - NOW COVERS 5 DAYS RANGE

@@ -57,7 +57,7 @@ export default function AuthModal({ open, onOpenChange, defaultTab = 'signin' }:
       <DialogContent className="sm:max-w-md bg-gradient-to-br from-gray-900/95 to-black/95 border border-white/20 backdrop-blur-lg">
         <DialogHeader>
           <DialogTitle className="text-center text-white text-2xl font-bold">
-            Welcome to ScraperDash
+            Welcome to IdeaHunter
           </DialogTitle>
         </DialogHeader>
 
