@@ -1,4 +1,4 @@
-✅ 已覆盖行业更新表格（共 26 类）
+✅ 已覆盖行业更新表格（共 31 类）
 
 | 行业编号 | 行业名称 | Subreddit 状态更新 |
 |-----------|-------------|--------------------|
@@ -28,4 +28,9 @@
 | 24 | 法律科技 | ➕ r/legaltech, ➕ r/law, ➕ r/legaladvice |
 | 25 | 房产科技 PropTech | ➕ r/PropTech, ➕ r/RealEstate, ➕ r/SmartHome |
 | 26 | 通用/热门话题 | ➕ r/AskReddit, ➕ r/IAMA, ➕ r/funny, ➕ r/gaming, ➕ r/worldnews, ➕ r/todayilearned, ➕ r/aww, ➕ r/Music, ➕ r/movies, ➕ r/memes, ➕ r/Showerthoughts, ➕ r/science, ➕ r/pics, ➕ r/Jokes, ➕ r/news, ➕ r/explainlikeimfive, ➕ r/books, ➕ r/food, ➕ r/LifeProTips, ➕ r/DIY, ➕ r/GetMotivated, ➕ r/askscience |
+| 27 | 数据科学与分析 | ➕ r/datascience, ➕ r/analytics, ➕ r/MachineLearning, ➕ r/statistics, ➕ r/tableau, ➕ r/PowerBI, ➕ r/bigdata |
+| 28 | 区块链与加密货币 | ➕ r/CryptoCurrency, ➕ r/blockchain, ➕ r/ethereum, ➕ r/Bitcoin, ➕ r/DeFi, ➕ r/NFT, ➕ r/Web3 |
+| 29 | 音频与播客 | ➕ r/podcasting, ➕ r/podcasts, ➕ r/audio, ➕ r/spotify, ➕ r/audioengineering, ➕ r/voiceover, ➕ r/audiobooks |
+| 30 | 设计与创意工具 | ➕ r/design, ➕ r/graphic_design, ➕ r/web_design, ➕ r/UI_Design, ➕ r/Adobe, ➕ r/Figma, ➕ r/creativity |
+| 31 | 农业科技 | ➕ r/agriculture, ➕ r/farming, ➕ r/AgTech, ➕ r/sustainability, ➕ r/food, ➕ r/permaculture, ➕ r/gardening |
 

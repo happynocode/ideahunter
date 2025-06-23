@@ -12,24 +12,17 @@ console.log('VITE_SUPABASE_ANON_KEY length:', import.meta.env.VITE_SUPABASE_ANON
 console.log('All import.meta.env:', import.meta.env);
 console.log('=== End Debug ===');
 
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://demo.supabase.co';
-// For local development, use Service Role Key to access database directly
-const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'demo-key';
+// Initialize Supabase client with proper auth configuration
+const supabaseUrl = 'https://niviihlfsqocuboafudh.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pdmlpaGxmc3FvY3Vib2FmdWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1NDA0MDcsImV4cCI6MjA2NjExNjQwN30.p1kZQezwzr_7ZHs5Nd8sHZouoY76MmfnHSedeRi7gSc';
 
-if (!import.meta.env.VITE_SUPABASE_URL) {
-  console.warn('Missing Supabase URL, using demo values');
-}
-
-if (import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
-  console.log('Using Service Role Key for local development');
-} else if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.log('Using Anonymous Key');
-} else {
-  console.warn('No Supabase keys found, using demo values');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
 
 export const queryClient = new QueryClient({
   defaultOptions: {

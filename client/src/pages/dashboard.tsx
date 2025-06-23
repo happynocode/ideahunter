@@ -11,6 +11,9 @@ import { useIdeas } from "@/hooks/use-ideas";
 import { Button } from "@/components/ui/button";
 import { Download, FileCode, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth.tsx";
+import UserMenu from "@/components/user-menu";
+import { AdminRequired } from "@/components/protected-route";
 
 export default function Dashboard() {
   const [selectedIndustry, setSelectedIndustry] = useState<number | undefined>();
@@ -21,6 +24,10 @@ export default function Dashboard() {
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all'>('all');
   
   const { toast } = useToast();
+  const { user, isAdmin } = useAuth();
+
+  // Debug log
+  console.log('Dashboard - User:', user?.email, 'isAdmin:', isAdmin);
 
   const { data: ideasData, isLoading } = useIdeas({
     industryId: selectedIndustry,
@@ -81,15 +88,18 @@ export default function Dashboard() {
               <h2 className="text-3xl font-bold text-white mb-2">Startup Ideas Dashboard</h2>
               <p className="text-gray-400">Discover trending opportunities from Reddit communities</p>
             </div>
-            <div className="flex space-x-4">
-              <Link href="/admin">
-                <Button
-                  className="glass-card rounded-lg px-4 py-2 text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 border border-neon-blue/50"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Admin Panel
-                </Button>
-              </Link>
+            <div className="flex space-x-4 items-center">
+              {/* Only show Admin Panel for admin users */}
+              {user && isAdmin && (
+                <Link href="/admin">
+                  <Button
+                    className="glass-card rounded-lg px-4 py-2 text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 border border-neon-blue/50"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Admin Panel
+                  </Button>
+                </Link>
+              )}
               <Button 
                 onClick={() => handleExport('csv')}
                 className="glass-card rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-all duration-200 neon-glow border-0"
@@ -104,6 +114,7 @@ export default function Dashboard() {
                 <FileCode className="w-4 h-4 mr-2" />
                 Export JSON
               </Button>
+              <UserMenu />
             </div>
           </motion.div>
 
@@ -123,6 +134,7 @@ export default function Dashboard() {
           <IdeaGrid
             ideas={ideasData?.ideas || []}
             isLoading={isLoading}
+            isLimited={ideasData?.isLimited}
             onIdeaClick={setSelectedIdea}
           />
 

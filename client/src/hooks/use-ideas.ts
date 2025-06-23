@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth.tsx';
 import type { StartupIdea, DailyStats, IdeasResponse } from '@/lib/types';
 
 interface UseIdeasFilters {
@@ -14,70 +15,93 @@ interface UseIdeasFilters {
 
 export function useIdeas(filters: UseIdeasFilters = {}) {
   const { page = 1, pageSize = 20 } = filters;
+  const { user } = useAuth();
 
   return useQuery<IdeasResponse>({
-    queryKey: ['ideas', filters],
+    queryKey: ['ideas', filters, user?.id],
     queryFn: async () => {
-      // Fallback to direct database query instead of Edge Function
-      // Include industry information with JOIN
+      // For non-authenticated users, restrict to today's top 3 ideas only
+      const isAuthenticated = !!user;
+      
       let query = supabase
         .from('startup_ideas')
         .select(`
           *,
           industry:industries!industry_id(*)
-        `, { count: 'exact' })
-        .range((page - 1) * pageSize, page * pageSize - 1);
+        `, { count: 'exact' });
 
-      // Apply filters
-      if (filters.industryId) {
-        query = query.eq('industry_id', filters.industryId);
-      }
-
-      if (filters.keywords) {
-        query = query.or(`title.ilike.%${filters.keywords}%,summary.ilike.%${filters.keywords}%`);
-      }
-
-      if (filters.minUpvotes) {
-        query = query.gte('upvotes', filters.minUpvotes);
-      }
-
-      // Apply sorting
-      switch (filters.sortBy) {
-        case 'upvotes':
-          query = query.order('upvotes', { ascending: false });
-          break;
-        case 'comments':
-          query = query.order('comments', { ascending: false });
-          break;
-        case 'confidence':
-          query = query.order('confidence_score', { ascending: false });
-          break;
-        case 'recent':
-        default:
-          query = query.order('created_at', { ascending: false });
-          break;
-      }
-
-      // Apply time range filter
-      if (filters.timeRange && filters.timeRange !== 'all') {
-        const now = new Date();
-        let startDate: Date;
+      // For unauthenticated users, only show today's top ideas
+      if (!isAuthenticated) {
+        const today = new Date();
+        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
         
-        switch (filters.timeRange) {
-          case 'today':
-            startDate = new Date(now.setHours(0, 0, 0, 0));
-            break;
-          case 'week':
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            break;
-          case 'month':
-            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            break;
-          default:
-            startDate = new Date(0);
+        query = query
+          .gte('created_at', startOfDay.toISOString())
+          .order('upvotes', { ascending: false })
+          .limit(3);
+      } else {
+        // Apply pagination for authenticated users
+        query = query.range((page - 1) * pageSize, page * pageSize - 1);
+
+        // Apply filters only for authenticated users
+        if (filters.industryId) {
+          query = query.eq('industry_id', filters.industryId);
         }
-        
-        query = query.gte('created_at', startDate.toISOString());
+
+        if (filters.keywords) {
+          query = query.or(`title.ilike.%${filters.keywords}%,summary.ilike.%${filters.keywords}%`);
+        }
+
+        if (filters.minUpvotes) {
+          query = query.gte('upvotes', filters.minUpvotes);
+        }
+
+        // Apply sorting
+        switch (filters.sortBy) {
+          case 'upvotes':
+            query = query.order('upvotes', { ascending: false });
+            break;
+          case 'comments':
+            query = query.order('comments', { ascending: false });
+            break;
+          case 'confidence':
+            query = query.order('confidence_score', { ascending: false });
+            break;
+          case 'recent':
+          default:
+            query = query.order('created_at', { ascending: false });
+            break;
+        }
+
+        // Apply time range filter based on target_date
+        if (filters.timeRange && filters.timeRange !== 'all') {
+          const now = new Date();
+          let startDate: Date;
+          
+          switch (filters.timeRange) {
+            case 'today':
+              // Get ideas based on today's target date
+              const today = new Date();
+              const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD
+              query = query.eq('target_date', todayString);
+              break;
+            case 'week':
+              // Get ideas from the last 7 days of target dates
+              startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+              const weekStartString = startDate.toISOString().split('T')[0];
+              query = query.gte('target_date', weekStartString);
+              break;
+            case 'month':
+              // Get ideas from the last 30 days of target dates
+              startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+              const monthStartString = startDate.toISOString().split('T')[0];
+              query = query.gte('target_date', monthStartString);
+              break;
+            default:
+              startDate = new Date(0);
+              query = query.gte('target_date', startDate.toISOString().split('T')[0]);
+          }
+        }
       }
 
       const { data: ideas, error, count } = await query;
@@ -107,12 +131,17 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
         industry: idea.industry
       }));
 
+      // For unauthenticated users, return limited data
+      const totalCount = !isAuthenticated ? 3 : (count || 0);
+      const currentPageSize = !isAuthenticated ? 3 : pageSize;
+
       return {
         ideas: mappedIdeas,
-        total: count || 0,
+        total: totalCount,
         page,
-        pageSize,
-        totalPages: Math.ceil((count || 0) / pageSize)
+        pageSize: currentPageSize,
+        totalPages: Math.ceil(totalCount / currentPageSize),
+        isLimited: !isAuthenticated
       };
     },
   });

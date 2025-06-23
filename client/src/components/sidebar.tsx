@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
-import { Rocket } from "lucide-react";
+import { Rocket, Lock } from "lucide-react";
 import { useIndustries } from "@/hooks/use-industries";
 import { useDailyStats } from "@/hooks/use-ideas";
+import { useAuth } from "@/hooks/use-auth.tsx";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import AuthModal from "./auth-modal";
 
 interface SidebarProps {
   selectedIndustry?: number;
@@ -12,6 +15,17 @@ interface SidebarProps {
 export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarProps) {
   const { data: industries, isLoading: industriesLoading } = useIndustries();
   const { data: stats } = useDailyStats();
+  const { user } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const handleIndustryClick = (industryId?: number) => {
+    if (!user && industryId !== undefined) {
+      // Show login modal for non-authenticated users clicking on specific industries
+      setAuthModalOpen(true);
+      return;
+    }
+    onIndustrySelect(industryId);
+  };
 
   const getColorClass = (color: string) => {
     const colorMap: Record<string, string> = {
@@ -33,108 +47,139 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
   };
 
   return (
-    <div className="w-80 glass-card border-r border-white/20 p-6 space-y-6">
-      {/* Logo Section */}
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="flex items-center space-x-3 mb-8"
-      >
-        <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-lg flex items-center justify-center">
-          <Rocket className="text-white text-lg" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-white">StartupScraper</h1>
-          <p className="text-sm text-gray-400">Reddit Ideas AI</p>
-        </div>
-      </motion.div>
-      
-      {/* Daily Stats */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card rounded-xl p-4 neon-glow"
-      >
-        <h3 className="text-lg font-semibold mb-3 text-neon-blue">Today's Stats</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-300">Ideas Scraped</span>
-            <span className="stats-counter font-bold text-lg">{stats?.totalIdeas || 0}</span>
+    <>
+      <div className="w-80 glass-card border-r border-white/20 p-6 space-y-6">
+        {/* Logo Section */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center space-x-3 mb-8"
+        >
+          <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-lg flex items-center justify-center">
+            <Rocket className="text-white text-lg" />
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">New Industries</span>
-            <span className="stats-counter font-bold text-lg">{stats?.newIndustries || 0}</span>
+          <div>
+            <h1 className="text-xl font-bold text-white">StartupScraper</h1>
+            <p className="text-sm text-gray-400">Reddit Ideas AI</p>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Avg Upvotes</span>
-            <span className="stats-counter font-bold text-lg">{stats?.avgUpvotes || 0}</span>
-          </div>
-        </div>
-      </motion.div>
-      
-      {/* Industry Categories */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4 text-white">Industries</h3>
-        <div className="space-y-2">
-          {/* All Industries Option */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className={`industry-item glass-card rounded-lg p-3 cursor-pointer hover:bg-white/20 transition-all duration-200 ${
-              !selectedIndustry ? 'border border-cyan-400/30' : 'border border-transparent'
-            }`}
-            onClick={() => onIndustrySelect(undefined)}
+        </motion.div>
+        
+        {/* User Status Banner */}
+        {!user && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="glass-card rounded-xl p-4 border border-amber-400/30 bg-amber-400/10"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <i className="fas fa-globe text-cyan-400"></i>
-                <span className="text-white">All Industries</span>
-              </div>
-              <span className="bg-cyan-400/20 text-cyan-400 px-2 py-1 rounded-full text-xs">
-                {industries?.reduce((sum, industry) => sum + (industry.ideaCount || 0), 0) || 0}
-              </span>
+            <div className="flex items-center space-x-2">
+              <Lock className="w-4 h-4 text-amber-400" />
+              <span className="text-amber-300 text-sm font-medium">Showing trending only</span>
             </div>
+            <p className="text-amber-200/80 text-xs mt-1">
+              Login to see all content and industry categories
+            </p>
           </motion.div>
-
-          {industriesLoading ? (
-            // Loading skeleton
-            Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="loading-skeleton rounded-lg h-12"></div>
-            ))
-          ) : (
-            industries?.map((industry, index) => (
+        )}
+        
+        {/* Daily Stats */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="glass-card rounded-xl p-4 neon-glow"
+        >
+          <h3 className="text-lg font-semibold mb-3 text-neon-blue">Today's Stats</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-300">Ideas Scraped</span>
+              <span className="stats-counter font-bold text-lg">{stats?.totalIdeas || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">New Industries</span>
+              <span className="stats-counter font-bold text-lg">{stats?.newIndustries || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">Avg Upvotes</span>
+              <span className="stats-counter font-bold text-lg">{stats?.avgUpvotes || 0}</span>
+            </div>
+          </div>
+        </motion.div>
+        
+        {/* Industry Categories */}
+        <div>
+          <h3 className="text-lg font-semibold mb-4 text-white">Industries</h3>
+          <div className="space-y-2">
+            {/* All Industries Option - only show for authenticated users */}
+            {user && (
               <motion.div
-                key={industry.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + index * 0.05 }}
+                transition={{ delay: 0.2 }}
                 className={`industry-item glass-card rounded-lg p-3 cursor-pointer hover:bg-white/20 transition-all duration-200 ${
-                  selectedIndustry === industry.id ? 'border border-cyan-400/30' : 'border border-transparent'
+                  !selectedIndustry ? 'border border-cyan-400/30' : 'border border-transparent'
                 }`}
-                onClick={() => onIndustrySelect(industry.id)}
+                onClick={() => handleIndustryClick(undefined)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <i className={`${industry.icon} ${getColorClass(industry.color).split(' ')[0]}`}></i>
-                    <span className="text-white">{industry.name}</span>
+                    <i className="fas fa-globe text-cyan-400"></i>
+                    <span className="text-white">All Industries</span>
                   </div>
-                  <Badge className={getColorClass(industry.color)}>
-                    {industry.ideaCount || 0}
-                  </Badge>
+                  <span className="bg-cyan-400/20 text-cyan-400 px-2 py-1 rounded-full text-xs">
+                    {industries?.reduce((sum, industry) => sum + (industry.ideaCount || 0), 0) || 0}
+                  </span>
                 </div>
               </motion.div>
-            ))
-          )}
-          
-          <div className="text-center mt-4">
-            <button className="text-cyan-400 hover:text-white transition-colors duration-200 text-sm">
-              View All Industries <i className="fas fa-arrow-right ml-1"></i>
-            </button>
+            )}
+
+            {industriesLoading ? (
+              // Loading skeleton
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="loading-skeleton rounded-lg h-12"></div>
+              ))
+            ) : (
+              industries?.map((industry, index) => (
+                <motion.div
+                  key={industry.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + index * 0.05 }}
+                  className={`industry-item glass-card rounded-lg p-3 cursor-pointer hover:bg-white/20 transition-all duration-200 relative ${
+                    selectedIndustry === industry.id ? 'border border-cyan-400/30' : 'border border-transparent'
+                  } ${!user ? 'opacity-60' : ''}`}
+                  onClick={() => handleIndustryClick(industry.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <i className={`${industry.icon} ${getColorClass(industry.color).split(' ')[0]}`}></i>
+                      <span className="text-white">{industry.name}</span>
+                      {!user && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
+                    </div>
+                    <Badge className={getColorClass(industry.color)}>
+                      {industry.ideaCount || 0}
+                    </Badge>
+                  </div>
+                </motion.div>
+              ))
+            )}
+            
+            {user && (
+              <div className="text-center mt-4">
+                <button className="text-cyan-400 hover:text-white transition-colors duration-200 text-sm">
+                  View All Industries <i className="fas fa-arrow-right ml-1"></i>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
+
+      <AuthModal 
+        open={authModalOpen} 
+        onOpenChange={setAuthModalOpen}
+        defaultTab="signin"
+      />
+    </>
   );
 }

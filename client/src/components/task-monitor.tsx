@@ -115,16 +115,16 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
   };
 
   const getStatusBadge = (status: ScrapeTask['status']) => {
-    const statusConfig = {
-      'pending_scrape': { variant: 'secondary' as const, text: '等待抓取' },
-      'scraping': { variant: 'default' as const, text: '抓取中' },
-      'complete_scrape': { variant: 'secondary' as const, text: '等待分析' },
-      'analyzing': { variant: 'default' as const, text: '分析中' },
-      'complete_analysis': { variant: 'default' as const, text: '已完成' },
-      'failed': { variant: 'destructive' as const, text: '失败' },
+    const statusConfig: Record<ScrapeTask['status'], { variant: 'default' | 'secondary' | 'destructive' | 'outline', text: string }> = {
+      'pending_scrape': { variant: 'secondary', text: 'Pending' },
+      'scraping': { variant: 'default', text: 'Scraping' },
+      'complete_scrape': { variant: 'default', text: 'Scraped' },
+      'analyzing': { variant: 'default', text: 'Analyzing' },
+      'complete_analysis': { variant: 'default', text: 'Complete' },
+      'failed': { variant: 'destructive', text: 'Failed' },
     };
     
-    const config = statusConfig[status] || { variant: 'secondary' as const, text: '未知' };
+    const config = statusConfig[status] || { variant: 'secondary' as const, text: 'Unknown' };
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
 
@@ -138,9 +138,9 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
 
   const formatTimeRange = (timeRange: string) => {
     switch (timeRange) {
-      case '24h': return '今日';
-      case '7d': return '本周';
-      case '30d': return '本月';
+      case '24h': return 'Today';
+      case '7d': return 'This Week';
+      case '30d': return 'This Month';
       default: return timeRange;
     }
   };
@@ -151,17 +151,17 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            任务监控
+            Task Monitor
           </CardTitle>
           <CardDescription>
-            实时监控任务执行状态和进度
+            Real-time monitoring of task execution status and progress
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>暂无任务数据</p>
-            <p className="text-sm">创建新的抓取任务后将显示监控信息</p>
+            <p>No task data available</p>
+            <p className="text-sm">Monitoring information will be displayed after creating new scrape tasks</p>
           </div>
         </CardContent>
       </Card>
@@ -176,7 +176,7 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              任务监控 - {taskData ? formatTimeRange(taskData.tasks[0]?.timeRange || '') : ''}
+              Task Monitor - {taskData ? formatTimeRange('24h') : ''}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Button
@@ -184,7 +184,7 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
                 size="sm"
                 onClick={() => setAutoRefresh(!autoRefresh)}
               >
-                {autoRefresh ? "停止自动刷新" : "启用自动刷新"}
+                {autoRefresh ? "Stop Auto Refresh" : "Enable Auto Refresh"}
               </Button>
               <Button
                 variant="outline"
@@ -197,10 +197,10 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
             </div>
           </div>
           <CardDescription>
-            批次ID: {taskData?.batchId.slice(0, 8)}... 
+            Batch ID: {taskData?.batchId.slice(0, 8)}... 
             {lastUpdated && (
               <span className="ml-2">
-                更新时间: {lastUpdated.toLocaleTimeString('zh-CN')}
+                Updated: {lastUpdated.toLocaleTimeString('en-US')}
               </span>
             )}
           </CardDescription>
@@ -211,7 +211,7 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>整体进度</span>
+                <span>Overall Progress</span>
                 <span>{calculateProgress()}%</span>
               </div>
               <Progress value={calculateProgress()} className="h-2" />
@@ -223,37 +223,37 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
                 <div className="text-2xl font-bold text-yellow-600">
                   {taskData.summary.pending_scrape}
                 </div>
-                <div className="text-sm text-muted-foreground">等待抓取</div>
+                <div className="text-sm text-muted-foreground">Pending Scrape</div>
               </div>
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
                   {taskData.summary.scraping}
                 </div>
-                <div className="text-sm text-muted-foreground">抓取中</div>
+                <div className="text-sm text-muted-foreground">Scraping</div>
               </div>
               <div className="text-center p-3 bg-purple-50 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">
                   {taskData.summary.analyzing}
                 </div>
-                <div className="text-sm text-muted-foreground">分析中</div>
+                <div className="text-sm text-muted-foreground">Analyzing</div>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
                   {taskData.summary.complete_analysis}
                 </div>
-                <div className="text-sm text-muted-foreground">已完成</div>
+                <div className="text-sm text-muted-foreground">Completed</div>
               </div>
               <div className="text-center p-3 bg-red-50 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">
                   {taskData.summary.failed}
                 </div>
-                <div className="text-sm text-muted-foreground">失败</div>
+                <div className="text-sm text-muted-foreground">Failed</div>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-600">
                   {taskData.summary.total}
                 </div>
-                <div className="text-sm text-muted-foreground">总任务数</div>
+                <div className="text-sm text-muted-foreground">Total Tasks</div>
               </div>
             </div>
           </CardContent>
@@ -264,9 +264,9 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
       {taskData && taskData.tasks.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>任务详情</CardTitle>
+            <CardTitle>Task Details</CardTitle>
             <CardDescription>
-              各行业任务的详细执行状态
+              Detailed execution status for each industry task
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -277,14 +277,14 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
                     {getStatusIcon(task.status)}
                     <div>
                       <div className="font-medium">
-                        {task.industry?.name || `行业 ${task.industryId}`}
+                        {task.industry?.name || `Industry ${task.industryId}`}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        任务 #{task.id} · 重试 {task.retryCount}/{task.maxRetries}
+                        Task #{task.id} · Retries {task.retryCount}/{task.maxRetries}
                       </div>
                       {task.postsScraped > 0 && (
                         <div className="text-sm text-muted-foreground">
-                          已抓取: {task.postsScraped} · 已处理: {task.postsProcessed} · 生成想法: {task.ideasGenerated}
+                          Scraped: {task.postsScraped} · Processed: {task.postsProcessed} · Ideas Generated: {task.ideasGenerated}
                         </div>
                       )}
                     </div>
@@ -300,7 +300,7 @@ export default function TaskMonitor({ batchId }: TaskMonitorProps) {
                         onClick={() => retryTask(task.id)}
                       >
                         <RefreshCw className="h-4 w-4 mr-1" />
-                        重试
+                        Retry
                       </Button>
                     )}
                     

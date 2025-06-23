@@ -17,37 +17,37 @@ export function formatRelativeTime(date: string | Date): string {
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return `${diffInMinutes}分钟前`;
+    return `${diffInMinutes} minutes ago`;
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return `${diffInHours}小时前`;
+    return `${diffInHours} hours ago`;
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
-    return `${diffInDays}天前`;
+    return `${diffInDays} days ago`;
   }
 
   const diffInWeeks = Math.floor(diffInDays / 7);
   if (diffInWeeks < 4) {
-    return `${diffInWeeks}周前`;
+    return `${diffInWeeks} weeks ago`;
   }
 
   const diffInMonths = Math.floor(diffInDays / 30);
-  return `${diffInMonths}个月前`;
+  return `${diffInMonths} months ago`;
 }
 
 export function formatTargetDate(targetDate: string | undefined): string {
   if (!targetDate) {
-    return '未知日期';
+    return 'Unknown date';
   }
   
   try {
     const date = new Date(targetDate);
-    return format(date, 'yyyy年MM月dd日');
+    return format(date, 'MMM dd, yyyy');
   } catch {
-    return '无效日期';
+    return 'Invalid date';
   }
 }

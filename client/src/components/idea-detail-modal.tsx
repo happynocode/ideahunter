@@ -132,7 +132,7 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
                               border: `1px solid ${(idea.industry as any)?.color || '#6b7280'}40`
                             }}
                           >
-                            {(idea.industry as any)?.name || '未分类'}
+                            {(idea.industry as any)?.name || 'Uncategorized'}
                           </Badge>
                           <div className="flex items-center space-x-4 text-gray-400 text-sm">
                             <span className="flex items-center space-x-1">
@@ -145,7 +145,7 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
                             </span>
                             <span className="flex items-center space-x-1">
                               <Clock className="w-4 h-4" />
-                              <span>基于 {(idea as any).target_date ? new Date((idea as any).target_date).toLocaleDateString('zh-CN') : '未知日期'}</span>
+                              <span>Based on {(idea as any).target_date ? new Date((idea as any).target_date).toLocaleDateString('en-US') : 'Unknown date'}</span>
                             </span>
                           </div>
                         </div>

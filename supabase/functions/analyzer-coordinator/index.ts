@@ -16,7 +16,7 @@ interface AnalyzerTask {
   max_retries: number;
 }
 
-const BATCH_SIZE = 2; // 每次处理2个任务
+const BATCH_SIZE = 4; // 每次处理4个任务
 const LOCK_TIMEOUT = 300000; // 5分钟锁定超时
 const TASK_TIMEOUT = 600000; // 10分钟任务超时
 
@@ -131,8 +131,9 @@ serve(async (req) => {
       .from('scrape_tasks')
       .select('*')
       .eq('status', 'failed')
-      .is('error_message', null)
-      .or('error_message.ilike.%analysis%,error_message.ilike.%deepseek%')
+      .not('error_message', 'ilike', '%No unprocessed posts%') // 排除没有帖子的情况
+      .not('error_message', 'ilike', '%no posts%') // 排除没有帖子的情况（小写）
+      .or('error_message.ilike.%analysis%,error_message.ilike.%deepseek%,error_message.ilike.%API%,error_message.ilike.%timeout%')
       .filter('retry_count', 'lt', 'max_retries')
       .lt('completed_at', new Date(Date.now() - 3600000).toISOString()); // 1小时后重试
 
@@ -167,13 +168,13 @@ serve(async (req) => {
     const runningTaskCount = runningTasks?.length || 0;
     console.log(`Analyzer Coordinator: Found ${runningTaskCount} running analysis tasks`);
 
-    // 如果已经有2个或更多任务在运行，不处理新任务
-    if (runningTaskCount >= 2) {
+    // 如果已经有4个或更多任务在运行，不处理新任务
+    if (runningTaskCount >= 4) {
       console.log('Analyzer Coordinator: Maximum concurrent analysis tasks reached, skipping new task processing')
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: `Maximum concurrent analysis tasks reached (${runningTaskCount}/2), skipping new task processing`,
+          message: `Maximum concurrent analysis tasks reached (${runningTaskCount}/4), skipping new task processing`,
           tasksProcessed: 0,
           runningAnalysisTasks: runningTaskCount
         }),
@@ -182,7 +183,7 @@ serve(async (req) => {
     }
 
     // 6. 获取完成爬取的任务，根据剩余容量限制
-    const availableSlots = 2 - runningTaskCount;
+    const availableSlots = 4 - runningTaskCount;
     const taskLimit = Math.min(BATCH_SIZE, availableSlots);
     
     console.log(`Analyzer Coordinator: Available analysis slots: ${availableSlots}, will process up to ${taskLimit} tasks`);

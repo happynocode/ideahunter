@@ -60,157 +60,157 @@ const PROBLEMATIC_SUBREDDITS = new Set<string>([
 
 // Industry mapping based on updated PRD (25 industries) - 根据文档完善版本
 const INDUSTRY_MAPPING = {
-  'SaaS & 云服务': {
+  'SaaS & Cloud Services': {
     id: 1,
     subreddits: ['SaaS', 'cloud', 'aws', 'azure', 'googlecloud', 'SaaSMarketing', 'Entrepreneur', 'Startups', 'Tech', 'growthhacking', 'IndieHackers', 'marketing', 'Productivity'],
     keywords: ['saas', 'software as a service', 'cloud', 'platform', 'subscription', 'api', 'service', 'kubernetes', 'docker', 'serverless', 'microservices']
   },
-  '开发者工具 & 平台': {
+  'Developer Tools & Platforms': {
     id: 7,
     subreddits: ['Programming', 'devops', 'opensource', 'sysadmin', 'AskProgramming', 'Technology', 'coding', 'compsci', 'algorithms', 'SideProject'],
     keywords: ['development', 'programming', 'code', 'developer', 'tool', 'framework', 'library', 'ide', 'editor', 'version control', 'devops', 'ci/cd']
   },
-  'API & 后端服务': {
+  'API & Backend Services': {
     id: 12,
     subreddits: ['api', 'backend', 'microservices', 'coding', 'SoftwareArchitecture', 'Kubernetes', 'docker', 'node', 'django'],
     keywords: ['api', 'backend', 'server', 'database', 'microservices', 'rest', 'graphql', 'sql', 'nosql', 'performance', 'scaling', 'architecture']
   },
-  '移动应用开发': {
+  'Mobile App Development': {
     id: 222,
     subreddits: ['androiddev', 'iOSProgramming', 'flutter', 'UIUX', 'FlutterDev', 'reactnative', 'ionic'],
     keywords: ['mobile', 'app', 'android', 'ios', 'flutter', 'react native', 'swift', 'kotlin', 'cross platform', 'mobile ui', 'app store']
   },
-  'Web & 前端开发': {
+  'Web & Frontend Development': {
     id: 223,
     subreddits: ['webdev', 'javascript', 'reactjs', 'webassembly', 'Frontend', 'web_design'],
     keywords: ['web', 'frontend', 'javascript', 'react', 'vue', 'angular', 'css', 'html', 'typescript', 'responsive', 'performance', 'ui/ux']
   },
-  '低/无代码平台': {
+  'No-Code/Low-Code Platforms': {
     id: 8,
     subreddits: ['NoCode', 'LowCode', 'Bubble', 'Makerpad', 'nocode', 'Airtable', 'zapier'],
     keywords: ['nocode', 'no code', 'low code', 'automation', 'workflow', 'integration', 'zapier', 'bubble', 'webflow', 'airtable', 'citizen developer']
   },
-  '网络安全 & 隐私': {
+  'Cybersecurity & Privacy': {
     id: 13,
     subreddits: ['cybersecurity', 'netsec', 'cryptography', 'privacytoolsio', 'malware', 'computerforensics', 'reverseengineering', 'ethicalhacking', 'Cybersecurity101', 'CyberSecurityJobs'],
     keywords: ['security', 'cybersecurity', 'privacy', 'encryption', 'protection', 'vulnerability', 'penetration testing', 'malware', 'firewall', 'authentication']
   },
-  'AI & 机器学习': {
+  'AI & Machine Learning': {
     id: 2,
     subreddits: ['MachineLearning', 'datascience', 'OpenAI', 'LLM', 'LanguageTechnology', 'DeepLearning', 'NeuralNetworks', 'ArtificialIntelligence', 'AI'],
     keywords: ['ai', 'artificial intelligence', 'machine learning', 'deep learning', 'neural network', 'llm', 'nlp', 'computer vision', 'data science', 'mlops']
   },
-  '电商 & 零售': {
+  'E-commerce & Retail': {
     id: 4,
     subreddits: ['ecommerce', 'Shopify', 'AmazonSeller', 'AmazonFBA', 'SEO', 'advertising', 'marketing', 'dropship'],
     keywords: ['ecommerce', 'e-commerce', 'retail', 'shop', 'marketplace', 'online store', 'dropshipping', 'amazon', 'shopify', 'payment']
   },
-  '健康 & 健身科技': {
+  'Health & Fitness Tech': {
     id: 5,
     subreddits: ['fitness', 'DigitalHealth', 'WearOS', 'healthtech', 'MedTech', 'QuantifiedSelf', 'sleephackers', 'Biohackers', 'healthIT'],
     keywords: ['health', 'healthcare', 'medical', 'fitness', 'wellness', 'telemedicine', 'nutrition', 'mental health', 'wearable', 'health tech']
   },
-  '教育科技': {
+  'EdTech': {
     id: 6,
     subreddits: ['edtech', 'learnprogramming', 'OnlineTutoring', 'education', 'instructionaldesign', 'Elearning', 'teachers'],
     keywords: ['education', 'edtech', 'learning', 'teaching', 'course', 'training', 'skill', 'knowledge', 'school', 'university', 'lms', 'e-learning']
   },
-  '金融科技': {
+  'FinTech': {
     id: 3,
     subreddits: ['fintech', 'CryptoCurrency', 'blockchain', 'InsurTech', 'CryptoMarkets', 'Altcoin', 'NFT', 'BitcoinBeginners'],
     keywords: ['fintech', 'finance', 'payment', 'banking', 'cryptocurrency', 'crypto', 'investment', 'trading', 'money', 'blockchain', 'defi']
   },
-  '消费者服务': {
+  'Consumer Services': {
     id: 224,
     subreddits: ['SideHustle', 'smallbusiness', 'freelance', 'BeerMoney', 'DigitalNomad', 'Fiverr'],
     keywords: ['service', 'consumer', 'local', 'home', 'food', 'delivery', 'cleaning', 'repair', 'maintenance', 'gig economy', 'freelance']
   },
-  '企业服务 & B2B': {
+  'Enterprise & B2B Services': {
     id: 225,
     subreddits: ['b2b', 'CRM', 'startups', 'Procurement', 'Entrepreneurship'],
     keywords: ['b2b', 'enterprise', 'business', 'crm', 'erp', 'workflow', 'collaboration', 'hr', 'sales', 'marketing', 'project management']
   },
-  '媒体 & 内容创作': {
+  'Media & Content Creation': {
     id: 226,
     subreddits: ['youtubers', 'podcasting', 'CreatorEconomy', 'SEO', 'vlogging', 'NewTubers', 'ContentCreators', 'photography', 'blogging'],
     keywords: ['content', 'media', 'video', 'audio', 'podcast', 'blog', 'design', 'editing', 'streaming', 'creator', 'influencer', 'social media']
   },
-  '旅游 & 出行': {
+  'Travel & Transportation': {
     id: 227,
     subreddits: ['travel', 'solotravel', 'airbnb', 'wanderlust', 'shoestring', 'travelhacks', 'backpacking', 'DigitalNomad'],
     keywords: ['travel', 'trip', 'vacation', 'hotel', 'flight', 'transportation', 'booking', 'tourism', 'nomad', 'journey']
   },
-  '社交 & 社区': {
+  'Social & Community': {
     id: 9,
     subreddits: ['socialmedia', 'discord', 'communitymanagement', 'SocialMediaMarketing', 'digital_marketing', 'marketing'],
     keywords: ['social', 'community', 'networking', 'communication', 'collaboration', 'forum', 'chat', 'messaging', 'relationship', 'connection']
   },
-  '绿色 & 可持续科技': {
+  'GreenTech & Sustainability': {
     id: 11,
     subreddits: ['sustainability', 'renewable', 'cleantech', 'RenewableEnergy', 'Envirotech', 'solar'],
     keywords: ['sustainability', 'green', 'eco', 'environment', 'renewable', 'climate', 'carbon', 'energy', 'waste', 'recycling', 'clean tech']
   },
-  '物流 & 供应链': {
+  'Logistics & Supply Chain': {
     id: 228,
     subreddits: ['logistics', 'warehouse', 'operations', 'supplychain', 'inventory'],
     keywords: ['logistics', 'supply chain', 'shipping', 'warehouse', 'inventory', 'freight', 'delivery', 'procurement', 'operations', 'manufacturing']
   },
-  '游戏 & 娱乐': {
+  'Gaming & Entertainment': {
     id: 10,
     subreddits: ['gaming', 'gamedev', 'VirtualReality', 'GamingIndustry', 'eSports', 'VRGaming', 'boardgames'],
     keywords: ['gaming', 'game', 'entertainment', 'streaming', 'content', 'video game', 'mobile game', 'vr', 'ar', 'unity', 'unreal']
   },
-  '硬件 & IoT': {
+  'Hardware & IoT': {
     id: 231,
     subreddits: ['hardware', 'IOT', 'homeautomation', 'arduino', 'raspberrypi'],
     keywords: ['hardware', 'iot', 'internet of things', 'embedded', 'sensors', 'automation', 'arduino', 'raspberry pi', 'electronics', 'microcontroller']
   },
-  'AR/VR & 元宇宙': {
+  'AR/VR & Metaverse': {
     id: 238,
     subreddits: ['virtualreality', 'oculus', 'augmentedreality', 'Metaverse'],
     keywords: ['ar', 'vr', 'augmented reality', 'virtual reality', 'metaverse', 'oculus', 'quest', 'immersive', '3d', 'spatial computing']
   },
-  '生物科技 & MedTech': {
+  'BioTech & MedTech': {
     id: 239,
     subreddits: ['biotech', 'biotechnology', 'bioinformatics', 'genomics', 'labrats'],
     keywords: ['biotech', 'biotechnology', 'medical technology', 'genomics', 'bioinformatics', 'pharmaceuticals', 'lab', 'research', 'clinical', 'diagnosis']
   },
-  '法律科技': {
+  'LegalTech': {
     id: 235,
     subreddits: ['legaltech', 'law', 'legaladvice'],
     keywords: ['legal tech', 'law', 'legal', 'compliance', 'contract', 'attorney', 'lawyer', 'paralegal', 'court', 'litigation']
   },
-  '房产科技 PropTech': {
+  'PropTech': {
     id: 234,
     subreddits: ['PropTech', 'RealEstate', 'SmartHome'],
     keywords: ['proptech', 'real estate', 'property', 'rental', 'smart home', 'mortgage', 'real estate investment', 'home automation', 'construction', 'architecture']
   },
-  '数据科学与分析': {
+  'Data Science & Analytics': {
     id: 229,
     subreddits: ['datascience', 'analytics', 'MachineLearning', 'statistics', 'tableau', 'PowerBI', 'bigdata'],
     keywords: ['data science', 'analytics', 'business intelligence', 'big data', 'statistics', 'visualization', 'dashboard', 'reporting', 'insights', 'data mining']
   },
-  '区块链与加密货币': {
+  'Blockchain & Cryptocurrency': {
     id: 230,
     subreddits: ['CryptoCurrency', 'blockchain', 'ethereum', 'Bitcoin', 'DeFi', 'NFT', 'Web3'],
     keywords: ['blockchain', 'cryptocurrency', 'bitcoin', 'ethereum', 'defi', 'nft', 'web3', 'smart contracts', 'crypto trading', 'digital assets']
   },
-  '音频与播客': {
+  'Audio & Podcast': {
     id: 232,
     subreddits: ['podcasting', 'podcasts', 'audio', 'spotify', 'audioengineering', 'voiceover', 'audiobooks'],
     keywords: ['podcast', 'audio', 'music', 'sound', 'radio', 'voice', 'audiobook', 'streaming', 'recording', 'editing']
   },
-  '设计与创意工具': {
+  'Design & Creative Tools': {
     id: 233,
     subreddits: ['design', 'graphic_design', 'web_design', 'UI_Design', 'Adobe', 'Figma', 'creativity'],
     keywords: ['design', 'creative', 'graphic design', 'ui/ux', 'adobe', 'figma', 'photoshop', 'illustration', 'branding', 'visual design']
   },
-  '农业科技': {
+  'AgTech': {
     id: 236,
     subreddits: ['agriculture', 'farming', 'AgTech', 'sustainability', 'food', 'permaculture', 'gardening'],
     keywords: ['agriculture', 'farming', 'agtech', 'food production', 'sustainable farming', 'precision agriculture', 'vertical farming', 'greenhouse', 'crop monitoring', 'livestock']
   },
-  '通用/热门话题': {
+  'General/Trending Topics': {
     id: 240,
     subreddits: [
       'AskReddit', 'IAMA', 'funny', 'gaming', 'worldnews', 'todayilearned', 

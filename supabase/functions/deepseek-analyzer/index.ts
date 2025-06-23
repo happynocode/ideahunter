@@ -229,7 +229,16 @@ function createAnalysisPrompt(industry: string, posts: RawRedditPost[], targetDa
   const dateContext = `from ${startDateStr} to ${targetDate} (5-day range)`;
 
   return `
-Analyze the following high-priority Reddit posts from the ${industry} industry from ${dateContext} and generate 1-10 high-potential startup ideas based on user pain points and unmet needs.
+Analyze the following high-priority Reddit posts from the ${industry} industry from ${dateContext} and generate 0-10 high-potential startup ideas based on user pain points and unmet needs.
+
+**IMPORTANT: Only generate ideas if you find genuine, valuable opportunities. It's perfectly acceptable to return an empty ideas array if:**
+- The posts don't reveal significant unmet needs
+- The sample size is too small to identify clear patterns
+- The discussions are too generic or lack actionable insights
+- Existing solutions already adequately address the problems mentioned
+- The market opportunity appears insufficient
+
+Quality over quantity - only suggest ideas you have high confidence in.
 
 Reddit Discussion Data (${dateContext}, sorted by priority):
 ${JSON.stringify(postsData, null, 2)}
@@ -249,21 +258,25 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks, no ext
       "innovation_score": 75,
       "source_post_ids": [1, 3, 5]
     }
-  ]
+  ],
+  "analysis_notes": "Brief explanation of why you generated these ideas, or why you chose not to generate any ideas if the array is empty"
 }
 
 Analysis Requirements:
 1. Focus on ${dateContext} trends and emerging user pain points
-2. Identify specific problems that lack adequate solutions
+2. **ONLY identify problems that lack adequate solutions and show clear market demand**
 3. Consider the urgency and recency of the discussions over this 5-day period
-4. Provide realistic market sizing based on the discussion volume and engagement
-5. Include confidence scores (1-100) based on market demand indicators
+4. **Require at least 3-5 related posts discussing similar problems before considering an idea**
+5. Include confidence scores (1-100) - only suggest ideas with confidence ≥70
 6. Include innovation scores (1-100) based on solution uniqueness
 7. Reference specific Reddit posts that inspired each idea
-8. Ensure each idea addresses genuine market needs from ${dateContext}
+8. **If the posts don't reveal clear patterns or significant opportunities, return an empty ideas array**
 9. Consider the priority scores when evaluating market potential
 10. Keywords should be SEO-friendly and relevant to the startup idea
-11. Focus on the highest priority posts for the most promising ideas
+11. **Reject ideas that have obvious, well-established solutions already available**
+12. **Require genuine user frustration or pain points, not just feature requests**
+
+**Remember: It's better to return no ideas than to force weak or unconvincing ones. Be selective and critical.**
 
 Sort ideas by combined market potential, confidence score, and innovation score (highest first).
 Return JSON only, no other text.
@@ -301,86 +314,98 @@ async function updateTaskStatus(
 async function manageTopIdeasForIndustry(
   supabaseClient: any,
   industryId: number,
-  newIdeas: StartupIdea[]
+  newIdeas: StartupIdea[],
+  targetDate: string
 ): Promise<number> {
-  // 获取该行业现有的想法
-  const { data: existingIdeas, error: fetchError } = await supabaseClient
-    .from('startup_ideas')
-    .select('*')
-    .eq('industry_id', industryId)
-    .order('quality_score', { ascending: false });
-
-  if (fetchError) {
-    console.error(`Error fetching existing ideas for industry ${industryId}:`, fetchError);
-  }
+  let savedCount = 0;
 
   // 定义扩展的想法类型
   type ExtendedIdea = StartupIdea & { id?: number };
-  const allIdeas: ExtendedIdea[] = [...(existingIdeas || []), ...newIdeas];
-  let savedCount = 0;
 
-  // 去重：移除相似的想法
-  const uniqueIdeas: ExtendedIdea[] = [];
-  for (const idea of allIdeas) {
+  // 去重：移除新想法中相似的想法
+  const uniqueNewIdeas: ExtendedIdea[] = [];
+  for (const idea of newIdeas) {
     let isDuplicate = false;
-    for (const existingIdea of uniqueIdeas) {
+    for (const existingIdea of uniqueNewIdeas) {
       if (calculateSimilarity(idea, existingIdea) > 0.7) { // 70%相似度阈值
         // 保留质量分数更高的
         if (idea.quality_score > existingIdea.quality_score) {
-          const index = uniqueIdeas.indexOf(existingIdea);
-          uniqueIdeas[index] = idea;
+          const index = uniqueNewIdeas.indexOf(existingIdea);
+          uniqueNewIdeas[index] = idea;
         }
         isDuplicate = true;
         break;
       }
     }
     if (!isDuplicate) {
-      uniqueIdeas.push(idea);
+      uniqueNewIdeas.push(idea);
     }
   }
 
-  // 按质量分数排序，保留前5个
-  uniqueIdeas.sort((a, b) => b.quality_score - a.quality_score);
-  const topIdeas = uniqueIdeas.slice(0, 5);
+  // 检查与现有想法的相似性，避免重复
+  const { data: existingIdeas, error: fetchError } = await supabaseClient
+    .from('startup_ideas')
+    .select('*')
+    .eq('industry_id', industryId)
+    .eq('target_date', targetDate)
+    .order('quality_score', { ascending: false });
 
-  // 删除该行业的所有现有想法
-  if (existingIdeas && existingIdeas.length > 0) {
+  if (fetchError) {
+    console.error(`Error fetching existing ideas for industry ${industryId} on ${targetDate}:`, fetchError);
+  }
+
+  const finalNewIdeas: ExtendedIdea[] = [];
+  for (const newIdea of uniqueNewIdeas) {
+    let isDuplicate = false;
+    for (const existingIdea of (existingIdeas || [])) {
+      if (calculateSimilarity(newIdea, existingIdea) > 0.7) {
+        isDuplicate = true;
+        break;
+      }
+    }
+    if (!isDuplicate) {
+      finalNewIdeas.push(newIdea);
+    }
+  }
+
+  // 按质量分数排序，保留前5个新想法
+  finalNewIdeas.sort((a, b) => b.quality_score - a.quality_score);
+  const topNewIdeas = finalNewIdeas.slice(0, 5);
+
+  console.log(`💡 Adding ${topNewIdeas.length} new unique ideas for industry ${industryId} on ${targetDate}`);
+
+  // 插入新的想法
+  for (const idea of topNewIdeas) {
+    const { error: insertError } = await supabaseClient
+      .from('startup_ideas')
+      .insert(idea);
+
+    if (insertError) {
+      console.error(`Error inserting idea for industry ${industryId} on ${targetDate}:`, insertError);
+    } else {
+      savedCount++;
+    }
+  }
+
+  // 检查该行业在该日期是否有超过5个想法，如果有则删除质量较低的
+  const { data: allIdeasForDate, error: countError } = await supabaseClient
+    .from('startup_ideas')
+    .select('*')
+    .eq('industry_id', industryId)
+    .eq('target_date', targetDate)
+    .order('quality_score', { ascending: false });
+
+  if (!countError && allIdeasForDate && allIdeasForDate.length > 5) {
+    const idsToDelete = allIdeasForDate.slice(5).map(idea => idea.id);
     const { error: deleteError } = await supabaseClient
       .from('startup_ideas')
       .delete()
-      .eq('industry_id', industryId);
+      .in('id', idsToDelete);
 
     if (deleteError) {
-      console.error(`Error deleting existing ideas for industry ${industryId}:`, deleteError);
-    }
-  }
-
-  // 插入新的顶级想法
-  for (const idea of topIdeas) {
-    // 只保存新的想法（没有id的）
-    if (!idea.id) {
-      const { error: insertError } = await supabaseClient
-        .from('startup_ideas')
-        .insert(idea);
-
-      if (insertError) {
-        console.error(`Error inserting top idea for industry ${industryId}:`, insertError);
-      } else {
-        savedCount++;
-      }
+      console.error(`Error deleting excess ideas for industry ${industryId} on ${targetDate}:`, deleteError);
     } else {
-      // 重新插入现有想法
-      const { id, ...ideaToInsert } = idea;
-      
-      const { error: insertError } = await supabaseClient
-        .from('startup_ideas')
-        .insert(ideaToInsert);
-
-      if (insertError) {
-        console.error(`Error re-inserting existing idea for industry ${industryId}:`, insertError);
-      } else {
-        savedCount++;
-      }
+      console.log(`🗑️ Deleted ${idsToDelete.length} excess ideas for industry ${industryId} on ${targetDate}`);
     }
   }
 
@@ -412,7 +437,7 @@ async function analyzeIndustry(
       .from('raw_reddit_posts')
       .select('*')
       .eq('industry_id', industryId)
-      .eq('processing_status', 'unprocessed')
+      .eq('analyzed', false)  // 只处理未分析过的posts
       .gte('created_at', targetDateStart.toISOString())
       .lte('created_at', targetDateEnd.toISOString())
       .order('priority_score', { ascending: false })
@@ -428,7 +453,7 @@ async function analyzeIndustry(
 
     if (!allPosts || allPosts.length === 0) {
       console.log(`⚠️ No unprocessed posts found for ${industryName}`);
-      return { ideasGenerated: 0, postsAnalyzed: 0, postsSkipped: 0, error: 'No unprocessed posts' };
+      return { ideasGenerated: 0, postsAnalyzed: 0, postsSkipped: 0, error: 'No unprocessed posts available for analysis' };
     }
 
     // 为所有帖子计算优先级分数（如果还没有）
@@ -552,6 +577,16 @@ async function analyzeIndustry(
           continue;
         }
 
+        // 检查是否没有生成想法，这是正常情况
+        if (analysisData.ideas.length === 0) {
+          const analysisNotes = analysisData.analysis_notes || 'No specific reason provided';
+          console.log(`📝 ${industryName} - No ideas generated: ${analysisNotes}`);
+          // 这不是错误，继续处理下一批
+          continue;
+        }
+
+        console.log(`💡 ${industryName} - Generated ${analysisData.ideas.length} ideas`);
+
         // 处理想法
         for (const ideaData of analysisData.ideas) {
           try {
@@ -635,7 +670,7 @@ async function analyzeIndustry(
     }
 
     // 管理该行业的顶级想法（最多保留5个最高质量的）
-    const savedIdeasCount = await manageTopIdeasForIndustry(supabaseClient, industryId, allNewIdeas);
+    const savedIdeasCount = await manageTopIdeasForIndustry(supabaseClient, industryId, allNewIdeas, targetDate);
 
     console.log(`🎯 ${industryName} analysis complete: ${savedIdeasCount} top ideas saved, ${postsAnalyzedCount} posts analyzed, ${postsToSkip.length} posts skipped`);
 
@@ -706,9 +741,10 @@ serve(async (req) => {
       error?: string;
     }> = [];
 
-    // Process each industry task
-    for (let i = 0; i < industry_ids.length; i++) {
-      const industryId = industry_ids[i];
+    // Process industry tasks concurrently
+    console.log(`🚀 Starting concurrent processing of ${industry_ids.length} industries...`);
+    
+    const industryTasks = industry_ids.map(async (industryId, i) => {
       const taskId = task_ids[i];
       const industryName = INDUSTRY_MAPPING[industryId] || `Industry ${industryId}`;
       
@@ -723,24 +759,28 @@ serve(async (req) => {
         );
         
         const postsProcessed = postsAnalyzed + postsSkipped;
-        totalPostsProcessed += postsProcessed;
         
         if (error && ideasGenerated === 0) {
+          // Check if this is a "no posts" error which should not be retried
+          const isNoPostsError = error.includes('No unprocessed posts available for analysis');
+          
           // Update task status to failed
-          await updateTaskStatus(supabaseClient, taskId, 'failed', {
-            error_message: error,
-            posts_processed: postsProcessed
+          await updateTaskStatus(supabaseClient, taskId, isNoPostsError ? 'complete_analysis' : 'failed', {
+            error_message: isNoPostsError ? undefined : error,
+            posts_processed: postsProcessed,
+            ideas_generated: 0
           });
           
-          taskResults.push({
+          return {
             taskId,
             industryId,
             ideasGenerated: 0,
             postsAnalyzed,
             postsSkipped,
-            success: false,
-            error
-          });
+            postsProcessed,
+            success: isNoPostsError, // Consider "no posts" as success to avoid retries
+            error: isNoPostsError ? undefined : error
+          };
         } else {
           // Update task status to complete_analysis
           await updateTaskStatus(supabaseClient, taskId, 'complete_analysis', {
@@ -748,19 +788,16 @@ serve(async (req) => {
             posts_processed: postsProcessed
           });
           
-          totalIdeasGenerated += ideasGenerated;
-          
-          taskResults.push({
+          return {
             taskId,
             industryId,
             ideasGenerated,
             postsAnalyzed,
             postsSkipped,
+            postsProcessed,
             success: true
-          });
+          };
         }
-        
-        console.log(`✅ Industry ${industryId} (${industryName}) completed: ${ideasGenerated} ideas generated, ${postsProcessed} posts processed`);
         
       } catch (error) {
         console.error(`❌ Error processing industry ${industryId}:`, error);
@@ -770,16 +807,38 @@ serve(async (req) => {
           error_message: error.message
         });
         
-        taskResults.push({
+        return {
           taskId,
           industryId,
           ideasGenerated: 0,
           postsAnalyzed: 0,
           postsSkipped: 0,
+          postsProcessed: 0,
           success: false,
           error: error.message
-        });
+        };
       }
+    });
+
+    // Wait for all industry analyses to complete
+    const results = await Promise.all(industryTasks);
+    
+    // Aggregate results
+    for (const result of results) {
+      totalIdeasGenerated += result.ideasGenerated;
+      totalPostsProcessed += result.postsProcessed;
+      
+      taskResults.push({
+        taskId: result.taskId,
+        industryId: result.industryId,
+        ideasGenerated: result.ideasGenerated,
+        postsAnalyzed: result.postsAnalyzed,
+        postsSkipped: result.postsSkipped,
+        success: result.success,
+        error: result.error
+      });
+      
+      console.log(`✅ Industry ${result.industryId} completed: ${result.ideasGenerated} ideas generated, ${result.postsProcessed} posts processed`);
     }
 
     console.log(`🎉 Enhanced DeepSeek analysis completed! Total ideas: ${totalIdeasGenerated}, Posts processed: ${totalPostsProcessed}`);

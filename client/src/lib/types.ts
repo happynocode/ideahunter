@@ -42,6 +42,7 @@ export interface IdeasResponse {
   page: number;
   pageSize: number;
   totalPages: number;
+  isLimited?: boolean; // For non-authenticated users
 }
 
 // New types for task management
