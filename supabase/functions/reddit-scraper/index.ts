@@ -456,6 +456,7 @@ interface ProcessedPost {
   permalink: string;
   reddit_id: string;
   industry_id: number;
+  created_at: string;  // Reddit帖子的原始创建时间
   analyzed: boolean;
   analyzed_at: null;
 }
@@ -467,6 +468,9 @@ async function processPosts(posts: RedditPost[], industryId: number, supabaseCli
   for (const post of posts) {
     if (!isValidPost(post)) continue;
     
+    // Convert Reddit's Unix timestamp to ISO string
+    const redditCreatedAt = new Date(post.created_utc * 1000).toISOString();
+    
     const processedPost = {
       title: post.title,
       content: post.selftext || '',
@@ -477,6 +481,7 @@ async function processPosts(posts: RedditPost[], industryId: number, supabaseCli
       permalink: `https://reddit.com${post.permalink}`,
       reddit_id: post.id,
       industry_id: industryId,
+      created_at: redditCreatedAt,  // 使用Reddit帖子的原始创建时间
       analyzed: false,
       analyzed_at: null,
     };
