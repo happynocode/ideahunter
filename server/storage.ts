@@ -1,4 +1,4 @@
-import { users, industries, startupIdeas, dailyStats, type User, type InsertUser, type Industry, type InsertIndustry, type StartupIdea, type InsertStartupIdea, type DailyStats, type InsertDailyStats } from "@shared/schema";
+import { users, industries, startupIdeas, dailyStats, scrapeTasks, type User, type InsertUser, type Industry, type InsertIndustry, type StartupIdea, type InsertStartupIdea, type DailyStats, type InsertDailyStats, type ScrapeTask, type InsertScrapeTask } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, desc, asc, and, gte, like, sql } from "drizzle-orm";
@@ -27,6 +27,12 @@ export interface IStorage {
   
   getDailyStats(): Promise<DailyStats | undefined>;
   updateDailyStats(stats: InsertDailyStats): Promise<DailyStats>;
+  
+  // Task management methods
+  getTasksByBatchId(batchId: string): Promise<ScrapeTask[]>;
+  getTaskById(taskId: number): Promise<ScrapeTask | undefined>;
+  updateTaskStatus(taskId: number, updates: Partial<ScrapeTask>): Promise<boolean>;
+  getTaskHistory(filters: { page: number; pageSize: number }): Promise<{ batches: { batchId: string; tasksCreated: number; timeRange: string; createdAt: string; tasks?: ScrapeTask[] }[]; total: number }>;
 }
 
 export class MemStorage implements IStorage {
@@ -352,6 +358,27 @@ export class MemStorage implements IStorage {
   async deleteStartupIdea(id: number): Promise<boolean> {
     return this.startupIdeas.delete(id);
   }
+
+  // Task management methods (stub implementation for MemStorage)
+  async getTasksByBatchId(batchId: string): Promise<ScrapeTask[]> {
+    // Stub implementation - tasks are not stored in memory storage
+    return [];
+  }
+
+  async getTaskById(taskId: number): Promise<ScrapeTask | undefined> {
+    // Stub implementation - tasks are not stored in memory storage
+    return undefined;
+  }
+
+  async updateTaskStatus(taskId: number, updates: Partial<ScrapeTask>): Promise<boolean> {
+    // Stub implementation - tasks are not stored in memory storage
+    return false;
+  }
+
+  async getTaskHistory(filters: { page: number; pageSize: number }): Promise<{ batches: { batchId: string; tasksCreated: number; timeRange: string; createdAt: string; tasks?: ScrapeTask[] }[]; total: number }> {
+    // Stub implementation - tasks are not stored in memory storage
+    return { batches: [], total: 0 };
+  }
 }
 
 // Remove the old DatabaseStorage implementation and use a simplified version
@@ -558,6 +585,65 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await this.db.insert(industries).values(industriesData);
+  }
+
+  // Task management methods
+  async getTasksByBatchId(batchId: string): Promise<ScrapeTask[]> {
+    const result = await this.db.select().from(scrapeTasks).where(eq(scrapeTasks.batchId, batchId)).orderBy(asc(scrapeTasks.createdAt));
+    return result;
+  }
+
+  async getTaskById(taskId: number): Promise<ScrapeTask | undefined> {
+    const result = await this.db.select().from(scrapeTasks).where(eq(scrapeTasks.id, taskId)).limit(1);
+    return result[0];
+  }
+
+  async updateTaskStatus(taskId: number, updates: Partial<ScrapeTask>): Promise<boolean> {
+    try {
+      await this.db.update(scrapeTasks).set(updates).where(eq(scrapeTasks.id, taskId));
+      return true;
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      return false;
+    }
+  }
+
+  async getTaskHistory(filters: { page: number; pageSize: number }): Promise<{ batches: { batchId: string; tasksCreated: number; timeRange: string; createdAt: string; tasks?: ScrapeTask[] }[]; total: number }> {
+    try {
+      // Get distinct batch IDs with pagination
+      const distinctBatches = await this.db.select({
+        batchId: scrapeTasks.batchId,
+        timeRange: scrapeTasks.timeRange,
+        createdAt: scrapeTasks.createdAt
+      }).from(scrapeTasks)
+      .groupBy(scrapeTasks.batchId, scrapeTasks.timeRange, scrapeTasks.createdAt)
+      .orderBy(desc(scrapeTasks.createdAt))
+      .limit(filters.pageSize)
+      .offset((filters.page - 1) * filters.pageSize);
+
+      // Get task counts for each batch
+      const batches = await Promise.all(
+        distinctBatches.map(async (batch) => {
+          const tasks = await this.getTasksByBatchId(batch.batchId);
+          return {
+            batchId: batch.batchId,
+            tasksCreated: tasks.length,
+            timeRange: batch.timeRange,
+            createdAt: batch.createdAt?.toISOString() || '',
+            tasks
+          };
+        })
+      );
+
+      // Get total count of distinct batches
+      const totalBatches = await this.db.select({ count: sql<number>`count(distinct ${scrapeTasks.batchId})` }).from(scrapeTasks);
+      const total = totalBatches[0]?.count || 0;
+
+      return { batches, total };
+    } catch (error) {
+      console.error('Error fetching task history:', error);
+      return { batches: [], total: 0 };
+    }
   }
 }
 

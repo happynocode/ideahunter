@@ -167,6 +167,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Task Management API Routes
+  
+  // Get task status by batch ID
+  app.get("/api/tasks/status/:batchId", async (req, res) => {
+    try {
+      const batchId = req.params.batchId;
+      const tasks = await storage.getTasksByBatchId(batchId);
+      
+      if (!tasks || tasks.length === 0) {
+        return res.status(404).json({ message: "Batch not found" });
+      }
+
+      // Get industry information for each task
+      const tasksWithIndustries = await Promise.all(
+        tasks.map(async (task) => {
+          const industry = await storage.getIndustryById(task.industryId);
+          return {
+            ...task,
+            industry: industry || { name: "Unknown", slug: "unknown", color: "gray-400" }
+          };
+        })
+      );
+
+      // Calculate summary statistics
+      const summary = tasks.reduce((acc, task) => {
+        acc[task.status] = (acc[task.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      res.json({
+        batchId,
+        tasks: tasksWithIndustries,
+        summary: {
+          total: tasks.length,
+          pending_scrape: summary.pending_scrape || 0,
+          scraping: summary.scraping || 0,
+          complete_scrape: summary.complete_scrape || 0,
+          analyzing: summary.analyzing || 0,
+          complete_analysis: summary.complete_analysis || 0,
+          failed: summary.failed || 0,
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching task status:", error);
+      res.status(500).json({ message: "Failed to fetch task status" });
+    }
+  });
+
+  // Get task history with pagination
+  app.get("/api/tasks/history", async (req, res) => {
+    try {
+      const querySchema = z.object({
+        page: z.string().optional().transform(val => val ? parseInt(val) : 1),
+        pageSize: z.string().optional().transform(val => val ? parseInt(val) : 20),
+      });
+
+      const { page, pageSize } = querySchema.parse(req.query);
+      const result = await storage.getTaskHistory({ page, pageSize });
+      
+      res.json({
+        batches: result.batches,
+        total: result.total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(result.total / pageSize)
+      });
+    } catch (error) {
+      console.error("Error fetching task history:", error);
+      res.status(500).json({ message: "Failed to fetch task history" });
+    }
+  });
+
+  // Retry failed task
+  app.post("/api/tasks/retry/:taskId", async (req, res) => {
+    try {
+      const taskId = parseInt(req.params.taskId);
+      const task = await storage.getTaskById(taskId);
+      
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      if (task.status !== 'failed') {
+        return res.status(400).json({ message: "Only failed tasks can be retried" });
+      }
+
+      if (task.retryCount >= task.maxRetries) {
+        return res.status(400).json({ message: "Maximum retry attempts reached" });
+      }
+
+      // Reset task status to pending_scrape
+      const updated = await storage.updateTaskStatus(taskId, {
+        status: 'pending_scrape',
+        retryCount: task.retryCount + 1,
+        errorMessage: null,
+        startedAt: null,
+        completedAt: null
+      });
+
+      if (updated) {
+        res.json({ message: "Task retry initiated successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to retry task" });
+      }
+    } catch (error) {
+      console.error("Error retrying task:", error);
+      res.status(500).json({ message: "Failed to retry task" });
+    }
+  });
+
   // Export ideas as CSV
   app.get("/api/export/csv", async (req, res) => {
     try {

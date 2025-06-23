@@ -49,6 +49,7 @@ export const startupIdeas = pgTable("startup_ideas", {
   existingSolutions: text("existing_solutions"),
   solutionGaps: text("solution_gaps"),
   marketSize: text("market_size"),
+  targetDate: text("target_date"), // YYYY-MM-DD format - the date this idea was based on
   confidenceScore: integer("confidence_score").default(0).notNull(),
   sourcePostIds: json("source_post_ids").$type<number[]>().default([]).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -62,6 +63,24 @@ export const dailyStats = pgTable("daily_stats", {
   newIndustries: integer("new_industries").default(0),
   avgUpvotes: integer("avg_upvotes").default(0),
   successRate: integer("success_rate").default(0),
+});
+
+// Scrape tasks table - manages distributed task processing
+export const scrapeTasks = pgTable("scrape_tasks", {
+  id: serial("id").primaryKey(),
+  industryId: integer("industry_id").notNull(),
+  targetDate: text("target_date").notNull(), // YYYY-MM-DD format
+  status: text("status").notNull().default('pending_scrape'), // pending_scrape, scraping, complete_scrape, analyzing, complete_analysis, failed
+  batchId: text("batch_id").notNull(),
+  postsScraped: integer("posts_scraped").default(0),
+  postsProcessed: integer("posts_processed").default(0),
+  ideasGenerated: integer("ideas_generated").default(0),
+  retryCount: integer("retry_count").default(0),
+  maxRetries: integer("max_retries").default(3),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -89,6 +108,13 @@ export const insertDailyStatsSchema = createInsertSchema(dailyStats).omit({
   id: true,
 });
 
+export const insertScrapeTaskSchema = createInsertSchema(scrapeTasks).omit({
+  id: true,
+  createdAt: true,
+  startedAt: true,
+  completedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Industry = typeof industries.$inferSelect;
@@ -99,3 +125,5 @@ export type StartupIdea = typeof startupIdeas.$inferSelect;
 export type InsertStartupIdea = z.infer<typeof insertStartupIdeaSchema>;
 export type DailyStats = typeof dailyStats.$inferSelect;
 export type InsertDailyStats = z.infer<typeof insertDailyStatsSchema>;
+export type ScrapeTask = typeof scrapeTasks.$inferSelect;
+export type InsertScrapeTask = z.infer<typeof insertScrapeTaskSchema>;

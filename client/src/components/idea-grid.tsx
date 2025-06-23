@@ -1,8 +1,8 @@
-import { ArrowUp, MessageSquare, Clock } from "lucide-react";
+import { ArrowUp, MessageSquare, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { StartupIdea } from "@/lib/types";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatTargetDate } from "@/lib/utils";
 
 interface IdeaGridProps {
   ideas: StartupIdea[];
@@ -96,8 +96,8 @@ export default function IdeaGrid({ ideas, isLoading, onIdeaClick }: IdeaGridProp
               <div className="flex items-center space-x-3">
                 <span>{idea.subreddit}</span>
                 <div className="flex items-center space-x-1">
-                  <Clock className="w-3 h-3" />
-                  <span>{formatRelativeTime(idea.createdAt)}</span>
+                  <Calendar className="w-3 h-3" />
+                  <span>基于 {formatTargetDate(idea.targetDate)}</span>
                 </div>
               </div>
               <div className="flex items-center space-x-1">

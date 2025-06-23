@@ -21,6 +21,7 @@ export interface StartupIdea {
   existingSolutions?: string;
   solutionGaps?: string;
   marketSize?: string;
+  targetDate?: string; // YYYY-MM-DD format - the date this idea was based on
   createdAt: string;
   updatedAt: string;
   industry?: Industry;
@@ -37,6 +38,55 @@ export interface DailyStats {
 
 export interface IdeasResponse {
   ideas: StartupIdea[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// New types for task management
+export interface ScrapeTask {
+  id: number;
+  industryId: number;
+  targetDate: string; // YYYY-MM-DD format
+  status: 'pending_scrape' | 'scraping' | 'complete_scrape' | 'analyzing' | 'complete_analysis' | 'failed';
+  batchId: string;
+  postsScraped: number;
+  postsProcessed: number;
+  ideasGenerated: number;
+  retryCount: number;
+  maxRetries: number;
+  errorMessage?: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  industry?: Industry;
+}
+
+export interface TaskBatch {
+  batchId: string;
+  tasksCreated: number;
+  targetDate: string; // YYYY-MM-DD format
+  createdAt: string;
+  tasks?: ScrapeTask[];
+}
+
+export interface TaskStatusResponse {
+  batchId: string;
+  tasks: ScrapeTask[];
+  summary: {
+    total: number;
+    pending_scrape: number;
+    scraping: number;
+    complete_scrape: number;
+    analyzing: number;
+    complete_analysis: number;
+    failed: number;
+  };
+}
+
+export interface TaskHistoryResponse {
+  batches: TaskBatch[];
   total: number;
   page: number;
   pageSize: number;

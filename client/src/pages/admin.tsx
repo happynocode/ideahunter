@@ -9,20 +9,8 @@ import AdminHeader from "@/components/admin-header";
 import ScraperControl from "@/components/scraper-control";
 import StatsCards from "@/components/stats-cards";
 import { 
-  RefreshCw, 
   Trash2, 
-  Calendar, 
-  Database, 
-  Download,
-  Search,
   Loader2,
-  Settings,
-  BarChart3,
-  Clock,
-  Bot,
-  Zap,
-  Brain,
-  PlayCircle,
   Activity
 } from "lucide-react";
 import { queryClient, supabase } from "@/lib/queryClient";
@@ -32,20 +20,13 @@ import type { StartupIdea } from "@/lib/types";
 // Edge Functions are not deployed yet, using direct fetch calls
 import ParticleBackground from "@/components/particle-background";
 
-// Constants
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 
 export default function Admin() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIdeas, setSelectedIdeas] = useState<Set<number>>(new Set());
-  const [isScrapingLoading, setIsScrapingLoading] = useState(false);
-  const [isAnalyzingLoading, setIsAnalyzingLoading] = useState(false);
-  const [stats, setStats] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRunning, setIsRunning] = useState({ scraper: false, analyzer: false });
   const [lastActivity, setLastActivity] = useState<string | null>(null);
-  const [selectedTimeRange, setSelectedTimeRange] = useState<'24h' | '7d' | '30d'>('24h');
+
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -128,36 +109,7 @@ export default function Admin() {
     }
   });
 
-  const handleScrapeReddit = async (timeRange: string = selectedTimeRange) => {
-    setIsRunning({ ...isRunning, scraper: true });
-    try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/reddit-scraper`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ timeRange })
-      });
 
-      const result = await response.json();
-      
-      if (result.success) {
-        const analyzerStatus = result.analyzerTriggered ? ' (analyzer auto-triggered)' : ' (no new posts to analyze)';
-        setLastActivity(`Successfully scraped ${result.totalScraped} posts (${result.timeRange})${analyzerStatus}`);
-        await fetchStats();
-        // Refresh ideas data to see newly generated ideas
-        qc.invalidateQueries({ queryKey: ['ideas'] });
-      } else {
-        setLastActivity(`Scraping failed: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Scraping error:', error);
-      setLastActivity(`Scraping error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsRunning({ ...isRunning, scraper: false });
-    }
-  };
 
   const handleDeleteIdea = async (ideaId: number) => {
     if (confirm("确认删除这个想法吗？此操作不可撤销。")) {
@@ -219,29 +171,11 @@ export default function Admin() {
     idea.summary?.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
-  const fetchStats = async () => {
-    const { data, error } = await supabase
-      .from('daily_stats')
-      .select('*')
-      .order('date', { ascending: false })
-      .limit(1)
-      .single();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    
-    setStats(data || {
-      id: 1,
-      date: new Date().toISOString().split('T')[0],
-      totalIdeas: 0,
-      newIndustries: 13,
-      avgUpvotes: 0,
-      successRate: 0
-    });
-  };
 
   const handleDeleteAllData = async () => {
     // First confirmation
-    const firstConfirm = confirm("WARNING: This will delete ALL data including startup ideas, reddit posts and stats. This action cannot be undone! Click OK to continue or Cancel to abort.");
+    const firstConfirm = confirm("WARNING: This will delete ALL data including startup ideas, reddit posts, scrape tasks and stats. This action cannot be undone! Click OK to continue or Cancel to abort.");
     
     if (!firstConfirm) return;
     
@@ -261,6 +195,7 @@ export default function Admin() {
     try {
       let deletedIdeas = 0;
       let deletedPosts = 0;
+      let deletedTasks = 0;
       let resetStats = 0;
 
       // Delete all startup ideas
@@ -287,6 +222,18 @@ export default function Admin() {
         deletedPosts = postsCount || 0;
       }
 
+      // Delete all scrape tasks
+      const { error: tasksError, count: tasksCount } = await supabase
+        .from('scrape_tasks')
+        .delete()
+        .neq('id', 0); // Delete all records
+
+      if (tasksError) {
+        console.error('Error deleting tasks:', tasksError);
+      } else {
+        deletedTasks = tasksCount || 0;
+      }
+
       // Reset daily stats (delete all and let it recreate)
       const { error: statsError, count: statsCount } = await supabase
         .from('daily_stats')
@@ -307,14 +254,14 @@ export default function Admin() {
       setSelectedIdeas(new Set());
       
       // Update last activity
-      setLastActivity(`🗑️ 全部数据已删除 - Ideas: ${deletedIdeas}, Posts: ${deletedPosts}, Stats: ${resetStats}`);
+      setLastActivity(`🗑️ 全部数据已删除 - Ideas: ${deletedIdeas}, Posts: ${deletedPosts}, Tasks: ${deletedTasks}, Stats: ${resetStats}`);
 
       toast({
         title: "数据删除完成",
-        description: `已删除 ${deletedIdeas} 个想法，${deletedPosts} 个帖子，重置了 ${resetStats} 个统计记录`,
+        description: `已删除 ${deletedIdeas} 个想法，${deletedPosts} 个帖子，${deletedTasks} 个任务，重置了 ${resetStats} 个统计记录`,
       });
 
-      console.log(`Data deletion completed - Ideas: ${deletedIdeas}, Posts: ${deletedPosts}, Stats: ${resetStats}`);
+      console.log(`Data deletion completed - Ideas: ${deletedIdeas}, Posts: ${deletedPosts}, Tasks: ${deletedTasks}, Stats: ${resetStats}`);
 
     } catch (error) {
       console.error('Error during data deletion:', error);
@@ -341,92 +288,10 @@ export default function Admin() {
           {/* Stats Cards */}
           <StatsCards />
 
-          {/* Time Range Selection */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Time Range Selection
-              </CardTitle>
-              <CardDescription className="text-slate-300">
-                Choose the time range for scraping and analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <Button
-                  variant={selectedTimeRange === '24h' ? 'default' : 'outline'}
-                  onClick={() => setSelectedTimeRange('24h')}
-                  className={selectedTimeRange === '24h' 
-                    ? 'bg-purple-600 hover:bg-purple-700' 
-                    : 'border-purple-600 text-purple-400 hover:bg-purple-600/20'
-                  }
-                >
-                  Last 24 Hours
-                </Button>
-                <Button
-                  variant={selectedTimeRange === '7d' ? 'default' : 'outline'}
-                  onClick={() => setSelectedTimeRange('7d')}
-                  className={selectedTimeRange === '7d' 
-                    ? 'bg-purple-600 hover:bg-purple-700' 
-                    : 'border-purple-600 text-purple-400 hover:bg-purple-600/20'
-                  }
-                >
-                  Last 7 Days
-                </Button>
-                <Button
-                  variant={selectedTimeRange === '30d' ? 'default' : 'outline'}
-                  onClick={() => setSelectedTimeRange('30d')}
-                  className={selectedTimeRange === '30d' 
-                    ? 'bg-purple-600 hover:bg-purple-700' 
-                    : 'border-purple-600 text-purple-400 hover:bg-purple-600/20'
-                  }
-                >
-                  Last 30 Days
-                </Button>
-              </div>
-              <p className="text-sm text-slate-400 mt-2">
-                Selected: <span className="text-purple-400 font-medium">
-                  {selectedTimeRange === '24h' ? 'Last 24 Hours' : 
-                   selectedTimeRange === '7d' ? 'Last 7 Days' : 'Last 30 Days'}
-                </span>
-              </p>
-            </CardContent>
-          </Card>
-
           {/* Scraper Control */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                Reddit Scraper Control
-              </CardTitle>
-              <CardDescription className="text-slate-300">
-                Scrape Reddit posts from all subreddits for the selected time range
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <Button
-                  onClick={() => handleScrapeReddit()}
-                  disabled={isRunning.scraper}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {isRunning.scraper ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Scraping ({selectedTimeRange})...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Start Scraping ({selectedTimeRange})
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <ScraperControl />
+          </div>
 
           {/* Activity Log */}
           {lastActivity && (
@@ -467,6 +332,7 @@ export default function Admin() {
                   <ul className="text-red-300 text-sm list-disc list-inside mb-4 space-y-1">
                     <li>所有创业想法 (startup_ideas 表)</li>
                     <li>所有原始Reddit帖子 (raw_reddit_posts 表)</li>
+                    <li>所有任务 (scrape_tasks 表)</li>
                     <li>所有统计数据 (daily_stats 表)</li>
                   </ul>
                   <p className="text-red-400 text-sm font-semibold mb-4">

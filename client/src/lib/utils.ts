@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { format } from "date-fns"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -36,4 +37,17 @@ export function formatRelativeTime(date: string | Date): string {
 
   const diffInMonths = Math.floor(diffInDays / 30);
   return `${diffInMonths}个月前`;
+}
+
+export function formatTargetDate(targetDate: string | undefined): string {
+  if (!targetDate) {
+    return '未知日期';
+  }
+  
+  try {
+    const date = new Date(targetDate);
+    return format(date, 'yyyy年MM月dd日');
+  } catch {
+    return '无效日期';
+  }
 }
