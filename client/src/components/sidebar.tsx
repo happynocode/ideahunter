@@ -28,60 +28,60 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
   };
 
   const getIconColorClass = (color: string, isSelected: boolean = false) => {
-    const colorMap: Record<string, string> = {
-      'neon-blue': isSelected ? 'text-cyan-200' : 'text-cyan-400',
-      'neon-purple': isSelected ? 'text-purple-200' : 'text-purple-400',
-      'violet-400': isSelected ? 'text-violet-200' : 'text-violet-400',
-      'green-400': isSelected ? 'text-green-200' : 'text-green-400',
-      'yellow-400': isSelected ? 'text-yellow-200' : 'text-yellow-400',
-      'orange-400': isSelected ? 'text-orange-200' : 'text-orange-400',
-      'blue-400': isSelected ? 'text-blue-200' : 'text-blue-400',
-      'pink-400': isSelected ? 'text-pink-200' : 'text-pink-400',
-      'indigo-400': isSelected ? 'text-indigo-200' : 'text-indigo-400',
-      'red-400': isSelected ? 'text-red-200' : 'text-red-400',
-      'cyan-400': isSelected ? 'text-cyan-200' : 'text-cyan-400',
-      'purple-400': isSelected ? 'text-purple-200' : 'text-purple-400',
-      'emerald-400': isSelected ? 'text-emerald-200' : 'text-emerald-400',
-    };
-    return colorMap[color] || (isSelected ? 'text-gray-200' : 'text-gray-400');
+    // Define all possible combinations explicitly so Tailwind can detect them
+    if (color === 'neon-blue') return isSelected ? 'text-cyan-200' : 'text-cyan-400';
+    if (color === 'neon-purple') return isSelected ? 'text-purple-200' : 'text-purple-400';
+    if (color === 'violet-400') return isSelected ? 'text-violet-200' : 'text-violet-400';
+    if (color === 'green-400') return isSelected ? 'text-green-200' : 'text-green-400';
+    if (color === 'yellow-400') return isSelected ? 'text-yellow-200' : 'text-yellow-400';
+    if (color === 'orange-400') return isSelected ? 'text-orange-200' : 'text-orange-400';
+    if (color === 'blue-400') return isSelected ? 'text-blue-200' : 'text-blue-400';
+    if (color === 'pink-400') return isSelected ? 'text-pink-200' : 'text-pink-400';
+    if (color === 'indigo-400') return isSelected ? 'text-indigo-200' : 'text-indigo-400';
+    if (color === 'red-400') return isSelected ? 'text-red-200' : 'text-red-400';
+    if (color === 'cyan-400') return isSelected ? 'text-cyan-200' : 'text-cyan-400';
+    if (color === 'purple-400') return isSelected ? 'text-purple-200' : 'text-purple-400';
+    if (color === 'emerald-400') return isSelected ? 'text-emerald-200' : 'text-emerald-400';
+    
+    return isSelected ? 'text-gray-200' : 'text-gray-400';
   };
 
   const getColorClass = (color: string, isSelected: boolean = false) => {
-    const colorMap: Record<string, string> = {
-      'neon-blue': isSelected ? 'text-cyan-300 bg-cyan-400/30' : 'text-cyan-400 bg-cyan-400/20',
-      'neon-purple': isSelected ? 'text-purple-300 bg-purple-400/30' : 'text-purple-400 bg-purple-400/20',
-      'violet-400': isSelected ? 'text-violet-300 bg-violet-400/30' : 'text-violet-400 bg-violet-400/20',
-      'green-400': isSelected ? 'text-green-300 bg-green-400/30' : 'text-green-400 bg-green-400/20',
-      'yellow-400': isSelected ? 'text-yellow-300 bg-yellow-400/30' : 'text-yellow-400 bg-yellow-400/20',
-      'orange-400': isSelected ? 'text-orange-300 bg-orange-400/30' : 'text-orange-400 bg-orange-400/20',
-      'blue-400': isSelected ? 'text-blue-300 bg-blue-400/30' : 'text-blue-400 bg-blue-400/20',
-      'pink-400': isSelected ? 'text-pink-300 bg-pink-400/30' : 'text-pink-400 bg-pink-400/20',
-      'indigo-400': isSelected ? 'text-indigo-300 bg-indigo-400/30' : 'text-indigo-400 bg-indigo-400/20',
-      'red-400': isSelected ? 'text-red-300 bg-red-400/30' : 'text-red-400 bg-red-400/20',
-      'cyan-400': isSelected ? 'text-cyan-300 bg-cyan-400/30' : 'text-cyan-400 bg-cyan-400/20',
-      'purple-400': isSelected ? 'text-purple-300 bg-purple-400/30' : 'text-purple-400 bg-purple-400/20',
-      'emerald-400': isSelected ? 'text-emerald-300 bg-emerald-400/30' : 'text-emerald-400 bg-emerald-400/20',
-    };
-    return colorMap[color] || (isSelected ? 'text-gray-300 bg-gray-400/30' : 'text-gray-400 bg-gray-400/20');
+    // Define all possible combinations explicitly so Tailwind can detect them
+    if (color === 'neon-blue') return isSelected ? 'text-cyan-300 bg-cyan-400/30' : 'text-cyan-400 bg-cyan-400/20';
+    if (color === 'neon-purple') return isSelected ? 'text-purple-300 bg-purple-400/30' : 'text-purple-400 bg-purple-400/20';
+    if (color === 'violet-400') return isSelected ? 'text-violet-300 bg-violet-400/30' : 'text-violet-400 bg-violet-400/20';
+    if (color === 'green-400') return isSelected ? 'text-green-300 bg-green-400/30' : 'text-green-400 bg-green-400/20';
+    if (color === 'yellow-400') return isSelected ? 'text-yellow-300 bg-yellow-400/30' : 'text-yellow-400 bg-yellow-400/20';
+    if (color === 'orange-400') return isSelected ? 'text-orange-300 bg-orange-400/30' : 'text-orange-400 bg-orange-400/20';
+    if (color === 'blue-400') return isSelected ? 'text-blue-300 bg-blue-400/30' : 'text-blue-400 bg-blue-400/20';
+    if (color === 'pink-400') return isSelected ? 'text-pink-300 bg-pink-400/30' : 'text-pink-400 bg-pink-400/20';
+    if (color === 'indigo-400') return isSelected ? 'text-indigo-300 bg-indigo-400/30' : 'text-indigo-400 bg-indigo-400/20';
+    if (color === 'red-400') return isSelected ? 'text-red-300 bg-red-400/30' : 'text-red-400 bg-red-400/20';
+    if (color === 'cyan-400') return isSelected ? 'text-cyan-300 bg-cyan-400/30' : 'text-cyan-400 bg-cyan-400/20';
+    if (color === 'purple-400') return isSelected ? 'text-purple-300 bg-purple-400/30' : 'text-purple-400 bg-purple-400/20';
+    if (color === 'emerald-400') return isSelected ? 'text-emerald-300 bg-emerald-400/30' : 'text-emerald-400 bg-emerald-400/20';
+    
+    return isSelected ? 'text-gray-300 bg-gray-400/30' : 'text-gray-400 bg-gray-400/20';
   };
 
   const getTextColorClass = (color: string, isSelected: boolean = false) => {
-    const colorMap: Record<string, string> = {
-      'neon-blue': isSelected ? 'text-cyan-200' : 'text-cyan-400',
-      'neon-purple': isSelected ? 'text-purple-200' : 'text-purple-400',
-      'violet-400': isSelected ? 'text-violet-200' : 'text-violet-400',
-      'green-400': isSelected ? 'text-green-200' : 'text-green-400',
-      'yellow-400': isSelected ? 'text-yellow-200' : 'text-yellow-400',
-      'orange-400': isSelected ? 'text-orange-200' : 'text-orange-400',
-      'blue-400': isSelected ? 'text-blue-200' : 'text-blue-400',
-      'pink-400': isSelected ? 'text-pink-200' : 'text-pink-400',
-      'indigo-400': isSelected ? 'text-indigo-200' : 'text-indigo-400',
-      'red-400': isSelected ? 'text-red-200' : 'text-red-400',
-      'cyan-400': isSelected ? 'text-cyan-200' : 'text-cyan-400',
-      'purple-400': isSelected ? 'text-purple-200' : 'text-purple-400',
-      'emerald-400': isSelected ? 'text-emerald-200' : 'text-emerald-400',
-    };
-    return colorMap[color] || (isSelected ? 'text-gray-200' : 'text-gray-400');
+    // Define all possible combinations explicitly so Tailwind can detect them
+    if (color === 'neon-blue') return isSelected ? 'text-cyan-200' : 'text-cyan-400';
+    if (color === 'neon-purple') return isSelected ? 'text-purple-200' : 'text-purple-400';
+    if (color === 'violet-400') return isSelected ? 'text-violet-200' : 'text-violet-400';
+    if (color === 'green-400') return isSelected ? 'text-green-200' : 'text-green-400';
+    if (color === 'yellow-400') return isSelected ? 'text-yellow-200' : 'text-yellow-400';
+    if (color === 'orange-400') return isSelected ? 'text-orange-200' : 'text-orange-400';
+    if (color === 'blue-400') return isSelected ? 'text-blue-200' : 'text-blue-400';
+    if (color === 'pink-400') return isSelected ? 'text-pink-200' : 'text-pink-400';
+    if (color === 'indigo-400') return isSelected ? 'text-indigo-200' : 'text-indigo-400';
+    if (color === 'red-400') return isSelected ? 'text-red-200' : 'text-red-400';
+    if (color === 'cyan-400') return isSelected ? 'text-cyan-200' : 'text-cyan-400';
+    if (color === 'purple-400') return isSelected ? 'text-purple-200' : 'text-purple-400';
+    if (color === 'emerald-400') return isSelected ? 'text-emerald-200' : 'text-emerald-400';
+    
+    return isSelected ? 'text-gray-200' : 'text-gray-400';
   };
 
   const getIndustryBgClass = (color: string, isSelected: boolean = false) => {
@@ -208,14 +208,7 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <i className={`${industry.icon} ${getIconColorClass(industry.color, selectedIndustry === industry.id)}`}></i>
-                      <span className={`${getTextColorClass(industry.color, selectedIndustry === industry.id)} ${
-                        industry.name === 'FinTech' ? 'text-yellow-400' : 
-                        industry.name === 'SaaS & Cloud Services' ? 'text-cyan-400' :
-                        industry.name === 'AI & Machine Learning' ? 'text-purple-400' :
-                        industry.name === 'Health & Fitness Tech' ? 'text-green-400' :
-                        industry.name === 'E-commerce & Retail' ? 'text-orange-400' :
-                        ''
-                      }`}>{industry.name}</span>
+                      <span className={getTextColorClass(industry.color, selectedIndustry === industry.id)}>{industry.name}</span>
                       {!user && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
                     </div>
                     <Badge className={getColorClass(industry.color, selectedIndustry === industry.id)}>

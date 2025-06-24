@@ -11,7 +11,7 @@ import { useIdeas } from "@/hooks/use-ideas";
 import { useIndustries } from "@/hooks/use-industries";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, ArrowLeft } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import UserMenu from "@/components/user-menu";
@@ -100,7 +100,6 @@ export default function Dashboard() {
                 <h2 className="text-3xl font-bold text-white">Trending Ideas</h2>
                 {selectedIndustry && industries && (
                   <div className="flex items-center space-x-2">
-                    <ArrowLeft className="w-4 h-4 text-gray-400" />
                     <Badge 
                       className="px-3 py-1 text-sm font-medium"
                       style={{
