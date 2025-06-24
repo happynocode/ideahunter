@@ -4,25 +4,25 @@
     <meta charset="utf-8">
     <title>IdeaHunter - Redirecting...</title>
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages
-      // https://github.com/rafgraph/spa-github-pages
-      // This script checks to see if a redirect is present in the query string,
-      // converts it back into the correct url and adds it to the
-      // browser's history using window.history.replaceState(...)
-      
-      var pathSegmentsToKeep = 1; // Change this to the number of path segments in your base URL
-
+      // Simple redirect to index.html for SPA routing
+      var pathSegmentsToKeep = 1;
       var l = window.location;
-      l.replace(
+      
+      // Extract the path after the repo name
+      var pathArray = l.pathname.split('/');
+      var repoPath = pathArray.slice(0, pathSegmentsToKeep + 1).join('/');
+      var routePath = pathArray.slice(pathSegmentsToKeep + 1).join('/');
+      
+      // Redirect to index.html with the route path as query parameter
+      window.location.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + 
-        '/?/' +
-        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        repoPath + '/?/' + routePath +
         (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
         l.hash
       );
     </script>
   </head>
   <body>
+    <p>Redirecting...</p>
   </body>
 </html> 

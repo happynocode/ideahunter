@@ -27,10 +27,10 @@ function AdminRoute() {
   return <Admin />;
 }
 
-// Get the base path for GitHub Pages
-const basePath = process.env.NODE_ENV === 'production' ? '/reddit-idea-scraper' : '';
-
 function AppRouter() {
+  // Get base path for GitHub Pages
+  const basePath = process.env.NODE_ENV === 'production' ? '/reddit-idea-scraper' : '';
+  
   return (
     <Router base={basePath}>
       <Switch>
