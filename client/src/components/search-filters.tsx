@@ -77,7 +77,7 @@ export default function SearchFilters({
               </Select>
               
               <Select value={sortBy} onValueChange={onSortChange}>
-                <SelectTrigger className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-400 min-w-32">
+                <SelectTrigger className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-400 min-w-40">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-white/20">

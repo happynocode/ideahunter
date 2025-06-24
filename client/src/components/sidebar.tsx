@@ -27,23 +27,42 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
     onIndustrySelect(industryId);
   };
 
-  const getColorClass = (color: string) => {
+  const getColorClass = (color: string, isSelected: boolean = false) => {
     const colorMap: Record<string, string> = {
-      'neon-blue': 'text-cyan-400 bg-cyan-400/20',
-      'neon-purple': 'text-purple-400 bg-purple-400/20',
-      'violet-400': 'text-violet-400 bg-violet-400/20',
-      'green-400': 'text-green-400 bg-green-400/20',
-      'yellow-400': 'text-yellow-400 bg-yellow-400/20',
-      'orange-400': 'text-orange-400 bg-orange-400/20',
-      'blue-400': 'text-blue-400 bg-blue-400/20',
-      'pink-400': 'text-pink-400 bg-pink-400/20',
-      'indigo-400': 'text-indigo-400 bg-indigo-400/20',
-      'red-400': 'text-red-400 bg-red-400/20',
-      'cyan-400': 'text-cyan-400 bg-cyan-400/20',
-      'purple-400': 'text-purple-400 bg-purple-400/20',
-      'emerald-400': 'text-emerald-400 bg-emerald-400/20',
+      'neon-blue': isSelected ? 'text-cyan-300 bg-cyan-400/30' : 'text-cyan-400 bg-cyan-400/20',
+      'neon-purple': isSelected ? 'text-purple-300 bg-purple-400/30' : 'text-purple-400 bg-purple-400/20',
+      'violet-400': isSelected ? 'text-violet-300 bg-violet-400/30' : 'text-violet-400 bg-violet-400/20',
+      'green-400': isSelected ? 'text-green-300 bg-green-400/30' : 'text-green-400 bg-green-400/20',
+      'yellow-400': isSelected ? 'text-yellow-300 bg-yellow-400/30' : 'text-yellow-400 bg-yellow-400/20',
+      'orange-400': isSelected ? 'text-orange-300 bg-orange-400/30' : 'text-orange-400 bg-orange-400/20',
+      'blue-400': isSelected ? 'text-blue-300 bg-blue-400/30' : 'text-blue-400 bg-blue-400/20',
+      'pink-400': isSelected ? 'text-pink-300 bg-pink-400/30' : 'text-pink-400 bg-pink-400/20',
+      'indigo-400': isSelected ? 'text-indigo-300 bg-indigo-400/30' : 'text-indigo-400 bg-indigo-400/20',
+      'red-400': isSelected ? 'text-red-300 bg-red-400/30' : 'text-red-400 bg-red-400/20',
+      'cyan-400': isSelected ? 'text-cyan-300 bg-cyan-400/30' : 'text-cyan-400 bg-cyan-400/20',
+      'purple-400': isSelected ? 'text-purple-300 bg-purple-400/30' : 'text-purple-400 bg-purple-400/20',
+      'emerald-400': isSelected ? 'text-emerald-300 bg-emerald-400/30' : 'text-emerald-400 bg-emerald-400/20',
     };
-    return colorMap[color] || 'text-gray-400 bg-gray-400/20';
+    return colorMap[color] || (isSelected ? 'text-gray-300 bg-gray-400/30' : 'text-gray-400 bg-gray-400/20');
+  };
+
+  const getIndustryBgClass = (color: string, isSelected: boolean = false) => {
+    const bgColorMap: Record<string, string> = {
+      'neon-blue': isSelected ? 'bg-cyan-400/20 border-cyan-400/50' : 'bg-cyan-400/10 border-cyan-400/20',
+      'neon-purple': isSelected ? 'bg-purple-400/20 border-purple-400/50' : 'bg-purple-400/10 border-purple-400/20',
+      'violet-400': isSelected ? 'bg-violet-400/20 border-violet-400/50' : 'bg-violet-400/10 border-violet-400/20',
+      'green-400': isSelected ? 'bg-green-400/20 border-green-400/50' : 'bg-green-400/10 border-green-400/20',
+      'yellow-400': isSelected ? 'bg-yellow-400/20 border-yellow-400/50' : 'bg-yellow-400/10 border-yellow-400/20',
+      'orange-400': isSelected ? 'bg-orange-400/20 border-orange-400/50' : 'bg-orange-400/10 border-orange-400/20',
+      'blue-400': isSelected ? 'bg-blue-400/20 border-blue-400/50' : 'bg-blue-400/10 border-blue-400/20',
+      'pink-400': isSelected ? 'bg-pink-400/20 border-pink-400/50' : 'bg-pink-400/10 border-pink-400/20',
+      'indigo-400': isSelected ? 'bg-indigo-400/20 border-indigo-400/50' : 'bg-indigo-400/10 border-indigo-400/20',
+      'red-400': isSelected ? 'bg-red-400/20 border-red-400/50' : 'bg-red-400/10 border-red-400/20',
+      'cyan-400': isSelected ? 'bg-cyan-400/20 border-cyan-400/50' : 'bg-cyan-400/10 border-cyan-400/20',
+      'purple-400': isSelected ? 'bg-purple-400/20 border-purple-400/50' : 'bg-purple-400/10 border-purple-400/20',
+      'emerald-400': isSelected ? 'bg-emerald-400/20 border-emerald-400/50' : 'bg-emerald-400/10 border-emerald-400/20',
+    };
+    return bgColorMap[color] || (isSelected ? 'bg-gray-400/20 border-gray-400/50' : 'bg-gray-400/10 border-gray-400/20');
   };
 
   return (
@@ -89,14 +108,14 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
           transition={{ delay: 0.1 }}
           className="glass-card rounded-xl p-4 neon-glow"
         >
-          <h3 className="text-lg font-semibold mb-3 text-neon-blue">Today's Stats</h3>
+          <h3 className="text-lg font-semibold mb-3 text-neon-blue">Total Stats</h3>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-300">Ideas Scraped</span>
               <span className="stats-counter font-bold text-lg">{stats?.totalIdeas || 0}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-300">New Industries</span>
+              <span className="text-gray-300">Industries</span>
               <span className="stats-counter font-bold text-lg">{stats?.newIndustries || 0}</span>
             </div>
             <div className="flex justify-between">
@@ -117,7 +136,7 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
                 className={`industry-item glass-card rounded-lg p-3 cursor-pointer hover:bg-white/20 transition-all duration-200 ${
-                  !selectedIndustry ? 'border border-cyan-400/30' : 'border border-transparent'
+                  !selectedIndustry ? 'border border-cyan-400/50 bg-cyan-400/20' : 'border border-transparent'
                 }`}
                 onClick={() => handleIndustryClick(undefined)}
               >
@@ -146,17 +165,19 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 + index * 0.05 }}
                   className={`industry-item glass-card rounded-lg p-3 cursor-pointer hover:bg-white/20 transition-all duration-200 relative ${
-                    selectedIndustry === industry.id ? 'border border-cyan-400/30' : 'border border-transparent'
+                    selectedIndustry === industry.id 
+                      ? `border ${getIndustryBgClass(industry.color, true)}` 
+                      : `border ${getIndustryBgClass(industry.color, false)}`
                   } ${!user ? 'opacity-60' : ''}`}
                   onClick={() => handleIndustryClick(industry.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <i className={`${industry.icon} ${getColorClass(industry.color).split(' ')[0]}`}></i>
+                      <i className={`${industry.icon} ${getColorClass(industry.color, selectedIndustry === industry.id).split(' ')[0]}`}></i>
                       <span className="text-white">{industry.name}</span>
                       {!user && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
                     </div>
-                    <Badge className={getColorClass(industry.color)}>
+                    <Badge className={getColorClass(industry.color, selectedIndustry === industry.id)}>
                       {industry.ideaCount || 0}
                     </Badge>
                   </div>

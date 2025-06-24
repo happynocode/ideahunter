@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import Sidebar from "@/components/sidebar";
@@ -9,7 +9,7 @@ import SearchFilters from "@/components/search-filters";
 import ParticleBackground from "@/components/particle-background";
 import { useIdeas } from "@/hooks/use-ideas";
 import { Button } from "@/components/ui/button";
-import { Download, FileCode, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import UserMenu from "@/components/user-menu";
@@ -22,6 +22,8 @@ export default function Dashboard() {
   const [sortBy, setSortBy] = useState<'upvotes' | 'comments' | 'recent'>('upvotes');
   const [minUpvotes, setMinUpvotes] = useState<number | undefined>();
   const [timeRange, setTimeRange] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allIdeas, setAllIdeas] = useState<any[]>([]);
   
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
@@ -35,37 +37,43 @@ export default function Dashboard() {
     sortBy,
     minUpvotes,
     timeRange,
-    page: 1,
+    page: currentPage,
     pageSize: 20
   });
 
-  const handleExport = async (format: 'csv' | 'json') => {
-    try {
-      const response = await fetch(`/api/export/${format}`);
-      if (!response.ok) throw new Error('Export failed');
+  // Reset page when filters change
+  const resetFilters = () => {
+    setCurrentPage(1);
+    setAllIdeas([]);
+  };
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `startup-ideas.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Export Successful",
-        description: `Ideas exported as ${format.toUpperCase()} file`,
-      });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Failed to export ideas. Please try again.",
-        variant: "destructive",
-      });
+  // Load more ideas function
+  const handleLoadMore = () => {
+    if (ideasData && !isLoading) {
+      const hasMorePages = currentPage < ideasData.totalPages;
+      if (hasMorePages) {
+        setCurrentPage(prev => prev + 1);
+      }
     }
   };
+
+  // Update combined ideas when new data arrives
+  useEffect(() => {
+    if (ideasData?.ideas) {
+      if (currentPage === 1) {
+        setAllIdeas(ideasData.ideas);
+      } else {
+        setAllIdeas(prev => [...prev, ...ideasData.ideas]);
+      }
+    }
+  }, [ideasData, currentPage]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    resetFilters();
+  }, [selectedIndustry, searchQuery, sortBy, minUpvotes, timeRange]);
+
+
 
   return (
     <div className="gradient-bg text-white min-h-screen relative overflow-x-hidden">
@@ -100,20 +108,7 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               )}
-              <Button 
-                onClick={() => handleExport('csv')}
-                className="glass-card rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-all duration-200 neon-glow border-0"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export CSV
-              </Button>
-              <Button 
-                onClick={() => handleExport('json')}
-                className="glass-card rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-all duration-200 border-0"
-              >
-                <FileCode className="w-4 h-4 mr-2" />
-                Export JSON
-              </Button>
+
               <UserMenu />
             </div>
           </motion.div>
@@ -132,18 +127,24 @@ export default function Dashboard() {
           <StatsCards />
 
           <IdeaGrid
-            ideas={ideasData?.ideas || []}
-            isLoading={isLoading}
+            ideas={allIdeas}
+            isLoading={isLoading && currentPage === 1}
             isLimited={ideasData?.isLimited}
             onIdeaClick={setSelectedIdea}
           />
 
           {/* Load More */}
-          <div className="text-center mt-8">
-            <Button className="glass-card rounded-lg px-8 py-3 text-white hover:bg-white/20 transition-all duration-200 neon-glow border-0">
-              Load More Ideas
-            </Button>
-          </div>
+          {ideasData && currentPage < ideasData.totalPages && (
+            <div className="text-center mt-8">
+              <Button 
+                onClick={handleLoadMore}
+                disabled={isLoading}
+                className="glass-card rounded-lg px-8 py-3 text-white hover:bg-white/20 transition-all duration-200 neon-glow border-0 disabled:opacity-50"
+              >
+                {isLoading ? "Loading..." : "Load More Ideas"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
