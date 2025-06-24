@@ -27,37 +27,51 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Link Supabase Project
-        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy task-creator function
-        run: supabase functions deploy task-creator --no-verify-jwt
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          supabase functions deploy task-creator --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy scraper-coordinator function
-        run: supabase functions deploy scraper-coordinator --no-verify-jwt
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          supabase functions deploy scraper-coordinator --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy reddit-scraper function
-        run: supabase functions deploy reddit-scraper --no-verify-jwt
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          supabase functions deploy reddit-scraper --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy analyzer-coordinator function
-        run: supabase functions deploy analyzer-coordinator --no-verify-jwt
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          supabase functions deploy analyzer-coordinator --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy deepseek-analyzer function
-        run: supabase functions deploy deepseek-analyzer --no-verify-jwt
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          supabase functions deploy deepseek-analyzer --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy reddit-trending-discovery function
-        run: supabase functions deploy reddit-trending-discovery --no-verify-jwt
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          supabase functions deploy reddit-trending-discovery --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
