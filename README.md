@@ -1,5 +1,7 @@
 # 🚀 IdeaHunter - AI-Powered Reddit Trend Discovery
 
+> **Latest Update**: Fixed GitHub Pages deployment and Supabase authentication issues ✅
+
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://happynocode.github.io/reddit-idea-scraper)
 [![React](https://img.shields.io/badge/React-18.x-blue)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
