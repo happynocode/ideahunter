@@ -22,7 +22,9 @@ jobs:
           cache: 'npm'
 
       - name: Install Supabase CLI
-        run: npm install -g supabase
+        run: |
+          curl -sSfL https://supabase.com/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Link Supabase Project
         run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
