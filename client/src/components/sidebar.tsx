@@ -65,23 +65,42 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
     return colorMap[color] || (isSelected ? 'text-gray-300 bg-gray-400/30' : 'text-gray-400 bg-gray-400/20');
   };
 
+  const getTextColorClass = (color: string, isSelected: boolean = false) => {
+    const colorMap: Record<string, string> = {
+      'neon-blue': isSelected ? 'text-cyan-200' : 'text-cyan-400',
+      'neon-purple': isSelected ? 'text-purple-200' : 'text-purple-400',
+      'violet-400': isSelected ? 'text-violet-200' : 'text-violet-400',
+      'green-400': isSelected ? 'text-green-200' : 'text-green-400',
+      'yellow-400': isSelected ? 'text-yellow-200' : 'text-yellow-400',
+      'orange-400': isSelected ? 'text-orange-200' : 'text-orange-400',
+      'blue-400': isSelected ? 'text-blue-200' : 'text-blue-400',
+      'pink-400': isSelected ? 'text-pink-200' : 'text-pink-400',
+      'indigo-400': isSelected ? 'text-indigo-200' : 'text-indigo-400',
+      'red-400': isSelected ? 'text-red-200' : 'text-red-400',
+      'cyan-400': isSelected ? 'text-cyan-200' : 'text-cyan-400',
+      'purple-400': isSelected ? 'text-purple-200' : 'text-purple-400',
+      'emerald-400': isSelected ? 'text-emerald-200' : 'text-emerald-400',
+    };
+    return colorMap[color] || (isSelected ? 'text-gray-200' : 'text-gray-400');
+  };
+
   const getIndustryBgClass = (color: string, isSelected: boolean = false) => {
     const bgColorMap: Record<string, string> = {
-      'neon-blue': isSelected ? 'bg-cyan-400/30 border-2 border-cyan-400 shadow-lg shadow-cyan-400/20' : 'bg-cyan-400/10 border border-cyan-400/30',
-      'neon-purple': isSelected ? 'bg-purple-400/30 border-2 border-purple-400 shadow-lg shadow-purple-400/20' : 'bg-purple-400/10 border border-purple-400/30',
-      'violet-400': isSelected ? 'bg-violet-400/30 border-2 border-violet-400 shadow-lg shadow-violet-400/20' : 'bg-violet-400/10 border border-violet-400/30',
-      'green-400': isSelected ? 'bg-green-400/30 border-2 border-green-400 shadow-lg shadow-green-400/20' : 'bg-green-400/10 border border-green-400/30',
-      'yellow-400': isSelected ? 'bg-yellow-400/30 border-2 border-yellow-400 shadow-lg shadow-yellow-400/20' : 'bg-yellow-400/10 border border-yellow-400/30',
-      'orange-400': isSelected ? 'bg-orange-400/30 border-2 border-orange-400 shadow-lg shadow-orange-400/20' : 'bg-orange-400/10 border border-orange-400/30',
-      'blue-400': isSelected ? 'bg-blue-400/30 border-2 border-blue-400 shadow-lg shadow-blue-400/20' : 'bg-blue-400/10 border border-blue-400/30',
-      'pink-400': isSelected ? 'bg-pink-400/30 border-2 border-pink-400 shadow-lg shadow-pink-400/20' : 'bg-pink-400/10 border border-pink-400/30',
-      'indigo-400': isSelected ? 'bg-indigo-400/30 border-2 border-indigo-400 shadow-lg shadow-indigo-400/20' : 'bg-indigo-400/10 border border-indigo-400/30',
-      'red-400': isSelected ? 'bg-red-400/30 border-2 border-red-400 shadow-lg shadow-red-400/20' : 'bg-red-400/10 border border-red-400/30',
-      'cyan-400': isSelected ? 'bg-cyan-400/30 border-2 border-cyan-400 shadow-lg shadow-cyan-400/20' : 'bg-cyan-400/10 border border-cyan-400/30',
-      'purple-400': isSelected ? 'bg-purple-400/30 border-2 border-purple-400 shadow-lg shadow-purple-400/20' : 'bg-purple-400/10 border border-purple-400/30',
-      'emerald-400': isSelected ? 'bg-emerald-400/30 border-2 border-emerald-400 shadow-lg shadow-emerald-400/20' : 'bg-emerald-400/10 border border-emerald-400/30',
+      'neon-blue': isSelected ? 'bg-cyan-400/40 border-2 border-cyan-400 border-l-4 border-l-cyan-400 shadow-lg shadow-cyan-400/30' : 'bg-cyan-400/10 border border-cyan-400/30',
+      'neon-purple': isSelected ? 'bg-purple-400/40 border-2 border-purple-400 border-l-4 border-l-purple-400 shadow-lg shadow-purple-400/30' : 'bg-purple-400/10 border border-purple-400/30',
+      'violet-400': isSelected ? 'bg-violet-400/40 border-2 border-violet-400 border-l-4 border-l-violet-400 shadow-lg shadow-violet-400/30' : 'bg-violet-400/10 border border-violet-400/30',
+      'green-400': isSelected ? 'bg-green-400/40 border-2 border-green-400 border-l-4 border-l-green-400 shadow-lg shadow-green-400/30' : 'bg-green-400/10 border border-green-400/30',
+      'yellow-400': isSelected ? 'bg-yellow-400/40 border-2 border-yellow-400 border-l-4 border-l-yellow-400 shadow-lg shadow-yellow-400/30' : 'bg-yellow-400/10 border border-yellow-400/30',
+      'orange-400': isSelected ? 'bg-orange-400/40 border-2 border-orange-400 border-l-4 border-l-orange-400 shadow-lg shadow-orange-400/30' : 'bg-orange-400/10 border border-orange-400/30',
+      'blue-400': isSelected ? 'bg-blue-400/40 border-2 border-blue-400 border-l-4 border-l-blue-400 shadow-lg shadow-blue-400/30' : 'bg-blue-400/10 border border-blue-400/30',
+      'pink-400': isSelected ? 'bg-pink-400/40 border-2 border-pink-400 border-l-4 border-l-pink-400 shadow-lg shadow-pink-400/30' : 'bg-pink-400/10 border border-pink-400/30',
+      'indigo-400': isSelected ? 'bg-indigo-400/40 border-2 border-indigo-400 border-l-4 border-l-indigo-400 shadow-lg shadow-indigo-400/30' : 'bg-indigo-400/10 border border-indigo-400/30',
+      'red-400': isSelected ? 'bg-red-400/40 border-2 border-red-400 border-l-4 border-l-red-400 shadow-lg shadow-red-400/30' : 'bg-red-400/10 border border-red-400/30',
+      'cyan-400': isSelected ? 'bg-cyan-400/40 border-2 border-cyan-400 border-l-4 border-l-cyan-400 shadow-lg shadow-cyan-400/30' : 'bg-cyan-400/10 border border-cyan-400/30',
+      'purple-400': isSelected ? 'bg-purple-400/40 border-2 border-purple-400 border-l-4 border-l-purple-400 shadow-lg shadow-purple-400/30' : 'bg-purple-400/10 border border-purple-400/30',
+      'emerald-400': isSelected ? 'bg-emerald-400/40 border-2 border-emerald-400 border-l-4 border-l-emerald-400 shadow-lg shadow-emerald-400/30' : 'bg-emerald-400/10 border border-emerald-400/30',
     };
-    return bgColorMap[color] || (isSelected ? 'bg-gray-400/30 border-2 border-gray-400 shadow-lg shadow-gray-400/20' : 'bg-gray-400/10 border border-gray-400/30');
+    return bgColorMap[color] || (isSelected ? 'bg-gray-400/40 border-2 border-gray-400 border-l-4 border-l-gray-400 shadow-lg shadow-gray-400/30' : 'bg-gray-400/10 border border-gray-400/30');
   };
 
   return (
@@ -189,7 +208,7 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <i className={`${industry.icon} ${getIconColorClass(industry.color, selectedIndustry === industry.id)}`}></i>
-                      <span className="text-white">{industry.name}</span>
+                      <span className={getTextColorClass(industry.color, selectedIndustry === industry.id)}>{industry.name}</span>
                       {!user && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
                     </div>
                     <Badge className={getColorClass(industry.color, selectedIndustry === industry.id)}>
