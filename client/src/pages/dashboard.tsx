@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import IdeaGrid from "@/components/idea-grid";
 import IdeaDetailModal from "@/components/idea-detail-modal";
-import StatsCards from "@/components/stats-cards";
+
 import SearchFilters from "@/components/search-filters";
 import ParticleBackground from "@/components/particle-background";
 import { useIdeas } from "@/hooks/use-ideas";
@@ -123,8 +123,6 @@ export default function Dashboard() {
             timeRange={timeRange}
             onTimeRangeChange={setTimeRange}
           />
-
-          <StatsCards />
 
           <IdeaGrid
             ideas={allIdeas}

@@ -27,6 +27,25 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
     onIndustrySelect(industryId);
   };
 
+  const getIconColorClass = (color: string, isSelected: boolean = false) => {
+    const colorMap: Record<string, string> = {
+      'neon-blue': isSelected ? 'text-cyan-300' : 'text-cyan-400',
+      'neon-purple': isSelected ? 'text-purple-300' : 'text-purple-400',
+      'violet-400': isSelected ? 'text-violet-300' : 'text-violet-400',
+      'green-400': isSelected ? 'text-green-300' : 'text-green-400',
+      'yellow-400': isSelected ? 'text-yellow-300' : 'text-yellow-400',
+      'orange-400': isSelected ? 'text-orange-300' : 'text-orange-400',
+      'blue-400': isSelected ? 'text-blue-300' : 'text-blue-400',
+      'pink-400': isSelected ? 'text-pink-300' : 'text-pink-400',
+      'indigo-400': isSelected ? 'text-indigo-300' : 'text-indigo-400',
+      'red-400': isSelected ? 'text-red-300' : 'text-red-400',
+      'cyan-400': isSelected ? 'text-cyan-300' : 'text-cyan-400',
+      'purple-400': isSelected ? 'text-purple-300' : 'text-purple-400',
+      'emerald-400': isSelected ? 'text-emerald-300' : 'text-emerald-400',
+    };
+    return colorMap[color] || (isSelected ? 'text-gray-300' : 'text-gray-400');
+  };
+
   const getColorClass = (color: string, isSelected: boolean = false) => {
     const colorMap: Record<string, string> = {
       'neon-blue': isSelected ? 'text-cyan-300 bg-cyan-400/30' : 'text-cyan-400 bg-cyan-400/20',
@@ -164,16 +183,12 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 + index * 0.05 }}
-                  className={`industry-item glass-card rounded-lg p-3 cursor-pointer hover:bg-white/20 transition-all duration-200 relative ${
-                    selectedIndustry === industry.id 
-                      ? `border ${getIndustryBgClass(industry.color, true)}` 
-                      : `border ${getIndustryBgClass(industry.color, false)}`
-                  } ${!user ? 'opacity-60' : ''}`}
+                  className={`industry-item rounded-lg p-3 cursor-pointer hover:bg-white/10 transition-all duration-200 relative ${getIndustryBgClass(industry.color, selectedIndustry === industry.id)} ${!user ? 'opacity-60' : ''}`}
                   onClick={() => handleIndustryClick(industry.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <i className={`${industry.icon} ${getColorClass(industry.color, selectedIndustry === industry.id).split(' ')[0]}`}></i>
+                      <i className={`${industry.icon} ${getIconColorClass(industry.color, selectedIndustry === industry.id)}`}></i>
                       <span className="text-white">{industry.name}</span>
                       {!user && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
                     </div>
