@@ -8,8 +8,10 @@ import IdeaDetailModal from "@/components/idea-detail-modal";
 import SearchFilters from "@/components/search-filters";
 import ParticleBackground from "@/components/particle-background";
 import { useIdeas } from "@/hooks/use-ideas";
+import { useIndustries } from "@/hooks/use-industries";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Settings, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import UserMenu from "@/components/user-menu";
@@ -27,6 +29,7 @@ export default function Dashboard() {
   
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
+  const { data: industries } = useIndustries();
 
   // Debug log
   console.log('Dashboard - User:', user?.email, 'isAdmin:', isAdmin);
@@ -93,8 +96,31 @@ export default function Dashboard() {
             className="flex justify-between items-center mb-8"
           >
             <div>
-              <h2 className="text-3xl font-bold text-white mb-2">Trending Ideas</h2>
-              <p className="text-gray-400">Discover trending opportunities from Reddit communities</p>
+              <div className="flex items-center space-x-4 mb-2">
+                <h2 className="text-3xl font-bold text-white">Trending Ideas</h2>
+                {selectedIndustry && industries && (
+                  <div className="flex items-center space-x-2">
+                    <ArrowLeft className="w-4 h-4 text-gray-400" />
+                    <Badge 
+                      className="px-3 py-1 text-sm font-medium"
+                      style={{
+                        backgroundColor: `${industries.find(i => i.id === selectedIndustry)?.color || '#6b7280'}30`,
+                        color: industries.find(i => i.id === selectedIndustry)?.color || '#6b7280',
+                        border: `1px solid ${industries.find(i => i.id === selectedIndustry)?.color || '#6b7280'}50`
+                      }}
+                    >
+                      <i className={`${industries.find(i => i.id === selectedIndustry)?.icon || 'fas fa-folder'} mr-2`}></i>
+                      {industries.find(i => i.id === selectedIndustry)?.name || 'Unknown Industry'}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              <p className="text-gray-400">
+                {selectedIndustry && industries 
+                  ? `Showing ideas from ${industries.find(i => i.id === selectedIndustry)?.name || 'selected industry'}`
+                  : 'Discover trending opportunities from Reddit communities'
+                }
+              </p>
             </div>
             <div className="flex space-x-4 items-center">
               {/* Only show Admin Panel for admin users */}
