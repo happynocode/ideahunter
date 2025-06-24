@@ -237,45 +237,57 @@ serve(async (req) => {
       throw new Error(`Failed to update task status to analyzing: ${updateError.message}`);
     }
 
-    // 8. 准备调用 gemini-analyzer 的参数
-    const industryIds = completeTasks.map(task => task.industry_id);
-    const batchIds = [...new Set(completeTasks.map(task => task.batch_id))];
-    const targetDate = completeTasks[0].target_date;
-
-    const analyzerPayload = {
-      industry_ids: industryIds,
-      target_date: targetDate,
-      task_ids: taskIds,
-      batch_id: batchIds[0]
-    };
-
-    console.log('Analyzer Coordinator: Calling gemini-analyzer with payload:', {
-      ...analyzerPayload,
-      industry_ids: analyzerPayload.industry_ids.length + ' industries',
-      task_ids: analyzerPayload.task_ids.length + ' tasks'
-    });
-
-    // 9. 触发 gemini-analyzer 函数 (fire-and-forget)
-    console.log('Analyzer Coordinator: Triggering gemini-analyzer...');
-    
-    fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/deepseek-analyzer`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(analyzerPayload)
-    }).then(response => {
-      if (response.ok) {
-        console.log('Analyzer Coordinator: Successfully triggered gemini-analyzer');
-      } else {
-        console.error(`Analyzer Coordinator: Failed to trigger gemini-analyzer: ${response.status}`);
+    // 8. 准备调用 gemini-analyzer 的参数 - 按target_date分组处理
+    const tasksByTargetDate = new Map<string, AnalyzerTask[]>();
+    completeTasks.forEach(task => {
+      if (!tasksByTargetDate.has(task.target_date)) {
+        tasksByTargetDate.set(task.target_date, []);
       }
-    }).catch(error => {
-      console.error('Analyzer Coordinator: Error triggering gemini-analyzer:', error);
+      tasksByTargetDate.get(task.target_date)!.push(task);
     });
+
+    console.log(`Analyzer Coordinator: Found tasks for ${tasksByTargetDate.size} different target dates`);
+
+    // 9. 为每个target_date分别触发 deepseek-analyzer
+    const allTriggerPromises: Promise<void>[] = [];
     
-    console.log('Analyzer Coordinator: Gemini analyzer triggered, tasks handed off');
+    for (const [targetDate, tasksForDate] of tasksByTargetDate) {
+      const industryIds = tasksForDate.map(task => task.industry_id);
+      const taskIds = tasksForDate.map(task => task.id);
+      const batchIds = [...new Set(tasksForDate.map(task => task.batch_id))];
+
+      const analyzerPayload = {
+        industry_ids: industryIds,
+        target_date: targetDate,
+        task_ids: taskIds,
+        batch_id: batchIds[0]
+      };
+
+      console.log(`Analyzer Coordinator: Triggering deepseek-analyzer for ${targetDate} with ${tasksForDate.length} tasks`);
+
+      const triggerPromise = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/deepseek-analyzer`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(analyzerPayload)
+      }).then(response => {
+        if (response.ok) {
+          console.log(`Analyzer Coordinator: Successfully triggered deepseek-analyzer for ${targetDate}`);
+        } else {
+          console.error(`Analyzer Coordinator: Failed to trigger deepseek-analyzer for ${targetDate}: ${response.status}`);
+        }
+      }).catch(error => {
+        console.error(`Analyzer Coordinator: Error triggering deepseek-analyzer for ${targetDate}:`, error);
+      });
+
+      allTriggerPromises.push(triggerPromise);
+    }
+    
+    // 等待所有触发操作完成
+    await Promise.all(allTriggerPromises);
+    console.log('Analyzer Coordinator: All deepseek-analyzer triggers completed');
 
     return new Response(
       JSON.stringify({
