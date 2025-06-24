@@ -23,7 +23,7 @@ interface TaskMonitorProps {
 export default function TaskMonitor({ batchId }: TaskMonitorProps) {
   const [taskData, setTaskData] = useState<TaskStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { toast } = useToast();
 
