@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="16" fill="#3B82F6"/>
+  
+  <!-- Light bulb shape (idea) -->
+  <path d="M16 6C13.2386 6 11 8.23858 11 11C11 12.5 11.5 13.8 12.3 14.8L12.7 15.2C13.1 15.6 13.3 16.1 13.3 16.7V18H18.7V16.7C18.7 16.1 18.9 15.6 19.3 15.2L19.7 14.8C20.5 13.8 21 12.5 21 11C21 8.23858 18.7614 6 16 6Z" fill="white"/>
+  
+  <!-- Bulb base -->
+  <rect x="13.5" y="18" width="5" height="2" fill="white"/>
+  <rect x="14" y="20" width="4" height="1.5" rx="0.5" fill="white"/>
+  
+  <!-- Search magnifying glass -->
+  <circle cx="22" cy="10" r="3" stroke="white" stroke-width="1.5" fill="none"/>
+  <line x1="24.5" y1="12.5" x2="26" y2="14" stroke="white" stroke-width="1.5"/>
+</svg> 
