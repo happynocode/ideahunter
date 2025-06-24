@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import UserMenu from "@/components/user-menu";
 import { AdminRequired } from "@/components/protected-route";
+import { getIndustryColor } from "@/lib/industry-colors";
 
 export default function Dashboard() {
   const [selectedIndustry, setSelectedIndustry] = useState<number | undefined>();
@@ -103,9 +104,9 @@ export default function Dashboard() {
                     <Badge 
                       className="px-3 py-1 text-sm font-medium"
                       style={{
-                        backgroundColor: `${industries.find(i => i.id === selectedIndustry)?.color || '#6b7280'}30`,
-                        color: industries.find(i => i.id === selectedIndustry)?.color || '#6b7280',
-                        border: `1px solid ${industries.find(i => i.id === selectedIndustry)?.color || '#6b7280'}50`
+                        backgroundColor: `${getIndustryColor(industries.find(i => i.id === selectedIndustry)?.name || '')}30`,
+                        color: getIndustryColor(industries.find(i => i.id === selectedIndustry)?.name || ''),
+                        border: `1px solid ${getIndustryColor(industries.find(i => i.id === selectedIndustry)?.name || '')}50`
                       }}
                     >
                       <i className={`${industries.find(i => i.id === selectedIndustry)?.icon || 'fas fa-folder'} mr-2`}></i>
