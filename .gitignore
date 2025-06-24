@@ -93,6 +93,7 @@ temp/
 
 # Supabase
 .supabase/
+supabase/.temp/
 
 # Replit specific
 .replit
