@@ -585,6 +585,8 @@ interface ProcessedPost {
   created_at: string;  // Reddit帖子的原始创建时间
   analyzed: boolean;
   analyzed_at: null;
+  processing_status: string;
+  priority_score: number | null;
 }
 
 // Process and save posts
@@ -611,7 +613,7 @@ async function processPosts(posts: RedditPost[], industryId: number, supabaseCli
       analyzed: false,
       analyzed_at: null,
       processing_status: 'unprocessed', // 确保新posts设置为unprocessed状态
-      priority_score: 0 // 初始化优先级分数
+      priority_score: null // 让 deepseek-analyzer 来计算优先级分数
     };
     
     processedPosts.push(processedPost);

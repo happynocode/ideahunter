@@ -502,9 +502,9 @@ async function analyzeIndustry(
       return { ideasGenerated: 0, postsAnalyzed: 0, postsSkipped: 0, error: 'No unprocessed posts available for analysis' };
     }
 
-    // 为所有帖子计算优先级分数（如果还没有）
+    // 为所有帖子计算优先级分数（如果还没有或为0）
     const postsWithPriority = allPosts.map(post => {
-      if (!post.priority_score) {
+      if (!post.priority_score || post.priority_score === 0) {
         post.priority_score = calculatePriorityScore(post);
       }
       return post;
