@@ -40,10 +40,7 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
           .order('upvotes', { ascending: false })
           .limit(3);
       } else {
-        // Apply pagination for authenticated users
-        query = query.range((page - 1) * pageSize, page * pageSize - 1);
-
-        // Apply filters only for authenticated users
+        // Apply filters first for authenticated users
         if (filters.industryId) {
           query = query.eq('industry_id', filters.industryId);
         }
@@ -54,23 +51,6 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
 
         if (filters.minUpvotes) {
           query = query.gte('upvotes', filters.minUpvotes);
-        }
-
-        // Apply sorting
-        switch (filters.sortBy) {
-          case 'upvotes':
-            query = query.order('upvotes', { ascending: false });
-            break;
-          case 'comments':
-            query = query.order('comments', { ascending: false });
-            break;
-          case 'confidence':
-            query = query.order('confidence_score', { ascending: false });
-            break;
-          case 'recent':
-          default:
-            query = query.order('created_at', { ascending: false });
-            break;
         }
 
         // Apply time range filter based on target_date
@@ -109,6 +89,26 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
               query = query.gte('target_date', startDate.toISOString().split('T')[0]);
           }
         }
+
+        // Apply sorting after filters
+        switch (filters.sortBy) {
+          case 'upvotes':
+            query = query.order('upvotes', { ascending: false });
+            break;
+          case 'comments':
+            query = query.order('comments', { ascending: false });
+            break;
+          case 'confidence':
+            query = query.order('confidence_score', { ascending: false });
+            break;
+          case 'recent':
+          default:
+            query = query.order('created_at', { ascending: false });
+            break;
+        }
+
+        // Apply pagination last, after all filters are applied
+        query = query.range((page - 1) * pageSize, page * pageSize - 1);
       }
 
       const { data: ideas, error, count } = await query;
