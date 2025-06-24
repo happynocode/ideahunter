@@ -30,28 +30,39 @@ interface AnalyzerResponse {
   }>;
 }
 
-// Industry mapping - simplified to match the task-based architecture
+// Industry mapping - using English names to match database
 const INDUSTRY_MAPPING = {
-  1: 'SaaS & 云服务',
-  2: 'AI & 机器学习',
-  3: '金融科技',
-  4: '电商 & 零售',
-  5: '健康 & 健身科技',
-  6: '教育科技',
-  7: '开发者工具 & 平台',
-  8: '低/无代码平台',
-  9: '社交 & 社区',
-  10: '游戏 & 娱乐',
-  11: '绿色 & 可持续科技',
-  12: 'API & 后端服务',
-  13: '网络安全 & 隐私',
-  222: '移动应用开发',
-  223: 'Web & 前端开发',
-  224: '消费者服务',
-  225: '企业服务 & B2B',
-  226: '媒体 & 内容创作',
-  227: '旅游 & 出行',
-  228: '物流 & 供应链'
+  1: 'SaaS & Cloud Services',
+  2: 'AI & Machine Learning',
+  3: 'FinTech',
+  4: 'E-commerce & Retail',
+  5: 'Health & Fitness Tech',
+  6: 'EdTech',
+  7: 'Developer Tools & Platforms',
+  8: 'No-Code/Low-Code Platforms',
+  9: 'Social & Community',
+  10: 'Gaming & Entertainment',
+  11: 'GreenTech & Sustainability',
+  12: 'API & Backend Services',
+  13: 'Cybersecurity & Privacy',
+  222: 'Mobile App Development',
+  223: 'Web & Frontend Development',
+  224: 'Consumer Services',
+  225: 'Enterprise & B2B Services',
+  226: 'Media & Content Creation',
+  227: 'Travel & Transportation',
+  228: 'Logistics & Supply Chain',
+  229: 'Data Science & Analytics',
+  230: 'Blockchain & Cryptocurrency',
+  231: 'Hardware & IoT',
+  232: 'Audio & Podcast',
+  233: 'Design & Creative Tools',
+  234: 'PropTech',
+  235: 'LegalTech',
+  236: 'AgTech',
+  238: 'AR/VR & Metaverse',
+  239: 'BioTech & MedTech',
+  240: 'General/Trending Topics'
 };
 
 interface RawRedditPost {
