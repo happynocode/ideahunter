@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, Redirect, Router } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -27,13 +27,18 @@ function AdminRoute() {
   return <Admin />;
 }
 
-function Router() {
+// Get the base path for GitHub Pages
+const basePath = process.env.NODE_ENV === 'production' ? '/reddit-idea-scraper' : '';
+
+function AppRouter() {
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/admin" component={AdminRoute} />
-      <Route component={NotFound} />
-    </Switch>
+    <Router base={basePath}>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/admin" component={AdminRoute} />
+        <Route component={NotFound} />
+      </Switch>
+    </Router>
   );
 }
 
@@ -43,7 +48,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <AppRouter />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
