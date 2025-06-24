@@ -198,23 +198,17 @@ export default function Admin() {
       let deletedTasks = 0;
       let resetStats = 0;
 
-      // Delete all startup ideas
-      const { error: ideasError, count: ideasCount } = await supabase
-        .from('startup_ideas')
-        .delete()
-        .neq('id', 0); // Delete all records
-
+            // Delete all startup ideas using admin function
+      const { data: ideasCount, error: ideasError } = await supabase.rpc('delete_all_startup_ideas');
+      
       if (ideasError) {
         console.error('Error deleting ideas:', ideasError);
       } else {
         deletedIdeas = ideasCount || 0;
       }
 
-      // Delete all raw reddit posts
-      const { error: postsError, count: postsCount } = await supabase
-        .from('raw_reddit_posts')
-        .delete()
-        .neq('id', 0); // Delete all records
+      // Delete all raw reddit posts using admin function
+      const { data: postsCount, error: postsError } = await supabase.rpc('delete_all_raw_posts');
 
       if (postsError) {
         console.error('Error deleting posts:', postsError);
@@ -222,11 +216,8 @@ export default function Admin() {
         deletedPosts = postsCount || 0;
       }
 
-      // Delete all scrape tasks
-      const { error: tasksError, count: tasksCount } = await supabase
-        .from('scrape_tasks')
-        .delete()
-        .neq('id', 0); // Delete all records
+      // Delete all scrape tasks using admin function
+      const { data: tasksCount, error: tasksError } = await supabase.rpc('delete_all_scrape_tasks');
 
       if (tasksError) {
         console.error('Error deleting tasks:', tasksError);
@@ -234,11 +225,8 @@ export default function Admin() {
         deletedTasks = tasksCount || 0;
       }
 
-      // Reset daily stats (delete all and let it recreate)
-      const { error: statsError, count: statsCount } = await supabase
-        .from('daily_stats')
-        .delete()
-        .neq('id', 0); // Delete all records
+      // Reset daily stats using admin function  
+      const { data: statsCount, error: statsError } = await supabase.rpc('delete_all_daily_stats');
 
       if (statsError) {
         console.error('Error resetting stats:', statsError);

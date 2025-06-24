@@ -133,7 +133,7 @@ serve(async (req) => {
       .eq('status', 'failed')
       .not('error_message', 'ilike', '%No unprocessed posts%') // 排除没有帖子的情况
       .not('error_message', 'ilike', '%no posts%') // 排除没有帖子的情况（小写）
-      .or('error_message.ilike.%analysis%,error_message.ilike.%deepseek%,error_message.ilike.%API%,error_message.ilike.%timeout%')
+              .or('error_message.ilike.%analysis%,error_message.ilike.%gemini%,error_message.ilike.%API%,error_message.ilike.%timeout%')
       .filter('retry_count', 'lt', 'max_retries')
       .lt('completed_at', new Date(Date.now() - 3600000).toISOString()); // 1小时后重试
 
@@ -237,7 +237,7 @@ serve(async (req) => {
       throw new Error(`Failed to update task status to analyzing: ${updateError.message}`);
     }
 
-    // 8. 准备调用 deepseek-analyzer 的参数
+    // 8. 准备调用 gemini-analyzer 的参数
     const industryIds = completeTasks.map(task => task.industry_id);
     const batchIds = [...new Set(completeTasks.map(task => task.batch_id))];
     const targetDate = completeTasks[0].target_date;
@@ -249,14 +249,14 @@ serve(async (req) => {
       batch_id: batchIds[0]
     };
 
-    console.log('Analyzer Coordinator: Calling deepseek-analyzer with payload:', {
+    console.log('Analyzer Coordinator: Calling gemini-analyzer with payload:', {
       ...analyzerPayload,
       industry_ids: analyzerPayload.industry_ids.length + ' industries',
       task_ids: analyzerPayload.task_ids.length + ' tasks'
     });
 
-    // 9. 触发 deepseek-analyzer 函数 (fire-and-forget)
-    console.log('Analyzer Coordinator: Triggering deepseek-analyzer...');
+    // 9. 触发 gemini-analyzer 函数 (fire-and-forget)
+    console.log('Analyzer Coordinator: Triggering gemini-analyzer...');
     
     fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/deepseek-analyzer`, {
       method: 'POST',
@@ -267,15 +267,15 @@ serve(async (req) => {
       body: JSON.stringify(analyzerPayload)
     }).then(response => {
       if (response.ok) {
-        console.log('Analyzer Coordinator: Successfully triggered deepseek-analyzer');
+        console.log('Analyzer Coordinator: Successfully triggered gemini-analyzer');
       } else {
-        console.error(`Analyzer Coordinator: Failed to trigger deepseek-analyzer: ${response.status}`);
+        console.error(`Analyzer Coordinator: Failed to trigger gemini-analyzer: ${response.status}`);
       }
     }).catch(error => {
-      console.error('Analyzer Coordinator: Error triggering deepseek-analyzer:', error);
+      console.error('Analyzer Coordinator: Error triggering gemini-analyzer:', error);
     });
     
-    console.log('Analyzer Coordinator: DeepSeek analyzer triggered, tasks handed off');
+    console.log('Analyzer Coordinator: Gemini analyzer triggered, tasks handed off');
 
     return new Response(
       JSON.stringify({

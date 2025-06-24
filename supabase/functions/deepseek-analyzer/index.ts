@@ -167,47 +167,93 @@ function calculateSimilarity(idea1: any, idea2: any): number {
   return (titleSimilarity * 0.6 + keywordSimilarity * 0.4);
 }
 
-async function callDeepSeekAPI(prompt: string): Promise<string> {
-  const apiKey = Deno.env.get('DEEPSEEK_API_KEY');
+// Gemini免费模型列表（按照优先级排列）
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite-preview-06-17',
+  'gemini-2.5-flash-preview-tts',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite'
+];
+
+let currentModelIndex = 0;
+
+async function callGeminiAPI(prompt: string): Promise<string> {
+  const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) {
-    throw new Error('DEEPSEEK_API_KEY not configured');
+    throw new Error('GEMINI_API_KEY not configured');
   }
 
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a startup analyst expert specializing in identifying market opportunities from Reddit discussions. Analyze posts and generate comprehensive startup ideas with deep market insights. IMPORTANT: Return ONLY valid JSON without any markdown formatting, code blocks, or extra text.'
+  let lastError: string = '';
+  
+  // 轮换所有可用的模型
+  for (let attempt = 0; attempt < GEMINI_MODELS.length; attempt++) {
+    const modelIndex = (currentModelIndex + attempt) % GEMINI_MODELS.length;
+    const model = GEMINI_MODELS[modelIndex];
+    
+    try {
+      console.log(`Trying Gemini model: ${model} (attempt ${attempt + 1}/${GEMINI_MODELS.length})`);
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          role: 'user',
-          content: prompt
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `You are a startup analyst expert specializing in identifying market opportunities from Reddit discussions. Analyze posts and generate comprehensive startup ideas with deep market insights. IMPORTANT: Return ONLY valid JSON without any markdown formatting, code blocks, or extra text.\n\n${prompt}`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4000,
+            topP: 0.95,
+            topK: 40
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+          throw new Error(`Invalid response format from Gemini API (${model})`);
         }
-      ],
-      max_tokens: 4000,
-      temperature: 0.7,
-      stream: false
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
-  }
-
-  const data = await response.json();
-  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-    throw new Error('Invalid response format from DeepSeek API');
+        
+        const content = data.candidates[0].content.parts[0]?.text;
+        if (!content) {
+          throw new Error(`No content in response from Gemini API (${model})`);
+        }
+        
+        // 更新当前模型索引为下一个（轮换使用）
+        currentModelIndex = (modelIndex + 1) % GEMINI_MODELS.length;
+        console.log(`✅ Successfully used Gemini model: ${model}`);
+        
+        return content;
+      } else {
+        const errorText = await response.text();
+        lastError = `Gemini API error with ${model}: ${response.status} - ${errorText}`;
+        console.error(lastError);
+        
+        // 如果是rate limit错误，等待一段时间后继续尝试下一个模型
+        if (response.status === 429) {
+          console.log(`Rate limit hit for ${model}, trying next model...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+    } catch (error) {
+      lastError = `Error calling Gemini API with ${model}: ${error.message}`;
+      console.error(lastError);
+    }
   }
   
-  return data.choices[0].message.content;
+  // 如果所有模型都失败了，抛出最后一个错误
+  throw new Error(`All Gemini models failed. Last error: ${lastError}`);
 }
 
 function createAnalysisPrompt(industry: string, posts: RawRedditPost[], targetDate: string): string {
@@ -539,7 +585,7 @@ async function analyzeIndustry(
         console.log(`📝 Analyzing batch ${i + 1}/${postBatches.length} for ${industryName} (${batchPosts.length} posts)...`);
         
         const prompt = createAnalysisPrompt(industryName, batchPosts, targetDate);
-        const analysisResponse = await callDeepSeekAPI(prompt);
+        const analysisResponse = await callGeminiAPI(prompt);
         
         // 解析响应
         let analysisData;
@@ -567,7 +613,7 @@ async function analyzeIndustry(
           
           analysisData = JSON.parse(cleanResponse);
         } catch (parseError) {
-          console.error(`Failed to parse DeepSeek response for ${industryName}:`, parseError);
+          console.error(`Failed to parse Gemini response for ${industryName}:`, parseError);
           console.error('Raw response:', analysisResponse.substring(0, 1000));
           continue;
         }
@@ -654,7 +700,7 @@ async function analyzeIndustry(
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (apiError) {
-        console.error(`DeepSeek API error for ${industryName} batch ${i + 1}:`, apiError);
+        console.error(`Gemini API error for ${industryName} batch ${i + 1}:`, apiError);
         
         // 标记失败的帖子
         const postIds = batchPosts.map(post => post.id);
@@ -722,7 +768,7 @@ serve(async (req) => {
       throw new Error('batch_id is required');
     }
     
-    console.log(`🧠 Starting enhanced DeepSeek analysis for industries: ${industry_ids.join(', ')}, target date: ${target_date}, batch: ${batch_id}`);
+    console.log(`🧠 Starting enhanced Gemini analysis for industries: ${industry_ids.join(', ')}, target date: ${target_date}, batch: ${batch_id}`);
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -841,7 +887,7 @@ serve(async (req) => {
       console.log(`✅ Industry ${result.industryId} completed: ${result.ideasGenerated} ideas generated, ${result.postsProcessed} posts processed`);
     }
 
-    console.log(`🎉 Enhanced DeepSeek analysis completed! Total ideas: ${totalIdeasGenerated}, Posts processed: ${totalPostsProcessed}`);
+    console.log(`🎉 Enhanced Gemini analysis completed! Total ideas: ${totalIdeasGenerated}, Posts processed: ${totalPostsProcessed}`);
 
     return new Response(
       JSON.stringify({
@@ -859,11 +905,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ Enhanced DeepSeek analysis failed:', error);
+    console.error('❌ Enhanced Gemini analysis failed:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Enhanced DeepSeek analysis failed',
+        message: 'Enhanced Gemini analysis failed',
         error: error.message,
         totalIdeasGenerated: 0,
         industriesProcessed: 0,
