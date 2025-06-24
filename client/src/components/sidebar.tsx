@@ -173,15 +173,15 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className={`industry-item glass-card rounded-lg p-3 cursor-pointer hover:bg-white/20 transition-all duration-200 ${
-                  !selectedIndustry ? 'border border-cyan-400/50 bg-cyan-400/20' : 'border border-transparent'
+                className={`industry-item rounded-lg p-3 cursor-pointer hover:bg-white/10 transition-all duration-200 ${
+                  !selectedIndustry ? 'bg-cyan-400/40 border-2 border-cyan-400 border-l-4 border-l-cyan-400 shadow-lg shadow-cyan-400/30' : 'bg-white/5 border border-white/20'
                 }`}
                 onClick={() => handleIndustryClick(undefined)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <i className="fas fa-globe text-cyan-400"></i>
-                    <span className="text-white">All Industries</span>
+                    <i className={`fas fa-globe ${!selectedIndustry ? 'text-cyan-200' : 'text-cyan-400'}`}></i>
+                    <span className={!selectedIndustry ? 'text-cyan-200' : 'text-white'}>All Industries</span>
                   </div>
                   <span className="bg-cyan-400/20 text-cyan-400 px-2 py-1 rounded-full text-xs">
                     {industries?.reduce((sum, industry) => sum + (industry.ideaCount || 0), 0) || 0}
@@ -208,7 +208,14 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <i className={`${industry.icon} ${getIconColorClass(industry.color, selectedIndustry === industry.id)}`}></i>
-                      <span className={getTextColorClass(industry.color, selectedIndustry === industry.id)}>{industry.name}</span>
+                      <span className={`${getTextColorClass(industry.color, selectedIndustry === industry.id)} ${
+                        industry.name === 'FinTech' ? 'text-yellow-400' : 
+                        industry.name === 'SaaS & Cloud Services' ? 'text-cyan-400' :
+                        industry.name === 'AI & Machine Learning' ? 'text-purple-400' :
+                        industry.name === 'Health & Fitness Tech' ? 'text-green-400' :
+                        industry.name === 'E-commerce & Retail' ? 'text-orange-400' :
+                        ''
+                      }`}>{industry.name}</span>
                       {!user && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
                     </div>
                     <Badge className={getColorClass(industry.color, selectedIndustry === industry.id)}>
