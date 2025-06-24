@@ -131,4 +131,32 @@
   .focus\:ring-neon-blue:focus {
     ring-color: var(--neon-blue);
   }
+
+  /* Industry colors */
+  .text-industry-neon-blue { color: #22d3ee !important; }
+  .text-industry-neon-blue-selected { color: #bfdbfe !important; }
+  .text-industry-neon-purple { color: #a855f7 !important; }
+  .text-industry-neon-purple-selected { color: #ddd6fe !important; }
+  .text-industry-violet-400 { color: #8b5cf6 !important; }
+  .text-industry-violet-400-selected { color: #ddd6fe !important; }
+  .text-industry-green-400 { color: #4ade80 !important; }
+  .text-industry-green-400-selected { color: #bbf7d0 !important; }
+  .text-industry-yellow-400 { color: #facc15 !important; }
+  .text-industry-yellow-400-selected { color: #fef3c7 !important; }
+  .text-industry-orange-400 { color: #fb923c !important; }
+  .text-industry-orange-400-selected { color: #fed7aa !important; }
+  .text-industry-blue-400 { color: #60a5fa !important; }
+  .text-industry-blue-400-selected { color: #bfdbfe !important; }
+  .text-industry-pink-400 { color: #f472b6 !important; }
+  .text-industry-pink-400-selected { color: #fce7f3 !important; }
+  .text-industry-indigo-400 { color: #818cf8 !important; }
+  .text-industry-indigo-400-selected { color: #e0e7ff !important; }
+  .text-industry-red-400 { color: #f87171 !important; }
+  .text-industry-red-400-selected { color: #fecaca !important; }
+  .text-industry-cyan-400 { color: #22d3ee !important; }
+  .text-industry-cyan-400-selected { color: #bfdbfe !important; }
+  .text-industry-purple-400 { color: #c084fc !important; }
+  .text-industry-purple-400-selected { color: #e9d5ff !important; }
+  .text-industry-emerald-400 { color: #34d399 !important; }
+  .text-industry-emerald-400-selected { color: #a7f3d0 !important; }
 }

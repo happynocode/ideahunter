@@ -66,20 +66,20 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
   };
 
   const getTextColorClass = (color: string, isSelected: boolean = false) => {
-    // Define all possible combinations explicitly so Tailwind can detect them
-    if (color === 'neon-blue') return isSelected ? 'text-cyan-200' : 'text-cyan-400';
-    if (color === 'neon-purple') return isSelected ? 'text-purple-200' : 'text-purple-400';
-    if (color === 'violet-400') return isSelected ? 'text-violet-200' : 'text-violet-400';
-    if (color === 'green-400') return isSelected ? 'text-green-200' : 'text-green-400';
-    if (color === 'yellow-400') return isSelected ? 'text-yellow-200' : 'text-yellow-400';
-    if (color === 'orange-400') return isSelected ? 'text-orange-200' : 'text-orange-400';
-    if (color === 'blue-400') return isSelected ? 'text-blue-200' : 'text-blue-400';
-    if (color === 'pink-400') return isSelected ? 'text-pink-200' : 'text-pink-400';
-    if (color === 'indigo-400') return isSelected ? 'text-indigo-200' : 'text-indigo-400';
-    if (color === 'red-400') return isSelected ? 'text-red-200' : 'text-red-400';
-    if (color === 'cyan-400') return isSelected ? 'text-cyan-200' : 'text-cyan-400';
-    if (color === 'purple-400') return isSelected ? 'text-purple-200' : 'text-purple-400';
-    if (color === 'emerald-400') return isSelected ? 'text-emerald-200' : 'text-emerald-400';
+    // Use custom CSS classes with !important to ensure they work
+    if (color === 'neon-blue') return isSelected ? 'text-industry-neon-blue-selected' : 'text-industry-neon-blue';
+    if (color === 'neon-purple') return isSelected ? 'text-industry-neon-purple-selected' : 'text-industry-neon-purple';
+    if (color === 'violet-400') return isSelected ? 'text-industry-violet-400-selected' : 'text-industry-violet-400';
+    if (color === 'green-400') return isSelected ? 'text-industry-green-400-selected' : 'text-industry-green-400';
+    if (color === 'yellow-400') return isSelected ? 'text-industry-yellow-400-selected' : 'text-industry-yellow-400';
+    if (color === 'orange-400') return isSelected ? 'text-industry-orange-400-selected' : 'text-industry-orange-400';
+    if (color === 'blue-400') return isSelected ? 'text-industry-blue-400-selected' : 'text-industry-blue-400';
+    if (color === 'pink-400') return isSelected ? 'text-industry-pink-400-selected' : 'text-industry-pink-400';
+    if (color === 'indigo-400') return isSelected ? 'text-industry-indigo-400-selected' : 'text-industry-indigo-400';
+    if (color === 'red-400') return isSelected ? 'text-industry-red-400-selected' : 'text-industry-red-400';
+    if (color === 'cyan-400') return isSelected ? 'text-industry-cyan-400-selected' : 'text-industry-cyan-400';
+    if (color === 'purple-400') return isSelected ? 'text-industry-purple-400-selected' : 'text-industry-purple-400';
+    if (color === 'emerald-400') return isSelected ? 'text-industry-emerald-400-selected' : 'text-industry-emerald-400';
     
     return isSelected ? 'text-gray-200' : 'text-gray-400';
   };
