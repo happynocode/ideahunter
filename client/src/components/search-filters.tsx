@@ -11,8 +11,8 @@ interface SearchFiltersProps {
   onSortChange: (sort: 'upvotes' | 'comments' | 'recent') => void;
   minUpvotes?: number;
   onMinUpvotesChange: (minUpvotes?: number) => void;
-  timeRange: 'today' | 'week' | 'month' | 'all';
-  onTimeRangeChange: (timeRange: 'today' | 'week' | 'month' | 'all') => void;
+  timeRange: 'today' | 'yesterday' | 'week' | 'month' | 'all';
+  onTimeRangeChange: (timeRange: 'today' | 'yesterday' | 'week' | 'month' | 'all') => void;
 }
 
 export default function SearchFilters({
@@ -53,6 +53,7 @@ export default function SearchFilters({
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-white/20">
                   <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
                   <SelectItem value="week">This Week</SelectItem>
                   <SelectItem value="month">This Month</SelectItem>
                   <SelectItem value="all">All Time</SelectItem>

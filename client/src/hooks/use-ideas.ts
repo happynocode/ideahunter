@@ -8,7 +8,7 @@ interface UseIdeasFilters {
   keywords?: string;
   minUpvotes?: number;
   sortBy?: 'upvotes' | 'comments' | 'recent' | 'confidence';
-  timeRange?: 'today' | 'week' | 'month' | 'all';
+  timeRange?: 'today' | 'yesterday' | 'week' | 'month' | 'all';
   page?: number;
   pageSize?: number;
 }
@@ -84,6 +84,13 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
               const today = new Date();
               const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD
               query = query.eq('target_date', todayString);
+              break;
+            case 'yesterday':
+              // Get ideas based on yesterday's target date
+              const yesterday = new Date();
+              yesterday.setDate(yesterday.getDate() - 1);
+              const yesterdayString = yesterday.toISOString().split('T')[0]; // YYYY-MM-DD
+              query = query.eq('target_date', yesterdayString);
               break;
             case 'week':
               // Get ideas from the last 7 days of target dates

@@ -78,7 +78,7 @@ export class SupabaseStorage implements IStorage {
     keywords?: string;
     minUpvotes?: number;
     sortBy?: 'upvotes' | 'comments' | 'recent';
-    timeRange?: 'today' | 'week' | 'month' | 'all';
+    timeRange?: 'today' | 'yesterday' | 'week' | 'month' | 'all';
     page?: number;
     pageSize?: number;
   }): Promise<{ ideas: StartupIdea[]; total: number }> {
@@ -112,6 +112,11 @@ export class SupabaseStorage implements IStorage {
       switch (filters.timeRange) {
         case 'today':
           cutoffTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'yesterday':
+          const yesterday = new Date(now);
+          yesterday.setDate(yesterday.getDate() - 1);
+          cutoffTime = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
           break;
         case 'week':
           cutoffTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
