@@ -208,7 +208,21 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <i className={`${industry.icon} ${getIconColorClass(industry.color, selectedIndustry === industry.id)}`}></i>
-                      <span className={getTextColorClass(industry.color, selectedIndustry === industry.id)}>{industry.name}</span>
+                      <span className={
+                        industry.name === 'FinTech' ? 'text-yellow-400' :
+                        industry.name === 'SaaS & Cloud Services' ? 'text-cyan-400' :
+                        industry.name === 'AI & Machine Learning' ? 'text-purple-400' :
+                        industry.name === 'Health & Fitness Tech' ? 'text-green-400' :
+                        industry.name === 'E-commerce & Retail' ? 'text-orange-400' :
+                        industry.name === 'EdTech' ? 'text-blue-400' :
+                        industry.name === 'Gaming & Entertainment' ? 'text-pink-400' :
+                        industry.name === 'Travel & Hospitality' ? 'text-indigo-400' :
+                        industry.name === 'Sports & Recreation' ? 'text-red-400' :
+                        industry.name === 'Social Media & Communication' ? 'text-cyan-400' :
+                        industry.name === 'Productivity & Tools' ? 'text-violet-400' :
+                        industry.name === 'Food & Beverage' ? 'text-emerald-400' :
+                        'text-gray-400'
+                      }>{industry.name}</span>
                       {!user && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
                     </div>
                     <Badge className={getColorClass(industry.color, selectedIndustry === industry.id)}>
