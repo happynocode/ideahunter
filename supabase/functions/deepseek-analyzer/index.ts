@@ -215,7 +215,7 @@ async function callGeminiAPI(prompt: string): Promise<string> {
             {
               parts: [
                 {
-                  text: `You are a startup analyst expert specializing in identifying market opportunities from Reddit discussions. Analyze posts and generate comprehensive startup ideas with deep market insights. IMPORTANT: Return ONLY valid JSON without any markdown formatting, code blocks, or extra text.\n\n${prompt}`
+                  text: `You are a business analyst expert specializing in identifying market opportunities from Reddit discussions. Analyze posts and generate comprehensive business ideas across various models including startups, small businesses, and service companies. Focus on diverse solutions beyond just tech startups, and avoid over-relying on AI-powered solutions unless truly necessary. IMPORTANT: Return ONLY valid JSON without any markdown formatting, code blocks, or extra text.\n\n${prompt}`
                 }
               ]
             }
@@ -286,7 +286,23 @@ function createAnalysisPrompt(industry: string, posts: RawRedditPost[], targetDa
   const dateContext = `from ${startDateStr} to ${targetDate} (5-day range)`;
 
   return `
-Analyze the following high-priority Reddit posts from the ${industry} industry from ${dateContext} and generate 0-10 high-potential startup ideas based on user pain points and unmet needs.
+Analyze the following high-priority Reddit posts from the ${industry} industry from ${dateContext} and generate 0-10 high-potential business ideas based on user pain points and unmet needs.
+
+**BUSINESS IDEA TYPES: Your ideas can be:**
+- **Tech Startups** (software, apps, platforms)
+- **Small Businesses** (local services, retail, consulting)
+- **Service Businesses** (professional services, maintenance, support)
+- **Traditional Businesses** (manufacturing, distribution, physical products)
+- **Hybrid Models** (combining online and offline elements)
+
+**AVOID OVER-RELIANCE ON AI**: While AI-powered solutions are valid, prioritize diverse approaches including:
+- Human-centered services
+- Process improvements and workflow optimization
+- Physical products and hardware solutions  
+- Community-driven platforms
+- Educational and training services
+- Marketplace and connection platforms
+- Subscription and membership models
 
 **IMPORTANT: Only generate ideas if you find genuine, valuable opportunities. It's perfectly acceptable to return an empty ideas array if:**
 - The posts don't reveal significant unmet needs
@@ -305,11 +321,11 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks, no ext
 {
   "ideas": [
     {
-      "title": "Clear, compelling startup idea title",
-      "summary": "Comprehensive overview of the startup idea (3-4 sentences explaining the core problem and solution)",
+      "title": "Clear, compelling business idea title (can be startup, small business, or service)",
+      "summary": "Comprehensive overview of the business idea (3-4 sentences explaining the core problem and solution)",
       "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
       "existing_solutions": "Analysis of current solutions in the market and their limitations",
-      "solution_gaps": "Specific gaps and shortcomings in existing solutions that this startup would address",
+      "solution_gaps": "Specific gaps and shortcomings in existing solutions that this business would address",
       "market_size": "Market size estimation and target audience analysis",
       "confidence_score": 85,
       "innovation_score": 75,
@@ -325,15 +341,18 @@ Analysis Requirements:
 3. Consider the urgency and recency of the discussions over this 5-day period
 4. **Require at least 3-5 related posts discussing similar problems before considering an idea**
 5. Include confidence scores (1-100) - only suggest ideas with confidence ≥70
-6. Include innovation scores (1-100) based on solution uniqueness
+6. Include innovation scores (1-100) based on solution uniqueness and business model creativity
 7. Reference specific Reddit posts that inspired each idea
 8. **If the posts don't reveal clear patterns or significant opportunities, return an empty ideas array**
 9. Consider the priority scores when evaluating market potential
-10. Keywords should be SEO-friendly and relevant to the startup idea
+10. Keywords should be SEO-friendly and relevant to the business idea
 11. **Reject ideas that have obvious, well-established solutions already available**
 12. **Require genuine user frustration or pain points, not just feature requests**
+13. **PRIORITIZE DIVERSE BUSINESS MODELS**: Avoid defaulting to "AI-powered" solutions unless truly necessary
+14. **CONSIDER NON-TECH SOLUTIONS**: Many problems can be solved through better processes, services, or physical products
+15. **THINK LOCAL AND SCALABLE**: Consider both local service opportunities and scalable business models
 
-**Remember: It's better to return no ideas than to force weak or unconvincing ones. Be selective and critical.**
+**Remember: It's better to return no ideas than to force weak or unconvincing ones. Be selective and critical. Diversify your approach - not everything needs to be a tech startup!**
 
 Sort ideas by combined market potential, confidence score, and innovation score (highest first).
 Return JSON only, no other text.
