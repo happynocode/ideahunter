@@ -1,4 +1,4 @@
-import { ArrowUp, MessageSquare, Calendar, Lock, Users } from "lucide-react";
+import { ArrowUp, MessageSquare, Calendar, Lock, Users, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,13 +14,12 @@ interface IdeaGridProps {
   isLoading: boolean;
   isLimited?: boolean;
   onIdeaClick: (ideaId: number) => void;
+  isFetching?: boolean;
 }
 
-export default function IdeaGrid({ ideas, isLoading, isLimited, onIdeaClick }: IdeaGridProps) {
+export default function IdeaGrid({ ideas, isLoading, isLimited, onIdeaClick, isFetching }: IdeaGridProps) {
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-
-
 
   if (isLoading) {
     return (
@@ -74,8 +73,18 @@ export default function IdeaGrid({ ideas, isLoading, isLimited, onIdeaClick }: I
         </div>
       )}
 
+      {/* Fetching Indicator */}
+      {isFetching && (
+        <div className="flex items-center justify-center py-4">
+          <div className="flex items-center space-x-2 text-neon-blue">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm">Updating results...</span>
+          </div>
+        </div>
+      )}
+
       {/* Ideas Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 ${isFetching ? 'opacity-70 transition-opacity duration-200' : ''}`}>
         {ideas.map((idea) => (
           <Card 
             key={idea.id}

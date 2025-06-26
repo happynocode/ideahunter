@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import Sidebar from "@/components/sidebar";
@@ -35,7 +35,8 @@ export default function Dashboard() {
   // Debug log
   console.log('Dashboard - User:', user?.email, 'isAdmin:', isAdmin);
 
-  const { data: ideasData, isLoading } = useIdeas({
+  // 使用useMemo来稳定filter对象，避免不必要的重新查询
+  const stableFilters = useMemo(() => ({
     industryId: selectedIndustry,
     keywords: searchQuery,
     sortBy,
@@ -43,17 +44,19 @@ export default function Dashboard() {
     timeRange,
     page: currentPage,
     pageSize: 20
-  });
+  }), [selectedIndustry, searchQuery, sortBy, minUpvotes, timeRange, currentPage]);
+
+  const { data: ideasData, isLoading, isFetching } = useIdeas(stableFilters);
 
   // Reset page when filters change
   const resetFilters = () => {
     setCurrentPage(1);
-    setAllIdeas([]);
+    // 不立即清空allIdeas，等待新数据到达
   };
 
   // Load more ideas function
   const handleLoadMore = () => {
-    if (ideasData && !isLoading) {
+    if (ideasData && !isLoading && !isFetching) {
       const hasMorePages = currentPage < ideasData.totalPages;
       if (hasMorePages) {
         setCurrentPage(prev => prev + 1);
@@ -65,19 +68,22 @@ export default function Dashboard() {
   useEffect(() => {
     if (ideasData?.ideas) {
       if (currentPage === 1) {
+        // 新的第一页数据，替换所有现有数据
         setAllIdeas(ideasData.ideas);
       } else {
+        // 追加分页数据
         setAllIdeas(prev => [...prev, ...ideasData.ideas]);
       }
     }
   }, [ideasData, currentPage]);
 
-  // Reset pagination when filters change
+  // Reset pagination when filters change (but not immediately clear data)
   useEffect(() => {
     resetFilters();
   }, [selectedIndustry, searchQuery, sortBy, minUpvotes, timeRange]);
 
-
+  // 计算是否应该显示loading状态
+  const shouldShowLoading = (isLoading || isFetching) && currentPage === 1 && allIdeas.length === 0;
 
   return (
     <div className="gradient-bg text-white min-h-screen relative overflow-x-hidden">
@@ -152,9 +158,10 @@ export default function Dashboard() {
 
           <IdeaGrid
             ideas={allIdeas}
-            isLoading={isLoading && currentPage === 1}
+            isLoading={shouldShowLoading}
             isLimited={ideasData?.isLimited}
             onIdeaClick={setSelectedIdea}
+            isFetching={isFetching && currentPage === 1}
           />
 
           {/* Load More */}
@@ -162,10 +169,10 @@ export default function Dashboard() {
             <div className="text-center mt-8">
               <Button 
                 onClick={handleLoadMore}
-                disabled={isLoading}
+                disabled={isLoading || isFetching}
                 className="glass-card rounded-lg px-8 py-3 text-white hover:bg-white/20 transition-all duration-200 neon-glow border-0 disabled:opacity-50"
               >
-                {isLoading ? "Loading..." : "Load More Ideas"}
+                {(isLoading || isFetching) ? "Loading..." : "Load More Ideas"}
               </Button>
             </div>
           )}

@@ -4,7 +4,7 @@ import { useIndustries } from "@/hooks/use-industries";
 import { useDailyStats } from "@/hooks/use-ideas";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import AuthModal from "./auth-modal";
 import { getIndustryTextColor } from "@/lib/industry-colors";
 
@@ -13,11 +13,39 @@ interface SidebarProps {
   onIndustrySelect: (industryId?: number) => void;
 }
 
+// 简单的防抖函数实现
+function useDebounce<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+): T {
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const debouncedCallback = useCallback(
+    (...args: Parameters<T>) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
+      const newTimer = setTimeout(() => {
+        callback(...args);
+      }, delay);
+
+      setDebounceTimer(newTimer);
+    },
+    [callback, delay, debounceTimer]
+  ) as T;
+
+  return debouncedCallback;
+}
+
 export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarProps) {
   const { data: industries, isLoading: industriesLoading } = useIndustries();
   const { data: stats } = useDailyStats();
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // 使用防抖来减少快速切换时的查询频率
+  const debouncedIndustrySelect = useDebounce(onIndustrySelect, 300); // 300ms防抖
 
   const handleIndustryClick = (industryId?: number) => {
     if (!user && industryId !== undefined) {
@@ -25,7 +53,8 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
       setAuthModalOpen(true);
       return;
     }
-    onIndustrySelect(industryId);
+    // 使用防抖版本的回调
+    debouncedIndustrySelect(industryId);
   };
 
   const getIconColorClass = (color: string, isSelected: boolean = false) => {

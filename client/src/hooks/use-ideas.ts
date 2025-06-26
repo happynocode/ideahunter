@@ -19,7 +19,7 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
 
   return useQuery<IdeasResponse>({
     queryKey: ['ideas', filters, user?.id],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       // For non-authenticated users, restrict to today's top 3 ideas only
       const isAuthenticated = !!user;
       
@@ -111,7 +111,8 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
         query = query.range((page - 1) * pageSize, page * pageSize - 1);
       }
 
-      const { data: ideas, error, count } = await query;
+      // Use AbortController for request cancellation to prevent race conditions
+      const { data: ideas, error, count } = await query.abortSignal(signal);
 
       if (error) {
         throw new Error(`Failed to fetch ideas: ${error.message}`);
@@ -151,6 +152,13 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
         isLimited: !isAuthenticated
       };
     },
+    // 添加配置来防止竞态条件
+    staleTime: 30 * 1000, // 30秒内认为数据是新鲜的，减少不必要的重复请求
+    gcTime: 5 * 60 * 1000, // 5分钟垃圾回收时间
+    retry: 1, // 减少重试次数，避免过多并发请求
+    refetchOnWindowFocus: false, // 禁用窗口聚焦时自动重新获取
+    // 为每个查询保持前一次的数据，直到新数据到达
+    placeholderData: (previousData) => previousData,
   });
 }
 
