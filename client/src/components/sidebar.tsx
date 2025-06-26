@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { Rocket, Lock } from "lucide-react";
+import { Rocket, Lock, Heart } from "lucide-react";
 import { useIndustries } from "@/hooks/use-industries";
 import { useDailyStats } from "@/hooks/use-ideas";
+import { useFavorites } from "@/hooks/use-favorites";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import { Badge } from "@/components/ui/badge";
 import { useState, useCallback } from "react";
@@ -10,7 +11,9 @@ import { getIndustryTextColor } from "@/lib/industry-colors";
 
 interface SidebarProps {
   selectedIndustry?: number;
+  showFavorites?: boolean;
   onIndustrySelect: (industryId?: number) => void;
+  onFavoritesSelect: (showFavorites: boolean) => void;
 }
 
 // 简单的防抖函数实现
@@ -38,9 +41,10 @@ function useDebounce<T extends (...args: any[]) => void>(
   return debouncedCallback;
 }
 
-export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarProps) {
+export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySelect, onFavoritesSelect }: SidebarProps) {
   const { data: industries, isLoading: industriesLoading } = useIndustries();
   const { data: stats } = useDailyStats();
+  const { data: favoritesData } = useFavorites(1, 1000); // Get all favorites for count
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
@@ -53,8 +57,19 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
       setAuthModalOpen(true);
       return;
     }
-    // 使用防抖版本的回调
+    // Clear favorites view and select industry
+    onFavoritesSelect(false);
     debouncedIndustrySelect(industryId);
+  };
+
+  const handleFavoritesClick = () => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+    // Clear industry selection and show favorites
+    onIndustrySelect(undefined);
+    onFavoritesSelect(true);
   };
 
   const getIconColorClass = (color: string, isSelected: boolean = false) => {
@@ -204,17 +219,40 @@ export default function Sidebar({ selectedIndustry, onIndustrySelect }: SidebarP
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
                 className={`industry-item rounded-lg p-3 cursor-pointer hover:bg-white/10 transition-all duration-200 ${
-                  !selectedIndustry ? 'bg-cyan-400/40 border-2 border-cyan-400 border-l-4 border-l-cyan-400 shadow-lg shadow-cyan-400/30' : 'bg-white/5 border border-white/20'
+                  !selectedIndustry && !showFavorites ? 'bg-cyan-400/40 border-2 border-cyan-400 border-l-4 border-l-cyan-400 shadow-lg shadow-cyan-400/30' : 'bg-white/5 border border-white/20'
                 }`}
                 onClick={() => handleIndustryClick(undefined)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <i className={`fas fa-globe ${!selectedIndustry ? 'text-cyan-200' : 'text-cyan-400'}`}></i>
-                    <span className={!selectedIndustry ? 'text-cyan-200' : 'text-white'}>All Industries</span>
+                    <i className={`fas fa-globe ${!selectedIndustry && !showFavorites ? 'text-cyan-200' : 'text-cyan-400'}`}></i>
+                    <span className={!selectedIndustry && !showFavorites ? 'text-cyan-200' : 'text-white'}>All Industries</span>
                   </div>
                   <span className="bg-cyan-400/20 text-cyan-400 px-2 py-1 rounded-full text-xs">
                     {industries?.reduce((sum, industry) => sum + (industry.ideaCount || 0), 0) || 0}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Favorites Option - only show for authenticated users */}
+            {user && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+                className={`industry-item rounded-lg p-3 cursor-pointer hover:bg-white/10 transition-all duration-200 ${
+                  showFavorites ? 'bg-pink-400/40 border-2 border-pink-400 border-l-4 border-l-pink-400 shadow-lg shadow-pink-400/30' : 'bg-white/5 border border-white/20'
+                }`}
+                onClick={handleFavoritesClick}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Heart className={`w-4 h-4 ${showFavorites ? 'text-pink-200 fill-current' : 'text-pink-400'}`} />
+                    <span className={showFavorites ? 'text-pink-200' : 'text-white'}>Favorites</span>
+                  </div>
+                  <span className="bg-pink-400/20 text-pink-400 px-2 py-1 rounded-full text-xs">
+                    {favoritesData?.total || 0}
                   </span>
                 </div>
               </motion.div>

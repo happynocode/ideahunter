@@ -25,6 +25,15 @@ export interface StartupIdea {
   createdAt: string;
   updatedAt: string;
   industry?: Industry;
+  isFavorited?: boolean; // Add flag to track if current user has favorited this idea
+}
+
+export interface Favorite {
+  id: number;
+  userId: number;
+  startupIdeaId: number;
+  createdAt: string;
+  startupIdea?: StartupIdea;
 }
 
 export interface DailyStats {

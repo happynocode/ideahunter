@@ -84,6 +84,14 @@ export const scrapeTasks = pgTable("scrape_tasks", {
   completedAt: timestamp("completed_at"),
 });
 
+// Favorites table - stores user favorite ideas
+export const favorites = pgTable("favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  startupIdeaId: integer("startup_idea_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -116,6 +124,11 @@ export const insertScrapeTaskSchema = createInsertSchema(scrapeTasks).omit({
   completedAt: true,
 });
 
+export const insertFavoriteSchema = createInsertSchema(favorites).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Industry = typeof industries.$inferSelect;
@@ -128,3 +141,5 @@ export type DailyStats = typeof dailyStats.$inferSelect;
 export type InsertDailyStats = z.infer<typeof insertDailyStatsSchema>;
 export type ScrapeTask = typeof scrapeTasks.$inferSelect;
 export type InsertScrapeTask = z.infer<typeof insertScrapeTaskSchema>;
+export type Favorite = typeof favorites.$inferSelect;
+export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
