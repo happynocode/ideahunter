@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowUp, MessageSquare, Clock, Bookmark, Share, ExternalLink, AlertCircle } from "lucide-react";
+import { X, ArrowUp, MessageSquare, Clock, Bookmark, ExternalLink, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -72,13 +72,7 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
     });
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast({
-      title: "Link Copied",
-      description: "Idea link has been copied to your clipboard.",
-    });
-  };
+
 
   if (!ideaId) return null;
 
@@ -296,13 +290,6 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
                         >
                           <Bookmark className="w-5 h-5 mr-2" />
                           Save to Favorites
-                        </Button>
-                        <Button
-                          onClick={handleShare}
-                          className="w-full glass-card rounded-lg py-4 text-white hover:bg-white/20 transition-all duration-200 border-0 font-semibold"
-                        >
-                          <Share className="w-5 h-5 mr-2" />
-                          Share Idea
                         </Button>
                       </div>
 
