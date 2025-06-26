@@ -269,4 +269,8 @@ This project is licensed under the [MIT License](./LICENSE).
 
 ---
 
-⭐ If this project helps you, please give it a star! 
+⭐ If this project helps you, please give it a star!
+
+# ScraperDash
+
+<!-- Trigger rebuild for ideahunter URL: 2024-12-30 --> 
