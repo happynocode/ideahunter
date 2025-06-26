@@ -29,7 +29,7 @@ function AdminRoute() {
 
 function AppRouter() {
   // Get base path for GitHub Pages
-  const basePath = process.env.NODE_ENV === 'production' ? '/reddit-idea-scraper' : '';
+  const basePath = process.env.NODE_ENV === 'production' ? '/ideahunter' : '';
   
   return (
     <Router base={basePath}>
