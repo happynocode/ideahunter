@@ -103,7 +103,8 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
             break;
           case 'recent':
           default:
-            query = query.order('created_at', { ascending: false });
+            // 使用target_date排序，显示最新目标日期的ideas在前面
+            query = query.order('target_date', { ascending: false });
             break;
         }
 

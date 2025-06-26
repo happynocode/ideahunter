@@ -45,8 +45,16 @@ export function formatTargetDate(targetDate: string | undefined): string {
   }
   
   try {
-    const date = new Date(targetDate);
-    return format(date, 'MMM dd, yyyy');
+    // 如果是YYYY-MM-DD格式的字符串，直接解析以避免时区问题
+    if (targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = targetDate.split('-').map(Number);
+      const date = new Date(year, month - 1, day); // month - 1 因为月份是0-indexed
+      return format(date, 'MMM dd, yyyy');
+    } else {
+      // 其他格式的日期字符串
+      const date = new Date(targetDate);
+      return format(date, 'MMM dd, yyyy');
+    }
   } catch {
     return 'Invalid date';
   }
