@@ -88,11 +88,11 @@ export default function Dashboard() {
     resetFilters();
   }, [selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange]);
 
-  // Reset ideas when switching between favorites and regular view
+  // Reset ideas when switching between favorites and regular view or when industry changes
   useEffect(() => {
     setAllIdeas([]);
     setCurrentPage(1);
-  }, [showFavorites]);
+  }, [showFavorites, selectedIndustry]);
 
   // 计算是否应该显示loading状态
   const shouldShowLoading = currentLoading && currentPage === 1 && allIdeas.length === 0;

@@ -21,7 +21,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30 * 1000, // 30秒内认为数据是新鲜的，减少不必要的重复请求
+      staleTime: 15 * 1000, // 减少到15秒，确保行业切换等操作时能更快获取新数据
       gcTime: 5 * 60 * 1000, // 5分钟垃圾回收时间，保持缓存更长时间
       retry: (failureCount, error) => {
         // 网络错误或超时时重试，其他错误不重试
