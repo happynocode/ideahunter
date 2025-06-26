@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth.tsx';
 import type { StartupIdea, DailyStats, IdeasResponse } from '@/lib/types';
+import { useMemo } from 'react';
 
 interface UseIdeasFilters {
   industryId?: number;
@@ -17,8 +18,17 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
   const { page = 1, pageSize = 20 } = filters;
   const { user } = useAuth();
 
+  // 添加时间戳和随机数确保每次查询都是唯一的
+  const uniqueKey = useMemo(() => Math.random().toString(36), [
+    filters.industryId, 
+    filters.keywords, 
+    filters.sortBy, 
+    filters.minUpvotes, 
+    filters.timeRange
+  ]);
+
   return useQuery<IdeasResponse>({
-    queryKey: ['ideas', JSON.stringify(filters), user?.id],
+    queryKey: ['ideas', JSON.stringify(filters), user?.id, uniqueKey],
     queryFn: async ({ signal }) => {
       // For non-authenticated users, restrict to today's top 3 ideas only
       const isAuthenticated = !!user;
@@ -165,13 +175,13 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
         isLimited: !isAuthenticated
       };
     },
-    // 添加配置来防止竞态条件
-    staleTime: 0, // 立即过期，确保每次筛选变化都会重新获取数据
-    gcTime: 1 * 60 * 1000, // 1分钟垃圾回收时间
-    retry: 1, // 减少重试次数，避免过多并发请求
+    // 强制禁用缓存，确保每次筛选都会重新查询
+    staleTime: 0, // 立即过期
+    gcTime: 0, // 立即垃圾回收，不缓存
+    retry: 1, // 减少重试次数
     refetchOnWindowFocus: false, // 禁用窗口聚焦时自动重新获取
-    // 当筛选条件改变时强制重新获取数据
-    refetchOnMount: true
+    refetchOnMount: true, // 组件挂载时重新获取
+    enabled: true // 确保查询始终启用
   });
 }
 

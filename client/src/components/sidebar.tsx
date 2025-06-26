@@ -5,7 +5,7 @@ import { useDailyStats } from "@/hooks/use-ideas";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import { Badge } from "@/components/ui/badge";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import AuthModal from "./auth-modal";
 import { getIndustryTextColor } from "@/lib/industry-colors";
 
@@ -16,31 +16,6 @@ interface SidebarProps {
   onFavoritesSelect: (showFavorites: boolean) => void;
 }
 
-// 简单的防抖函数实现
-function useDebounce<T extends (...args: any[]) => void>(
-  callback: T,
-  delay: number
-): T {
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
-
-  const debouncedCallback = useCallback(
-    (...args: Parameters<T>) => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-
-      const newTimer = setTimeout(() => {
-        callback(...args);
-      }, delay);
-
-      setDebounceTimer(newTimer);
-    },
-    [callback, delay, debounceTimer]
-  ) as T;
-
-  return debouncedCallback;
-}
-
 export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySelect, onFavoritesSelect }: SidebarProps) {
   const { data: industries, isLoading: industriesLoading } = useIndustries();
   const { data: stats } = useDailyStats();
@@ -49,6 +24,8 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const handleIndustryClick = (industryId?: number) => {
+    console.log('Sidebar - handleIndustryClick called with:', industryId);
+    
     if (!user && industryId !== undefined) {
       // Show login modal for non-authenticated users clicking on specific industries
       setAuthModalOpen(true);
@@ -56,11 +33,15 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
     }
     // Clear favorites view and select industry
     onFavoritesSelect(false);
-    // 不使用防抖，直接调用以确保状态立即更新
+    // 立即调用，确保状态立即更新
     onIndustrySelect(industryId);
+    
+    console.log('Sidebar - Industry selected:', industryId);
   };
 
   const handleFavoritesClick = () => {
+    console.log('Sidebar - handleFavoritesClick called');
+    
     if (!user) {
       setAuthModalOpen(true);
       return;
@@ -68,6 +49,8 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
     // Clear industry selection and show favorites
     onIndustrySelect(undefined);
     onFavoritesSelect(true);
+    
+    console.log('Sidebar - Favorites selected');
   };
 
   const getIconColorClass = (color: string, isSelected: boolean = false) => {

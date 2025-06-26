@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useLocation, useParams } from "wouter";
 import Sidebar from "@/components/sidebar";
 import IdeaGrid from "@/components/idea-grid";
 import IdeaDetailModal from "@/components/idea-detail-modal";
@@ -20,8 +20,15 @@ import { AdminRequired } from "@/components/protected-route";
 import { getIndustryColor } from "@/lib/industry-colors";
 
 export default function Dashboard() {
-  const [selectedIndustry, setSelectedIndustry] = useState<number | undefined>();
-  const [showFavorites, setShowFavorites] = useState(false);
+  const [location, setLocation] = useLocation();
+  const params = useParams();
+  
+  // 从URL获取行业ID，如果存在的话
+  const industryFromUrl = params.industryId ? parseInt(params.industryId) : undefined;
+  const showFavoritesFromUrl = location.includes('favorites');
+  
+  const [selectedIndustry, setSelectedIndustry] = useState<number | undefined>(industryFromUrl);
+  const [showFavorites, setShowFavorites] = useState(showFavoritesFromUrl);
   const [selectedIdea, setSelectedIdea] = useState<number | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<'upvotes' | 'comments' | 'recent'>('upvotes');
@@ -29,6 +36,7 @@ export default function Dashboard() {
   const [timeRange, setTimeRange] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [allIdeas, setAllIdeas] = useState<any[]>([]);
+  const [lastFilterKey, setLastFilterKey] = useState('');
   
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
@@ -37,7 +45,55 @@ export default function Dashboard() {
   // Debug log
   console.log('Dashboard - User:', user?.email, 'isAdmin:', isAdmin);
 
-  // 使用useMemo来稳定filter对象，避免不必要的重新查询
+  // 处理行业选择，同时更新URL
+  const handleIndustrySelect = (industryId?: number) => {
+    console.log('Dashboard - handleIndustrySelect called with:', industryId);
+    console.log('Dashboard - Before update - selectedIndustry:', selectedIndustry, 'showFavorites:', showFavorites);
+    
+    setSelectedIndustry(industryId);
+    setShowFavorites(false);
+    setAllIdeas([]); // 立即清空数据
+    setCurrentPage(1);
+    
+    // 更新URL
+    if (industryId) {
+      setLocation(`/dashboard/industry/${industryId}`);
+    } else {
+      setLocation('/dashboard');
+    }
+    
+    // 强制重置过滤器状态
+    const newFilterKey = `${industryId || 'all'}-${Date.now()}`;
+    setLastFilterKey(newFilterKey);
+    
+    console.log('Dashboard - After update - industryId:', industryId, 'newFilterKey:', newFilterKey);
+  };
+
+  // 处理收藏夹选择，同时更新URL
+  const handleFavoritesSelect = (showFav: boolean) => {
+    console.log('Dashboard - handleFavoritesSelect called with:', showFav);
+    console.log('Dashboard - Before update - selectedIndustry:', selectedIndustry, 'showFavorites:', showFavorites);
+    
+    setShowFavorites(showFav);
+    setSelectedIndustry(undefined);
+    setAllIdeas([]); // 立即清空数据
+    setCurrentPage(1);
+    
+    // 更新URL
+    if (showFav) {
+      setLocation('/dashboard/favorites');
+    } else {
+      setLocation('/dashboard');
+    }
+    
+    // 强制重置过滤器状态
+    const newFilterKey = `favorites-${showFav}-${Date.now()}`;
+    setLastFilterKey(newFilterKey);
+    
+    console.log('Dashboard - After update - showFavorites:', showFav, 'newFilterKey:', newFilterKey);
+  };
+
+  // 使用useMemo来稳定filter对象，并添加唯一标识符
   const stableFilters = useMemo(() => ({
     industryId: selectedIndustry,
     keywords: searchQuery,
@@ -45,11 +101,13 @@ export default function Dashboard() {
     minUpvotes,
     timeRange,
     page: currentPage,
-    pageSize: 20
-  }), [selectedIndustry, searchQuery, sortBy, minUpvotes, timeRange, currentPage]);
+    pageSize: 20,
+    // 添加唯一标识符确保每次筛选都会重新查询
+    _uniqueId: lastFilterKey
+  }), [selectedIndustry, searchQuery, sortBy, minUpvotes, timeRange, currentPage, lastFilterKey]);
 
-  const { data: ideasData, isLoading, isFetching } = useIdeas(stableFilters);
-  const { data: favoritesData, isLoading: favoritesLoading } = useFavorites(currentPage, 20);
+  const { data: ideasData, isLoading, isFetching, refetch: refetchIdeas } = useIdeas(stableFilters);
+  const { data: favoritesData, isLoading: favoritesLoading, refetch: refetchFavorites } = useFavorites(currentPage, 20);
 
   // Determine which data to show based on showFavorites
   const currentData = showFavorites ? favoritesData : ideasData;
@@ -58,6 +116,7 @@ export default function Dashboard() {
   // Reset page when filters change
   const resetFilters = () => {
     setCurrentPage(1);
+    setAllIdeas([]);
   };
 
   // Load more ideas function
@@ -87,11 +146,32 @@ export default function Dashboard() {
     }
   }, [currentData, currentPage]);
 
-  // Reset everything when any filter changes (including industry)
+  // Reset everything when any filter changes (including industry) - 增强版本
   useEffect(() => {
     setAllIdeas([]);
     setCurrentPage(1);
-  }, [selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange]);
+    
+    // 强制重新获取数据
+    setTimeout(() => {
+      if (showFavorites) {
+        refetchFavorites();
+      } else {
+        refetchIdeas();
+      }
+    }, 100);
+  }, [selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange, refetchIdeas, refetchFavorites]);
+
+  // URL变化时同步状态
+  useEffect(() => {
+    if (industryFromUrl !== selectedIndustry) {
+      setSelectedIndustry(industryFromUrl);
+      setShowFavorites(false);
+    }
+    if (showFavoritesFromUrl !== showFavorites) {
+      setShowFavorites(showFavoritesFromUrl);
+      setSelectedIndustry(undefined);
+    }
+  }, [industryFromUrl, showFavoritesFromUrl]);
 
   // 计算是否应该显示loading状态
   const shouldShowLoading = currentLoading && currentPage === 1 && allIdeas.length === 0;
@@ -127,8 +207,8 @@ export default function Dashboard() {
         <Sidebar 
           selectedIndustry={selectedIndustry}
           showFavorites={showFavorites}
-          onIndustrySelect={setSelectedIndustry}
-          onFavoritesSelect={setShowFavorites}
+          onIndustrySelect={handleIndustrySelect}
+          onFavoritesSelect={handleFavoritesSelect}
         />
         
         <div className="flex-1 p-8">

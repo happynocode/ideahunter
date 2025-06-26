@@ -24,6 +24,15 @@ export default function IdeaGrid({ ideas, isLoading, isLimited, onIdeaClick, isF
   const { toast } = useToast();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
+  // 添加调试日志
+  console.log('IdeaGrid - Rendering with:', {
+    ideasCount: ideas.length,
+    isLoading,
+    isFetching,
+    isLimited,
+    firstIdeaTitle: ideas[0]?.title || 'No ideas'
+  });
+
   // Get favorite status for all ideas
   const ideaIds = ideas.map(idea => idea.id);
   const { data: favoriteStatus } = useFavoriteStatus(ideaIds);

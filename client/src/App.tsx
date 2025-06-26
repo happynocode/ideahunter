@@ -35,6 +35,9 @@ function AppRouter() {
     <Router base={basePath}>
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/dashboard/industry/:industryId" component={Dashboard} />
+        <Route path="/dashboard/favorites" component={Dashboard} />
         <Route path="/admin" component={AdminRoute} />
         <Route component={NotFound} />
       </Switch>
