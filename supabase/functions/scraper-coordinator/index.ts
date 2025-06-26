@@ -1,5 +1,5 @@
-import "https://deno.land/x/xhr@0.3.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -16,12 +16,12 @@ interface ScraperTask {
   max_retries: number;
 }
 
-const BATCH_SIZE = 1; // 每次处理1个任务（优化后）
+const BATCH_SIZE = 2; // 每次处理2个任务（优化后）
 const LOCK_TIMEOUT = 300000; // 5分钟锁定超时
 const TASK_TIMEOUT = 300000; // 5分钟任务超时 (优化后缩短，原来是10分钟)
 const MAX_TASK_RETRIES = 3; // 最大重试次数
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -87,11 +87,15 @@ serve(async (req) => {
 
     // 3. 检查并重置超时任务
     console.log('Scraper Coordinator: Checking for timeout tasks...');
-    const { data: timeoutTasks } = await supabaseClient
+    const { data: timeoutTasks, error: timeoutError } = await supabaseClient
       .from('scrape_tasks')
       .select('id, retry_count, max_retries, industry_id, started_at, batch_id')
       .eq('status', 'scraping')
       .lt('started_at', new Date(Date.now() - TASK_TIMEOUT).toISOString());
+
+    if (timeoutError) {
+      console.error('Error checking timeout tasks:', timeoutError);
+    }
 
     if (timeoutTasks && timeoutTasks.length > 0) {
       console.log(`⚠️ Scraper Coordinator: Found ${timeoutTasks.length} timeout tasks, analyzing...`);
@@ -283,7 +287,7 @@ serve(async (req) => {
       task_ids: scraperPayload.task_ids.length + ' tasks'
     });
 
-    // 9. 触发 reddit-scraper 函数 (fire-and-forget)
+    // 9. 触发 reddit-scraper 函数 (改进错误处理)
     console.log('Scraper Coordinator: Triggering reddit-scraper...');
     
     fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/reddit-scraper`, {
@@ -293,14 +297,35 @@ serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(scraperPayload)
-    }).then(response => {
+    }).then(async response => {
       if (response.ok) {
         console.log('Scraper Coordinator: Successfully triggered reddit-scraper');
       } else {
-        console.error(`Scraper Coordinator: Failed to trigger reddit-scraper: ${response.status}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error(`Scraper Coordinator: Failed to trigger reddit-scraper: ${response.status} - ${errorText}`);
+        
+        // 如果触发失败，重置任务状态并记录错误
+        await supabaseClient
+          .from('scrape_tasks')
+          .update({
+            status: 'pending_scrape',
+            error_message: `Failed to trigger reddit-scraper: ${response.status} - ${errorText}`,
+            started_at: null
+          })
+          .in('id', taskIds);
       }
-    }).catch(error => {
+    }).catch(async error => {
       console.error('Scraper Coordinator: Error triggering reddit-scraper:', error);
+      
+      // 网络错误或其他异常，重置任务状态
+      await supabaseClient
+        .from('scrape_tasks')
+        .update({
+          status: 'pending_scrape',
+          error_message: `Error triggering reddit-scraper: ${error.message}`,
+          started_at: null
+        })
+        .in('id', taskIds);
     });
     
     console.log('Scraper Coordinator: Reddit scraper triggered, tasks handed off');

@@ -1,5 +1,5 @@
-import "https://deno.land/x/xhr@0.3.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -20,7 +20,7 @@ const BATCH_SIZE = 4; // 每次处理4个任务
 const LOCK_TIMEOUT = 300000; // 5分钟锁定超时
 const TASK_TIMEOUT = 600000; // 10分钟任务超时
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -133,8 +133,8 @@ serve(async (req) => {
       .eq('status', 'failed')
       .not('error_message', 'ilike', '%No unprocessed posts%') // 排除没有帖子的情况
       .not('error_message', 'ilike', '%no posts%') // 排除没有帖子的情况（小写）
-              .or('error_message.ilike.%analysis%,error_message.ilike.%gemini%,error_message.ilike.%API%,error_message.ilike.%timeout%')
-      .filter('retry_count', 'lt', 'max_retries')
+      .or('error_message.ilike.%analysis%,error_message.ilike.%gemini%,error_message.ilike.%API%,error_message.ilike.%timeout%')
+      .lt('retry_count', 3) // 修复: 使用具体数字而不是字段比较
       .lt('completed_at', new Date(Date.now() - 3600000).toISOString()); // 1小时后重试
 
     if (retryTasks && retryTasks.length > 0) {
