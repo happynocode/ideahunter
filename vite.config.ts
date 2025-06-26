@@ -24,7 +24,7 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
-  base: process.env.NODE_ENV === "production" ? "/reddit-idea-scraper/" : "/",
+  base: process.env.NODE_ENV === "production" ? "/ideahunter/" : "/",
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
