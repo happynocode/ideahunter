@@ -18,7 +18,7 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
   const { user } = useAuth();
 
   return useQuery<IdeasResponse>({
-    queryKey: ['ideas', filters, user?.id],
+    queryKey: ['ideas', JSON.stringify(filters), user?.id],
     queryFn: async ({ signal }) => {
       // For non-authenticated users, restrict to today's top 3 ideas only
       const isAuthenticated = !!user;
@@ -116,6 +116,18 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
       const { data: ideas, error, count } = await query.abortSignal(signal);
 
       if (error) {
+        // Handle range not satisfiable error gracefully
+        if (error.message.includes('Range Not Satisfiable') || error.code === 'PGRST103') {
+          console.warn('Range not satisfiable, returning empty result');
+          return {
+            ideas: [],
+            total: 0,
+            page: 1,
+            pageSize,
+            totalPages: 0,
+            isLimited: !isAuthenticated
+          };
+        }
         throw new Error(`Failed to fetch ideas: ${error.message}`);
       }
 
@@ -154,10 +166,12 @@ export function useIdeas(filters: UseIdeasFilters = {}) {
       };
     },
     // 添加配置来防止竞态条件
-    staleTime: 10 * 1000, // 减少到10秒，确保行业切换时能更快获取新数据
-    gcTime: 5 * 60 * 1000, // 5分钟垃圾回收时间
+    staleTime: 0, // 立即过期，确保每次筛选变化都会重新获取数据
+    gcTime: 1 * 60 * 1000, // 1分钟垃圾回收时间
     retry: 1, // 减少重试次数，避免过多并发请求
     refetchOnWindowFocus: false, // 禁用窗口聚焦时自动重新获取
+    // 当筛选条件改变时强制重新获取数据
+    refetchOnMount: true
   });
 }
 

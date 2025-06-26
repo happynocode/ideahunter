@@ -72,27 +72,26 @@ export default function Dashboard() {
 
   // Update combined ideas when new data arrives
   useEffect(() => {
-    if (currentData?.ideas) {
+    if (currentData?.ideas !== undefined) {
       if (currentPage === 1) {
-        // 新的第一页数据，替换所有现有数据
+        // 新的第一页数据，替换所有现有数据（包括空数组）
         setAllIdeas(currentData.ideas);
-      } else {
-        // 追加分页数据
-        setAllIdeas(prev => [...prev, ...currentData.ideas]);
+      } else if (currentData.ideas.length > 0) {
+        // 追加分页数据，但确保不会出现重复数据
+        setAllIdeas(prev => {
+          const existingIds = new Set(prev.map(idea => idea.id));
+          const newIdeas = currentData.ideas.filter(idea => !existingIds.has(idea.id));
+          return [...prev, ...newIdeas];
+        });
       }
     }
   }, [currentData, currentPage]);
 
-  // Reset pagination when filters change (but not immediately clear data)
-  useEffect(() => {
-    resetFilters();
-  }, [selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange]);
-
-  // Reset ideas when switching between favorites and regular view or when industry changes
+  // Reset everything when any filter changes (including industry)
   useEffect(() => {
     setAllIdeas([]);
     setCurrentPage(1);
-  }, [showFavorites, selectedIndustry]);
+  }, [selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange]);
 
   // 计算是否应该显示loading状态
   const shouldShowLoading = currentLoading && currentPage === 1 && allIdeas.length === 0;

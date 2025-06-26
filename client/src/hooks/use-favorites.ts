@@ -36,6 +36,17 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
       const { data: favorites, error, count } = await query;
 
       if (error) {
+        // Handle range not satisfiable error gracefully
+        if (error.message.includes('Range Not Satisfiable') || error.code === 'PGRST103') {
+          console.warn('Range not satisfiable for favorites, returning empty result');
+          return {
+            ideas: [],
+            total: 0,
+            page,
+            pageSize,
+            totalPages: 0
+          };
+        }
         throw new Error(`Failed to fetch favorites: ${error.message}`);
       }
 

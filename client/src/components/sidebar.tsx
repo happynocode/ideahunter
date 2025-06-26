@@ -48,9 +48,6 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // 使用防抖来减少快速切换时的查询频率
-  const debouncedIndustrySelect = useDebounce(onIndustrySelect, 300); // 300ms防抖
-
   const handleIndustryClick = (industryId?: number) => {
     if (!user && industryId !== undefined) {
       // Show login modal for non-authenticated users clicking on specific industries
@@ -59,7 +56,8 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
     }
     // Clear favorites view and select industry
     onFavoritesSelect(false);
-    debouncedIndustrySelect(industryId);
+    // 不使用防抖，直接调用以确保状态立即更新
+    onIndustrySelect(industryId);
   };
 
   const handleFavoritesClick = () => {
