@@ -87,7 +87,7 @@ export const scrapeTasks = pgTable("scrape_tasks", {
 // Favorites table - stores user favorite ideas
 export const favorites = pgTable("favorites", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: text("user_id").notNull(),
   startupIdeaId: integer("startup_idea_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
