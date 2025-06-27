@@ -299,7 +299,7 @@ export default function Dashboard() {
           )}
 
           <IdeaGrid
-            ideas={allIdeas}
+            ideas={showFavorites ? (currentData?.ideas || []) : allIdeas}
             isLoading={shouldShowLoading}
             isLimited={currentData?.isLimited}
             onIdeaClick={setSelectedIdea}
