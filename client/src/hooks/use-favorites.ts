@@ -8,11 +8,8 @@ import { useMemo } from 'react';
 export function useFavorites(page: number = 1, pageSize: number = 20) {
   const { user } = useAuth();
 
-  // 添加唯一标识符确保每次查询都是新的
-  const uniqueKey = useMemo(() => Math.random().toString(36), [page, pageSize]);
-
   return useQuery<IdeasResponse>({
-    queryKey: ['favorites', user?.id, page, pageSize, uniqueKey],
+    queryKey: ['favorites', user?.id, page, pageSize],
     queryFn: async () => {
       console.log('Favorites - Query executing for user:', user?.id, 'page:', page);
       
@@ -62,7 +59,7 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
         .from('startup_ideas')
         .select(`
           *,
-          industries!inner(*)
+          industry:industries!industry_id(*)
         `)
         .in('id', ideaIds);
 
@@ -95,7 +92,7 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
         createdAt: idea.created_at,
         updatedAt: idea.updated_at,
         confidenceScore: idea.confidence_score,
-        industry: idea.industries,
+        industry: idea.industry,
         isFavorited: true
       }));
 
@@ -110,12 +107,10 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
       };
     },
     enabled: !!user,
-    // 与ideas hook保持一致的缓存策略
-    staleTime: 0, // 立即过期
-    gcTime: 0, // 立即垃圾回收，不缓存
-    retry: 1, // 减少重试次数
-    refetchOnWindowFocus: false, // 禁用窗口聚焦时自动重新获取
-    refetchOnMount: true, // 组件挂载时重新获取
+    staleTime: 30000, // 30秒有效期
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    retry: 2
   });
 }
 
