@@ -2,15 +2,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth.tsx';
 import type { Favorite, StartupIdea, IdeasResponse } from '@/lib/types';
+import { useMemo } from 'react';
 
 // Hook to get user's favorites
 export function useFavorites(page: number = 1, pageSize: number = 20) {
   const { user } = useAuth();
 
+  // 添加唯一标识符确保每次查询都是新的
+  const uniqueKey = useMemo(() => Math.random().toString(36), [page, pageSize]);
+
   return useQuery<IdeasResponse>({
-    queryKey: ['favorites', user?.id, page, pageSize],
+    queryKey: ['favorites', user?.id, page, pageSize, uniqueKey],
     queryFn: async () => {
+      console.log('Favorites - Query executing for user:', user?.id, 'page:', page);
+      
       if (!user) {
+        console.log('Favorites - No user, returning empty result');
         return {
           ideas: [],
           total: 0,
@@ -24,16 +31,22 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
         .from('favorites')
         .select(`
           *,
-          startup_ideas!startup_idea_id(
+          startup_ideas!startupIdeaId(
             *,
-            industry:industries!industry_id(*)
+            industry:industries!industryId(*)
           )
         `, { count: 'exact' })
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .eq('userId', user.id)
+        .order('createdAt', { ascending: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       const { data: favorites, error, count } = await query;
+
+      console.log('Favorites - Query result:', {
+        favoritesCount: favorites?.length || 0,
+        totalCount: count,
+        error: error?.message
+      });
 
       if (error) {
         // Handle range not satisfiable error gracefully
@@ -57,22 +70,25 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
           id: idea.id,
           title: idea.title,
           summary: idea.summary,
-          industryId: idea.industry_id,
+          industryId: idea.industryId,
           upvotes: idea.upvotes,
           comments: idea.comments,
           keywords: idea.keywords || [],
           subreddit: idea.subreddit,
-          redditPostUrls: idea.reddit_post_urls || [],
-          existingSolutions: idea.existing_solutions,
-          solutionGaps: idea.solution_gaps,
-          marketSize: idea.market_size,
-          targetDate: idea.target_date,
-          createdAt: idea.created_at,
-          updatedAt: idea.updated_at,
+          redditPostUrls: idea.redditPostUrls || [],
+          existingSolutions: idea.existingSolutions,
+          solutionGaps: idea.solutionGaps,
+          marketSize: idea.marketSize,
+          targetDate: idea.targetDate,
+          createdAt: idea.createdAt,
+          updatedAt: idea.updatedAt,
+          confidenceScore: idea.confidenceScore,
           industry: idea.industry,
           isFavorited: true
         };
       });
+
+      console.log('Favorites - Mapped ideas:', ideas.length);
 
       return {
         ideas,
@@ -82,7 +98,13 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
         totalPages: Math.ceil((count || 0) / pageSize)
       };
     },
-    enabled: !!user
+    enabled: !!user,
+    // 与ideas hook保持一致的缓存策略
+    staleTime: 0, // 立即过期
+    gcTime: 0, // 立即垃圾回收，不缓存
+    retry: 1, // 减少重试次数
+    refetchOnWindowFocus: false, // 禁用窗口聚焦时自动重新获取
+    refetchOnMount: true, // 组件挂载时重新获取
   });
 }
 
@@ -99,9 +121,9 @@ export function useFavoriteStatus(ideaIds: number[]) {
 
       const { data, error } = await supabase
         .from('favorites')
-        .select('startup_idea_id')
-        .eq('user_id', user.id)
-        .in('startup_idea_id', ideaIds);
+        .select('startupIdeaId')
+        .eq('userId', user.id)
+        .in('startupIdeaId', ideaIds);
 
       if (error) {
         throw new Error(`Failed to check favorite status: ${error.message}`);
@@ -113,7 +135,7 @@ export function useFavoriteStatus(ideaIds: number[]) {
       });
 
       (data || []).forEach(favorite => {
-        statusMap[favorite.startup_idea_id] = true;
+        statusMap[favorite.startupIdeaId] = true;
       });
 
       return statusMap;
@@ -138,8 +160,8 @@ export function useToggleFavorite() {
         const { error } = await supabase
           .from('favorites')
           .delete()
-          .eq('user_id', user.id)
-          .eq('startup_idea_id', ideaId);
+          .eq('userId', user.id)
+          .eq('startupIdeaId', ideaId);
 
         if (error) {
           throw new Error(`Failed to remove favorite: ${error.message}`);
@@ -149,8 +171,8 @@ export function useToggleFavorite() {
         const { error } = await supabase
           .from('favorites')
           .insert({
-            user_id: user.id,
-            startup_idea_id: ideaId
+            userId: user.id,
+            startupIdeaId: ideaId
           });
 
         if (error) {
