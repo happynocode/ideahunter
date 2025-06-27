@@ -58,162 +58,197 @@ const PROBLEMATIC_SUBREDDITS = new Set<string>([
   // 用户要求最大化数据，所以不过滤任何subreddit
 ]);
 
-// Industry mapping based on updated PRD (25 industries) - 根据文档完善版本
+// Industry mapping based on updated 38 categories
 const INDUSTRY_MAPPING = {
   'SaaS & Cloud Services': {
     id: 1,
-    subreddits: ['SaaS', 'cloud', 'aws', 'azure', 'googlecloud', 'SaaSMarketing', 'Entrepreneur', 'Startups', 'Tech', 'growthhacking', 'IndieHackers', 'marketing', 'Productivity'],
+    subreddits: ['SaaS', 'cloud', 'aws', 'azure', 'googlecloud', 'SaaSMarketing', 'microsaas', 'SaaSSales'],
     keywords: ['saas', 'software as a service', 'cloud', 'platform', 'subscription', 'api', 'service', 'kubernetes', 'docker', 'serverless', 'microservices']
   },
   'Developer Tools & Platforms': {
-    id: 7,
-    subreddits: ['Programming', 'devops', 'opensource', 'sysadmin', 'AskProgramming', 'Technology', 'coding', 'compsci', 'algorithms', 'SideProject'],
+    id: 2,
+    subreddits: ['Programming', 'devops', 'opensource', 'sysadmin', 'AskProgramming', 'Technology', 'coding', 'compsci', 'algorithms', 'programming', 'learnprogramming', 'AskEngineers', 'cscareerquestions', 'linux', 'Python', 'learnpython', 'computerscience', 'rust', 'ExperiencedDevs', 'csharp', 'software', 'SoftwareEngineering', 'AskComputerScience', 'coolgithubprojects'],
     keywords: ['development', 'programming', 'code', 'developer', 'tool', 'framework', 'library', 'ide', 'editor', 'version control', 'devops', 'ci/cd']
   },
   'API & Backend Services': {
-    id: 12,
-    subreddits: ['api', 'backend', 'microservices', 'coding', 'SoftwareArchitecture', 'Kubernetes', 'docker', 'node', 'django'],
+    id: 3,
+    subreddits: ['api', 'backend', 'microservices', 'SoftwareArchitecture', 'Kubernetes', 'docker', 'node', 'django'],
     keywords: ['api', 'backend', 'server', 'database', 'microservices', 'rest', 'graphql', 'sql', 'nosql', 'performance', 'scaling', 'architecture']
   },
   'Mobile App Development': {
-    id: 222,
+    id: 4,
     subreddits: ['androiddev', 'iOSProgramming', 'flutter', 'UIUX', 'FlutterDev', 'reactnative', 'ionic'],
     keywords: ['mobile', 'app', 'android', 'ios', 'flutter', 'react native', 'swift', 'kotlin', 'cross platform', 'mobile ui', 'app store']
   },
   'Web & Frontend Development': {
-    id: 223,
-    subreddits: ['webdev', 'javascript', 'reactjs', 'webassembly', 'Frontend', 'web_design'],
+    id: 5,
+    subreddits: ['webdev', 'javascript', 'reactjs', 'webassembly', 'Frontend', 'web_design', 'learnjavascript'],
     keywords: ['web', 'frontend', 'javascript', 'react', 'vue', 'angular', 'css', 'html', 'typescript', 'responsive', 'performance', 'ui/ux']
   },
   'No-Code/Low-Code Platforms': {
-    id: 8,
-    subreddits: ['NoCode', 'LowCode', 'Bubble', 'Makerpad', 'nocode', 'Airtable', 'zapier'],
+    id: 6,
+    subreddits: ['NoCode', 'LowCode', 'Bubble', 'Makerpad', 'nocode', 'Airtable', 'zapier', 'webflow', 'NoCodeSaaS', 'lowcode'],
     keywords: ['nocode', 'no code', 'low code', 'automation', 'workflow', 'integration', 'zapier', 'bubble', 'webflow', 'airtable', 'citizen developer']
   },
   'Cybersecurity & Privacy': {
-    id: 13,
+    id: 7,
     subreddits: ['cybersecurity', 'netsec', 'cryptography', 'privacytoolsio', 'malware', 'computerforensics', 'reverseengineering', 'ethicalhacking', 'Cybersecurity101', 'CyberSecurityJobs'],
     keywords: ['security', 'cybersecurity', 'privacy', 'encryption', 'protection', 'vulnerability', 'penetration testing', 'malware', 'firewall', 'authentication']
   },
   'AI & Machine Learning': {
-    id: 2,
-    subreddits: ['MachineLearning', 'datascience', 'OpenAI', 'LLM', 'LanguageTechnology', 'DeepLearning', 'NeuralNetworks', 'ArtificialIntelligence', 'AI'],
+    id: 8,
+    subreddits: ['MachineLearning', 'datascience', 'OpenAI', 'LLM', 'LanguageTechnology', 'DeepLearning', 'NeuralNetworks', 'ArtificialIntelligence', 'AI', 'ChatGPT', 'ArtificialInteligence', 'artificial', 'aiArt', 'CharGPTPromptGenius', 'LocalLLaMA', 'ChatGPTPro', 'ChatGPTCoding', 'ClaudeAI', 'aivideo', 'AI_Agents', 'automation', 'aipromptprogramming', 'Bard', 'perplexity_ai', 'GeminiAI', 'cursor', 'GoogleGeminiAI', 'DeepSeek', 'midjourney', 'StableDiffusion', 'PromptEngineering', 'ollama', 'LocalLLM', 'OpenSourceAi'],
     keywords: ['ai', 'artificial intelligence', 'machine learning', 'deep learning', 'neural network', 'llm', 'nlp', 'computer vision', 'data science', 'mlops']
   },
   'E-commerce & Retail': {
-    id: 4,
-    subreddits: ['ecommerce', 'Shopify', 'AmazonSeller', 'AmazonFBA', 'SEO', 'advertising', 'marketing', 'dropship'],
+    id: 9,
+    subreddits: ['ecommerce', 'Shopify', 'AmazonSeller', 'AmazonFBA', 'dropship', 'Etsy', 'EtsySellers', 'reviewmyshopify', 'ecommercemarketing'],
     keywords: ['ecommerce', 'e-commerce', 'retail', 'shop', 'marketplace', 'online store', 'dropshipping', 'amazon', 'shopify', 'payment']
   },
   'Health & Fitness Tech': {
-    id: 5,
-    subreddits: ['fitness', 'DigitalHealth', 'WearOS', 'healthtech', 'MedTech', 'QuantifiedSelf', 'sleephackers', 'Biohackers', 'healthIT'],
+    id: 10,
+    subreddits: ['fitness', 'DigitalHealth', 'WearOS', 'healthtech', 'MedTech', 'QuantifiedSelf', 'sleephackers', 'Biohackers', 'healthIT', 'Fitness', 'strength_training', 'loseit', 'Health', 'GYM', 'GymMotivation', 'workout', 'fitness30plus', 'physicaltherapy', 'personaltraining', 'WeightTraining'],
     keywords: ['health', 'healthcare', 'medical', 'fitness', 'wellness', 'telemedicine', 'nutrition', 'mental health', 'wearable', 'health tech']
   },
   'EdTech': {
-    id: 6,
+    id: 11,
     subreddits: ['edtech', 'learnprogramming', 'OnlineTutoring', 'education', 'instructionaldesign', 'Elearning', 'teachers'],
     keywords: ['education', 'edtech', 'learning', 'teaching', 'course', 'training', 'skill', 'knowledge', 'school', 'university', 'lms', 'e-learning']
   },
   'FinTech': {
-    id: 3,
-    subreddits: ['fintech', 'CryptoCurrency', 'blockchain', 'InsurTech', 'CryptoMarkets', 'Altcoin', 'NFT', 'BitcoinBeginners'],
-    keywords: ['fintech', 'finance', 'payment', 'banking', 'cryptocurrency', 'crypto', 'investment', 'trading', 'money', 'blockchain', 'defi']
+    id: 12,
+    subreddits: ['fintech', 'InsurTech'],
+    keywords: ['fintech', 'finance', 'payment', 'banking', 'financial services', 'digital banking', 'insurtech', 'regtech']
   },
-  'Consumer Services': {
-    id: 224,
-    subreddits: ['SideHustle', 'smallbusiness', 'freelance', 'BeerMoney', 'DigitalNomad', 'Fiverr'],
+  'Startup & Business': {
+    id: 13,
+    subreddits: ['Entrepreneur', 'business', 'startups', 'EntrepreneurRideAlong', 'SideProject', 'startup', 'ycombinator', 'Entrepreneurship', 'indiehackers', 'Entrepreneurs', 'growmybusiness', 'indiebiz', 'thesidehustle'],
+    keywords: ['startup', 'business', 'entrepreneur', 'venture', 'funding', 'investment', 'business model', 'innovation', 'growth', 'scaling']
+  },
+  'Consumer Services & Freelance': {
+    id: 14,
+    subreddits: ['SideHustle', 'smallbusiness', 'freelance', 'BeerMoney', 'DigitalNomad', 'Fiverr', 'WorkOnline', 'forhire', 'freelanceWriters', 'freelance_forhire', 'Upwork', 'Freelancers', 'remotework', 'RemoteJobHunters'],
     keywords: ['service', 'consumer', 'local', 'home', 'food', 'delivery', 'cleaning', 'repair', 'maintenance', 'gig economy', 'freelance']
   },
   'Enterprise & B2B Services': {
-    id: 225,
-    subreddits: ['b2b', 'CRM', 'startups', 'Procurement', 'Entrepreneurship'],
+    id: 15,
+    subreddits: ['b2b', 'CRM', 'Procurement'],
     keywords: ['b2b', 'enterprise', 'business', 'crm', 'erp', 'workflow', 'collaboration', 'hr', 'sales', 'marketing', 'project management']
   },
+  'Digital Marketing & SEO': {
+    id: 16,
+    subreddits: ['SEO', 'DigitalMarketing', 'digital_marketing', 'Affiliatemarketing', 'PPC', 'advertising', 'FacebookAds', 'content_marketing', 'bigseo', 'Emailmarketing', 'AskMarketing', 'googleads', 'MarketingResearch', 'GrowthHacking', 'DigitalMarketingHack', 'TechSEO', 'seogrowth', 'marketing'],
+    keywords: ['seo', 'digital marketing', 'content marketing', 'ppc', 'advertising', 'email marketing', 'social media marketing', 'affiliate marketing', 'growth hacking']
+  },
+  'Social Media Marketing & Influencers': {
+    id: 17,
+    subreddits: ['socialmedia', 'discord', 'communitymanagement', 'SocialMediaMarketing', 'BeautyFuruChatter', 'Instagram', 'InstagramMarketing', 'inflencermarketing', 'InstagramGrowthTips'],
+    keywords: ['social media', 'influencer', 'instagram', 'tiktok', 'youtube', 'community management', 'social marketing', 'engagement', 'followers']
+  },
   'Media & Content Creation': {
-    id: 226,
-    subreddits: ['youtubers', 'podcasting', 'CreatorEconomy', 'SEO', 'vlogging', 'NewTubers', 'ContentCreators', 'photography', 'blogging'],
-    keywords: ['content', 'media', 'video', 'audio', 'podcast', 'blog', 'design', 'editing', 'streaming', 'creator', 'influencer', 'social media']
+    id: 18,
+    subreddits: ['youtubers', 'podcasting', 'CreatorEconomy', 'vlogging', 'NewTubers', 'ContentCreators', 'blogging', 'VideoEditing', 'bideography', 'premiere', 'editors', 'finalcutpro', 'BideoEditors', 'Youtubevideo'],
+    keywords: ['content', 'media', 'video', 'audio', 'podcast', 'blog', 'design', 'editing', 'streaming', 'creator', 'youtube', 'video editing']
+  },
+  'Photography & Visual Arts': {
+    id: 19,
+    subreddits: ['photography', 'analog', 'AskPhotography', 'streetphotography', 'postprocessing', 'AnalogCommunity', 'WeddingPhotography', 'Beginning_Photography'],
+    keywords: ['photography', 'photo', 'camera', 'visual arts', 'image', 'picture', 'portrait', 'landscape', 'digital photography', 'film photography']
+  },
+  'Design & Creative Tools': {
+    id: 20,
+    subreddits: ['design', 'graphic_design', 'web_design', 'UI_Design', 'Adobe', 'Figma', 'creativity', 'typography', 'logodesign', 'UXDesign', 'userexperience', 'UXResearch', 'learndesign', 'product_design', 'UX_Design', 'FigmaDesign'],
+    keywords: ['design', 'creative', 'graphic design', 'ui/ux', 'adobe', 'figma', 'photoshop', 'illustration', 'branding', 'visual design']
   },
   'Travel & Transportation': {
-    id: 227,
+    id: 21,
     subreddits: ['travel', 'solotravel', 'airbnb', 'wanderlust', 'shoestring', 'travelhacks', 'backpacking', 'DigitalNomad'],
     keywords: ['travel', 'trip', 'vacation', 'hotel', 'flight', 'transportation', 'booking', 'tourism', 'nomad', 'journey']
   },
-  'Social & Community': {
-    id: 9,
-    subreddits: ['socialmedia', 'discord', 'communitymanagement', 'SocialMediaMarketing', 'digital_marketing', 'marketing'],
-    keywords: ['social', 'community', 'networking', 'communication', 'collaboration', 'forum', 'chat', 'messaging', 'relationship', 'connection']
-  },
   'GreenTech & Sustainability': {
-    id: 11,
+    id: 22,
     subreddits: ['sustainability', 'renewable', 'cleantech', 'RenewableEnergy', 'Envirotech', 'solar'],
     keywords: ['sustainability', 'green', 'eco', 'environment', 'renewable', 'climate', 'carbon', 'energy', 'waste', 'recycling', 'clean tech']
   },
   'Logistics & Supply Chain': {
-    id: 228,
+    id: 23,
     subreddits: ['logistics', 'warehouse', 'operations', 'supplychain', 'inventory'],
     keywords: ['logistics', 'supply chain', 'shipping', 'warehouse', 'inventory', 'freight', 'delivery', 'procurement', 'operations', 'manufacturing']
   },
   'Gaming & Entertainment': {
-    id: 10,
+    id: 24,
     subreddits: ['gaming', 'gamedev', 'VirtualReality', 'GamingIndustry', 'eSports', 'VRGaming', 'boardgames'],
     keywords: ['gaming', 'game', 'entertainment', 'streaming', 'content', 'video game', 'mobile game', 'vr', 'ar', 'unity', 'unreal']
   },
   'Hardware & IoT': {
-    id: 231,
+    id: 25,
     subreddits: ['hardware', 'IOT', 'homeautomation', 'arduino', 'raspberrypi'],
     keywords: ['hardware', 'iot', 'internet of things', 'embedded', 'sensors', 'automation', 'arduino', 'raspberry pi', 'electronics', 'microcontroller']
   },
   'AR/VR & Metaverse': {
-    id: 238,
+    id: 26,
     subreddits: ['virtualreality', 'oculus', 'augmentedreality', 'Metaverse'],
     keywords: ['ar', 'vr', 'augmented reality', 'virtual reality', 'metaverse', 'oculus', 'quest', 'immersive', '3d', 'spatial computing']
   },
   'BioTech & MedTech': {
-    id: 239,
+    id: 27,
     subreddits: ['biotech', 'biotechnology', 'bioinformatics', 'genomics', 'labrats'],
     keywords: ['biotech', 'biotechnology', 'medical technology', 'genomics', 'bioinformatics', 'pharmaceuticals', 'lab', 'research', 'clinical', 'diagnosis']
   },
   'LegalTech': {
-    id: 235,
+    id: 28,
     subreddits: ['legaltech', 'law', 'legaladvice'],
     keywords: ['legal tech', 'law', 'legal', 'compliance', 'contract', 'attorney', 'lawyer', 'paralegal', 'court', 'litigation']
   },
   'PropTech': {
-    id: 234,
+    id: 29,
     subreddits: ['PropTech', 'RealEstate', 'SmartHome'],
     keywords: ['proptech', 'real estate', 'property', 'rental', 'smart home', 'mortgage', 'real estate investment', 'home automation', 'construction', 'architecture']
   },
   'Data Science & Analytics': {
-    id: 229,
-    subreddits: ['datascience', 'analytics', 'MachineLearning', 'statistics', 'tableau', 'PowerBI', 'bigdata'],
+    id: 30,
+    subreddits: ['datascience', 'analytics', 'statistics', 'tableau', 'PowerBI', 'bigdata', 'dataengineering', 'BusinessIntelligence', 'dataanalysis', 'dataanalytics'],
     keywords: ['data science', 'analytics', 'business intelligence', 'big data', 'statistics', 'visualization', 'dashboard', 'reporting', 'insights', 'data mining']
   },
   'Blockchain & Cryptocurrency': {
-    id: 230,
-    subreddits: ['CryptoCurrency', 'blockchain', 'ethereum', 'Bitcoin', 'DeFi', 'NFT', 'Web3'],
+    id: 31,
+    subreddits: ['CryptoCurrency', 'blockchain', 'ethereum', 'Bitcoin', 'DeFi', 'NFT', 'Web3', 'ethtrader', 'CryptoMarkets', 'solana', 'BitcoinBeginners', 'defi', 'web3'],
     keywords: ['blockchain', 'cryptocurrency', 'bitcoin', 'ethereum', 'defi', 'nft', 'web3', 'smart contracts', 'crypto trading', 'digital assets']
   },
+  'Stock Investment & Trading': {
+    id: 32,
+    subreddits: ['stocks', 'Daytrading', 'SotckMarket', 'investing', 'finance', 'options', 'dividends', 'ValueInvesting', 'Trading', 'swingtrading', 'StocksAndTrading'],
+    keywords: ['stocks', 'trading', 'investment', 'finance', 'stock market', 'portfolio', 'dividend', 'options', 'forex', 'commodities']
+  },
+  'Financial Independence & Personal Finance': {
+    id: 33,
+    subreddits: ['TheRaceTo10Million', 'Fire', 'fatFIRE', 'leanfire', 'personalfinance', 'Frugal', 'financialindependence', 'FinancialPlanning', 'UKPersonalFinance', 'PersonalFinanceCanada', 'lifehacks', 'productivity', 'getdisciplined', 'lifehack'],
+    keywords: ['financial independence', 'fire', 'personal finance', 'retirement', 'saving', 'budgeting', 'frugal', 'money management', 'productivity', 'life optimization']
+  },
   'Audio & Podcast': {
-    id: 232,
+    id: 34,
     subreddits: ['podcasting', 'podcasts', 'audio', 'spotify', 'audioengineering', 'voiceover', 'audiobooks'],
     keywords: ['podcast', 'audio', 'music', 'sound', 'radio', 'voice', 'audiobook', 'streaming', 'recording', 'editing']
   },
-  'Design & Creative Tools': {
-    id: 233,
-    subreddits: ['design', 'graphic_design', 'web_design', 'UI_Design', 'Adobe', 'Figma', 'creativity'],
-    keywords: ['design', 'creative', 'graphic design', 'ui/ux', 'adobe', 'figma', 'photoshop', 'illustration', 'branding', 'visual design']
-  },
   'AgTech': {
-    id: 236,
-    subreddits: ['agriculture', 'farming', 'AgTech', 'sustainability', 'food', 'permaculture', 'gardening'],
+    id: 35,
+    subreddits: ['agriculture', 'farming', 'AgTech', 'permaculture', 'gardening'],
     keywords: ['agriculture', 'farming', 'agtech', 'food production', 'sustainable farming', 'precision agriculture', 'vertical farming', 'greenhouse', 'crop monitoring', 'livestock']
   },
+  'Pet Care & Community': {
+    id: 36,
+    subreddits: ['cats', 'dogs', 'Dogtraining', 'Aquariums', 'dogswithjobs', 'RATS', 'BeardedDragons', 'birding', 'DOG', 'DogAdvice', 'cat', 'Ornithology', 'Pets', 'germanshepherds', 'reptiles', 'herpetology', 'ballpython', 'leopardgeckos', 'turtle', 'PetAdvice', 'DogTrainingTips', 'Dogowners', 'dogbreed', 'DogBreeds101', 'cockatiel', 'doggrooming', 'CatAdvice', 'puppy101'],
+    keywords: ['pets', 'animals', 'dogs', 'cats', 'pet care', 'veterinary', 'animal health', 'pet products', 'pet training', 'pet community']
+  },
+  'Family & Parenting': {
+    id: 37,
+    subreddits: ['Parenting', 'daddit', 'SingleParents', 'beyondthebump', 'toddlers', 'NewParents', 'raisingkids', 'parentsofmultiples', 'Parents'],
+    keywords: ['parenting', 'family', 'children', 'kids', 'baby', 'child development', 'education', 'family life', 'pregnancy', 'childcare']
+  },
   'General/Trending Topics': {
-    id: 240,
+    id: 38,
     subreddits: [
-      'AskReddit', 'IAMA', 'funny', 'gaming', 'worldnews', 'todayilearned', 
+      'AskReddit', 'IAMA', 'funny', 'worldnews', 'todayilearned', 
       'aww', 'Music', 'movies', 'memes', 'Showerthoughts', 'science', 
       'pics', 'Jokes', 'news', 'explainlikeimfive', 'books', 'food', 
       'LifeProTips', 'DIY', 'GetMotivated', 'askscience'
