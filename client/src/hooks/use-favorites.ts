@@ -8,8 +8,14 @@ import { useMemo } from 'react';
 export function useFavorites(page: number = 1, pageSize: number = 20) {
   const { user } = useAuth();
 
+  // 每次调用都生成新的查询键，确保重新获取
+  const queryKey = useMemo(() => 
+    ['favorites', user?.id, page, pageSize, Date.now()], 
+    [user?.id, page, pageSize]
+  );
+
   return useQuery<IdeasResponse>({
-    queryKey: ['favorites', user?.id, page, pageSize],
+    queryKey,
     queryFn: async () => {
       console.log('Favorites - Query executing for user:', user?.id, 'page:', page);
       
@@ -107,7 +113,8 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
       };
     },
     enabled: !!user,
-    staleTime: 30000, // 30秒有效期
+    staleTime: 0, // 立即过期，每次都重新查询
+    gcTime: 0, // 不缓存
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     retry: 2

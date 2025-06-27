@@ -161,7 +161,7 @@ export default function Dashboard() {
       if (currentPage === 1) {
         // 新的第一页数据，替换所有现有数据（包括空数组）
         console.log('Dashboard - Setting allIdeas to:', currentData.ideas.length, 'ideas');
-        setAllIdeas(currentData.ideas);
+        setAllIdeas([...currentData.ideas]); // 使用展开运算符确保新数组
       } else if (currentData.ideas.length > 0) {
         // 追加分页数据，但确保不会出现重复数据
         setAllIdeas(prev => {
@@ -171,33 +171,20 @@ export default function Dashboard() {
         });
       }
     }
-  }, [currentData, currentPage, showFavorites]);
+  }, [currentData?.ideas, currentPage, showFavorites]); // 依赖于ideas数组而不是整个currentData对象
 
-  // Reset everything when any filter changes (including industry) - 增强版本
+  // Reset everything when any filter changes (including industry) - 简化版本
   useEffect(() => {
     console.log('Dashboard - Filter reset effect triggered:', {
       selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange
     });
     
-    // 只在真的切换过滤条件时才重置
-    const shouldReset = true; // 保持原有逻辑，但添加日志
+    console.log('Dashboard - Resetting allIdeas and currentPage');
+    setAllIdeas([]);
+    setCurrentPage(1);
     
-    if (shouldReset) {
-      console.log('Dashboard - Resetting allIdeas and currentPage');
-      setAllIdeas([]);
-      setCurrentPage(1);
-      
-      // 强制重新获取数据
-      setTimeout(() => {
-        console.log('Dashboard - Refetching data, showFavorites:', showFavorites);
-        if (showFavorites) {
-          refetchFavorites();
-        } else {
-          refetchIdeas();
-        }
-      }, 100);
-    }
-  }, [selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange, refetchIdeas, refetchFavorites]);
+    // 不需要手动refetch，React Query会自动处理
+  }, [selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange]);
 
   // URL变化时同步状态
   useEffect(() => {
