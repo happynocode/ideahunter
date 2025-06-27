@@ -113,6 +113,24 @@ export default function Dashboard() {
   const currentData = showFavorites ? favoritesData : ideasData;
   const currentLoading = showFavorites ? favoritesLoading : (isLoading || isFetching);
 
+  // Debug current data state
+  console.log('Dashboard - Data state:', {
+    showFavorites,
+    favoritesData: favoritesData ? { 
+      ideasCount: favoritesData.ideas?.length || 0,
+      total: favoritesData.total 
+    } : null,
+    ideasData: ideasData ? { 
+      ideasCount: ideasData.ideas?.length || 0,
+      total: ideasData.total 
+    } : null,
+    currentData: currentData ? { 
+      ideasCount: currentData.ideas?.length || 0,
+      total: currentData.total 
+    } : null,
+    allIdeasLength: allIdeas.length
+  });
+
   // Reset page when filters change
   const resetFilters = () => {
     setCurrentPage(1);
@@ -131,9 +149,18 @@ export default function Dashboard() {
 
   // Update combined ideas when new data arrives
   useEffect(() => {
+    console.log('Dashboard - currentData update:', {
+      currentDataExists: !!currentData,
+      ideasLength: currentData?.ideas?.length || 0,
+      currentPage,
+      showFavorites,
+      allIdeasLength: allIdeas.length
+    });
+    
     if (currentData?.ideas !== undefined) {
       if (currentPage === 1) {
         // 新的第一页数据，替换所有现有数据（包括空数组）
+        console.log('Dashboard - Setting allIdeas to:', currentData.ideas.length, 'ideas');
         setAllIdeas(currentData.ideas);
       } else if (currentData.ideas.length > 0) {
         // 追加分页数据，但确保不会出现重复数据
@@ -144,21 +171,32 @@ export default function Dashboard() {
         });
       }
     }
-  }, [currentData, currentPage]);
+  }, [currentData, currentPage, showFavorites]);
 
   // Reset everything when any filter changes (including industry) - 增强版本
   useEffect(() => {
-    setAllIdeas([]);
-    setCurrentPage(1);
+    console.log('Dashboard - Filter reset effect triggered:', {
+      selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange
+    });
     
-    // 强制重新获取数据
-    setTimeout(() => {
-      if (showFavorites) {
-        refetchFavorites();
-      } else {
-        refetchIdeas();
-      }
-    }, 100);
+    // 只在真的切换过滤条件时才重置
+    const shouldReset = true; // 保持原有逻辑，但添加日志
+    
+    if (shouldReset) {
+      console.log('Dashboard - Resetting allIdeas and currentPage');
+      setAllIdeas([]);
+      setCurrentPage(1);
+      
+      // 强制重新获取数据
+      setTimeout(() => {
+        console.log('Dashboard - Refetching data, showFavorites:', showFavorites);
+        if (showFavorites) {
+          refetchFavorites();
+        } else {
+          refetchIdeas();
+        }
+      }, 100);
+    }
   }, [selectedIndustry, showFavorites, searchQuery, sortBy, minUpvotes, timeRange, refetchIdeas, refetchFavorites]);
 
   // URL变化时同步状态
