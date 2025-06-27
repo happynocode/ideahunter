@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth.tsx';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { FaGoogle } from 'react-icons/fa';
 
 interface AuthModalProps {
   open: boolean;
@@ -19,9 +21,10 @@ export default function AuthModal({ open, onOpenChange, defaultTab = 'signin' }:
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(defaultTab);
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,10 +32,10 @@ export default function AuthModal({ open, onOpenChange, defaultTab = 'signin' }:
 
     setLoading(true);
     try {
-      const { error } = activeTab === 'signin' 
+      const { error } = activeTab === 'signin'
         ? await signIn(email, password)
         : await signUp(email, password);
-      
+
       if (!error) {
         onOpenChange(false);
         setEmail('');
@@ -40,6 +43,18 @@ export default function AuthModal({ open, onOpenChange, defaultTab = 'signin' }:
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      if (!error) {
+        onOpenChange(false);
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -79,6 +94,26 @@ export default function AuthModal({ open, onOpenChange, defaultTab = 'signin' }:
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
+                {/* Google Sign In Button */}
+                <Button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={googleLoading}
+                  className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 flex items-center justify-center gap-3"
+                >
+                  <FaGoogle className="w-4 h-4" />
+                  {googleLoading ? 'Signing in...' : 'Continue with Google'}
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full bg-white/20" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-gray-900 px-2 text-gray-400">Or continue with email</span>
+                  </div>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signin-email" className="text-white">Email</Label>
@@ -143,6 +178,26 @@ export default function AuthModal({ open, onOpenChange, defaultTab = 'signin' }:
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
+                {/* Google Sign Up Button */}
+                <Button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={googleLoading}
+                  className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 flex items-center justify-center gap-3"
+                >
+                  <FaGoogle className="w-4 h-4" />
+                  {googleLoading ? 'Signing up...' : 'Continue with Google'}
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full bg-white/20" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-gray-900 px-2 text-gray-400">Or continue with email</span>
+                  </div>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-email" className="text-white">Email</Label>

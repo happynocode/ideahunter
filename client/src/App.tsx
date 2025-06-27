@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth.tsx";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
+import AuthCallback from "@/pages/auth-callback";
 
 function AdminRoute() {
   const { user, isAdmin, loading } = useAuth();
@@ -39,6 +40,7 @@ function AppRouter() {
         <Route path="/dashboard/industry/:industryId" component={Dashboard} />
         <Route path="/dashboard/favorites" component={Dashboard} />
         <Route path="/admin" component={AdminRoute} />
+        <Route path="/auth/callback" component={AuthCallback} />
         <Route component={NotFound} />
       </Switch>
     </Router>
