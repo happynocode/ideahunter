@@ -1,6 +1,6 @@
 # A string used to distinguish different Supabase projects on the same machine.
 # Not necessarily the Project ID in Supabase.
-project_id = "reddit-scraper"
+project_id = "ideahunter"
 
 [api]
 enabled = true

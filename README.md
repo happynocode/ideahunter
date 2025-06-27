@@ -2,7 +2,7 @@
 
 > **Latest Update**: Fixed GitHub Pages deployment and Supabase authentication issues ✅
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://happynocode.github.io/reddit-idea-scraper)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://happynocode.github.io/ideahunter)
 [![React](https://img.shields.io/badge/React-18.x-blue)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-green)](https://supabase.io/)
@@ -105,8 +105,8 @@ The project supports data collection across 31 major industries:
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/happynocode/reddit-idea-scraper.git
-cd reddit-idea-scraper
+git clone https://github.com/happynocode/ideahunter.git
+cd ideahunter
 ```
 
 2. **Install dependencies**
@@ -206,7 +206,7 @@ Add the following secrets in your GitHub repository settings:
 3. **Automatic Deployment**
    - Push code to main branch
    - GitHub Actions automatically builds and deploys
-   - Access at `https://happynocode.github.io/reddit-idea-scraper`
+   - Access at `https://happynocode.github.io/ideahunter`
 
 ### Manual Build
 
@@ -251,9 +251,9 @@ Contributions are welcome! Please follow these steps:
 
 ## 📞 Contact
 
-- Project Homepage: [GitHub Repository](https://github.com/happynocode/reddit-idea-scraper)
-- Issue Feedback: [Issues](https://github.com/happynocode/reddit-idea-scraper/issues)
-- Live Demo: [Demo](https://happynocode.github.io/reddit-idea-scraper)
+- Project Homepage: [GitHub Repository](https://github.com/happynocode/ideahunter)
+- Issue Feedback: [Issues](https://github.com/happynocode/ideahunter/issues)
+- Live Demo: [Demo](https://happynocode.github.io/ideahunter)
 
 ## 📄 License
 
