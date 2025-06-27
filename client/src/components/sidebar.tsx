@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import { Rocket, Lock, Heart } from "lucide-react";
+import { Rocket, Lock, Heart, Menu, X } from "lucide-react";
 import { useIndustries } from "@/hooks/use-industries";
 import { useDailyStats } from "@/hooks/use-ideas";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useAuth } from "@/hooks/use-auth.tsx";
+import { useIsMobile } from "@/hooks/use-mobile.tsx";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import AuthModal from "./auth-modal";
 import { getIndustryTextColor } from "@/lib/industry-colors";
 
@@ -21,7 +23,25 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
   const { data: stats } = useDailyStats();
   const { data: favoritesData } = useFavorites(1, 1000); // Get all favorites for count
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobile) {
+      if (mobileMenuOpen) {
+        document.body.classList.add('mobile-menu-open');
+      } else {
+        document.body.classList.remove('mobile-menu-open');
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('mobile-menu-open');
+    };
+  }, [mobileMenuOpen, isMobile]);
 
   const handleIndustryClick = (industryId?: number) => {
     console.log('Sidebar - handleIndustryClick called with:', industryId);
@@ -36,6 +56,11 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
     // 立即调用，确保状态立即更新
     onIndustrySelect(industryId);
     
+    // Close mobile menu after selection
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
+    
     console.log('Sidebar - Industry selected:', industryId);
   };
 
@@ -49,6 +74,11 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
     // Clear industry selection and show favorites
     onIndustrySelect(undefined);
     onFavoritesSelect(true);
+    
+    // Close mobile menu after selection
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
     
     console.log('Sidebar - Favorites selected');
   };
@@ -131,7 +161,46 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
 
   return (
     <>
-      <div className="w-80 glass-card border-r border-white/20 p-6 space-y-6">
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <Button
+          onClick={() => setMobileMenuOpen(true)}
+          className="mobile-menu-button glass-card rounded-lg p-2 text-white hover:bg-white/20 transition-all duration-200 border border-white/20"
+          size="sm"
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
+      )}
+
+      {/* Mobile Overlay */}
+      {isMobile && mobileMenuOpen && (
+        <div 
+          className="mobile-overlay"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        ${isMobile 
+          ? `mobile-sidebar mobile-transition ${
+              mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+            }`
+          : 'relative'
+        }
+        w-80 glass-card border-r border-white/20 p-6 space-y-6 overflow-y-auto
+      `}>
+        {/* Mobile Close Button */}
+        {isMobile && (
+          <Button
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute top-4 right-4 glass-card rounded-lg p-2 text-white hover:bg-white/20 transition-all duration-200 border border-white/20"
+            size="sm"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+
         {/* Logo Section */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -142,8 +211,8 @@ export default function Sidebar({ selectedIndustry, showFavorites, onIndustrySel
             <Rocket className="text-white text-lg" />
           </div>
           <div>
-                          <h1 className="text-xl font-bold text-white">IdeaHunter</h1>
-              <p className="text-sm text-gray-400">AI-Powered Reddit Trend Discovery</p>
+            <h1 className="text-xl font-bold text-white">IdeaHunter</h1>
+            <p className="text-sm text-gray-400">AI-Powered Reddit Trend Discovery</p>
           </div>
         </motion.div>
         

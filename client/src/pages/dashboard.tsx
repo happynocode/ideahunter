@@ -10,6 +10,7 @@ import ParticleBackground from "@/components/particle-background";
 import { useIdeas } from "@/hooks/use-ideas";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useIndustries } from "@/hooks/use-industries";
+import { useIsMobile } from "@/hooks/use-mobile.tsx";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Settings, Heart } from "lucide-react";
@@ -22,6 +23,7 @@ import { getIndustryColor } from "@/lib/industry-colors";
 export default function Dashboard() {
   const [location, setLocation] = useLocation();
   const params = useParams();
+  const isMobile = useIsMobile();
   
   // 从URL获取行业ID，如果存在的话
   const industryFromUrl = params.industryId ? parseInt(params.industryId) : undefined;
@@ -228,7 +230,7 @@ export default function Dashboard() {
     <div className="gradient-bg text-white min-h-screen relative overflow-x-hidden">
       <ParticleBackground />
       
-      <div className="relative z-10 flex min-h-screen">
+      <div className={`relative z-10 ${isMobile ? 'block' : 'flex'} min-h-screen`}>
         <Sidebar 
           selectedIndustry={selectedIndustry}
           showFavorites={showFavorites}
@@ -236,45 +238,45 @@ export default function Dashboard() {
           onFavoritesSelect={handleFavoritesSelect}
         />
         
-        <div className="flex-1 p-8">
+        <div className={`${isMobile ? 'w-full' : 'flex-1'} p-4 md:p-8 ${isMobile ? 'mt-16' : ''}`}>
           {/* Header */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-between items-center mb-8"
+            className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 space-y-4 md:space-y-0"
           >
-            <div>
-              <div className="flex items-center space-x-4 mb-2">
-                <h2 className="text-3xl font-bold text-white">{title}</h2>
+            <div className="flex-1">
+              <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-white">{title}</h2>
                 {showFavorites && (
-                  <Heart className="w-6 h-6 text-pink-400 fill-current" />
+                  <Heart className="w-5 h-5 md:w-6 md:h-6 text-pink-400 fill-current" />
                 )}
                 {selectedIndustry && industries && !showFavorites && (
                   <div className="flex items-center space-x-2">
                     <Badge 
-                      className="px-3 py-1 text-sm font-medium"
+                      className="px-2 md:px-3 py-1 text-xs md:text-sm font-medium"
                       style={{
                         backgroundColor: `${getIndustryColor(industries.find(i => i.id === selectedIndustry)?.name || '')}30`,
                         color: getIndustryColor(industries.find(i => i.id === selectedIndustry)?.name || ''),
                         border: `1px solid ${getIndustryColor(industries.find(i => i.id === selectedIndustry)?.name || '')}50`
                       }}
                     >
-                      <i className={`${industries.find(i => i.id === selectedIndustry)?.icon || 'fas fa-folder'} mr-2`}></i>
+                      <i className={`${industries.find(i => i.id === selectedIndustry)?.icon || 'fas fa-folder'} mr-1 md:mr-2`}></i>
                       {industries.find(i => i.id === selectedIndustry)?.name || 'Unknown Industry'}
                     </Badge>
                   </div>
                 )}
               </div>
-              <p className="text-gray-400">{description}</p>
+              <p className="text-gray-400 text-sm md:text-base">{description}</p>
             </div>
-            <div className="flex space-x-4 items-center">
+            <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 items-stretch md:items-center w-full md:w-auto">
               {/* Only show Admin Panel for admin users */}
               {user && isAdmin && (
                 <Link href="/admin">
                   <Button
-                    className="glass-card rounded-lg px-4 py-2 text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 border border-neon-blue/50"
+                    className="w-full md:w-auto glass-card rounded-lg px-3 md:px-4 py-2 text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 border border-neon-blue/50 text-sm"
                   >
-                    <Settings className="w-4 h-4 mr-2" />
+                    <Settings className="w-4 h-4 mr-1 md:mr-2" />
                     Admin Panel
                   </Button>
                 </Link>
