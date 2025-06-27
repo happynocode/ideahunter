@@ -34,6 +34,8 @@
    https://你的生产域名.com/ideahunter/auth/callback
    ```
 
+   ⚠️ **重要提示**：生产环境的回调URL必须包含 `/ideahunter` 路径前缀！
+
 5. **保存凭据**
    - 复制 `Client ID`
    - 复制 `Client Secret`

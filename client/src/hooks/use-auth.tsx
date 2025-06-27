@@ -88,10 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    // Get the correct base path for production
+    const basePath = process.env.NODE_ENV === 'production' ? '/ideahunter' : '';
+    const redirectTo = `${window.location.origin}${basePath}/auth/callback`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo
       }
     });
 

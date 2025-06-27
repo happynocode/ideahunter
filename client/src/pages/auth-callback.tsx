@@ -10,8 +10,9 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // Handle the OAuth callback by exchanging the code for a session
         const { data, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Auth callback error:', error);
           toast({
@@ -30,6 +31,24 @@ export default function AuthCallback() {
           });
           setLocation('/dashboard');
         } else {
+          // If no session, try to handle the URL hash/search params
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const searchParams = new URLSearchParams(window.location.search);
+
+          // Check for error in URL params
+          const errorParam = hashParams.get('error') || searchParams.get('error');
+          if (errorParam) {
+            console.error('OAuth error from URL:', errorParam);
+            toast({
+              title: "Authentication Error",
+              description: errorParam,
+              variant: "destructive",
+            });
+            setLocation('/');
+            return;
+          }
+
+          // If no session and no error, redirect to home
           setLocation('/');
         }
       } catch (error) {
