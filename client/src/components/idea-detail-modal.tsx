@@ -141,7 +141,7 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
                   >
                     
                     {/* Modal Header */}
-                    <div className="mb-6">
+                    <div className="mb-8">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-3">
@@ -192,170 +192,219 @@ export default function IdeaDetailModal({ ideaId, open, onOpenChange }: IdeaDeta
                       </div>
                     </div>
 
-                    {/* Top Section - Key Info Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      {/* Keywords */}
-                      <Card className="glass-card border-white/20 bg-transparent">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm font-semibold text-white flex items-center">
-                            <span className="w-2 h-2 bg-cyan-400 rounded-full mr-2"></span>
-                            Keywords
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="flex flex-wrap gap-1">
-                            {idea.keywords && idea.keywords.length > 0 ? (
-                              idea.keywords.map((keyword: string, index: number) => (
-                                <Badge key={index} className="bg-cyan-400/20 text-cyan-400 px-2 py-1 rounded text-xs">
-                                  {keyword}
-                                </Badge>
-                              ))
-                            ) : (
-                              <span className="text-gray-400 text-xs">No keywords</span>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Market Size */}
-                      <Card className="glass-card border-white/20 bg-transparent">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm font-semibold text-white flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            Market Size
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <p className="text-green-400 text-sm font-medium">
-                            {idea.market_size || 'Not specified'}
-                          </p>
-                        </CardContent>
-                      </Card>
-
-                      {/* Confidence Score */}
-                      <Card className="glass-card border-white/20 bg-transparent">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm font-semibold text-white flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            Confidence
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="flex items-center space-x-2">
-                            <div className="flex-1 bg-gray-700 rounded-full h-2">
-                              <div 
-                                className="bg-yellow-400 h-2 rounded-full" 
-                                style={{ width: `${(idea.confidence_score || 0)}%` }}
-                              ></div>
+                    {/* Hero Section - Problem Summary (Prominently Featured) */}
+                    <div className="mb-8">
+                      <Card className="glass-card border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 rounded-xl p-8 shadow-2xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/5 to-blue-600/5 rounded-xl"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center mb-6">
+                            <div className="w-3 h-3 bg-cyan-400 rounded-full mr-4 shadow-lg shadow-cyan-400/50"></div>
+                            <h2 className="text-3xl font-bold text-white">Problem Summary</h2>
+                            <div className="ml-4 px-3 py-1 bg-cyan-400/20 rounded-full">
+                              <span className="text-cyan-400 text-sm font-semibold">Core Issue</span>
                             </div>
-                            <span className="text-yellow-400 text-sm">{idea.confidence_score || 0}%</span>
                           </div>
-                        </CardContent>
+                          <p className="text-gray-200 leading-relaxed text-lg font-medium">{idea.summary}</p>
+                        </div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-400/10 to-transparent rounded-full blur-3xl"></div>
                       </Card>
                     </div>
 
-                    {/* Main Content Area */}
-                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                      {/* Left Column - Main Content */}
-                      <div className="lg:col-span-3 space-y-6">
-                        {/* Problem Summary */}
-                        <div className="glass-card border-white/20 bg-transparent rounded-lg p-5">
-                          <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                            <span className="w-1 h-6 bg-cyan-400 rounded-full mr-3"></span>
-                            Problem Summary
-                          </h3>
-                          <p className="text-gray-300 leading-relaxed text-base">{idea.summary}</p>
-                        </div>
-
-                        {/* Key Pain Points */}
-                        {idea.solution_gaps && (
-                          <div className="glass-card border-white/20 bg-transparent rounded-lg p-5">
-                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                              <span className="w-1 h-6 bg-red-400 rounded-full mr-3"></span>
-                              Key Pain Points
-                            </h3>
-                            <div className="flex items-start space-x-3">
-                              <AlertCircle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
-                              <p className="text-gray-300 leading-relaxed text-base">{idea.solution_gaps}</p>
+                    {/* Key Pain Points Section (Prominently Featured) */}
+                    {idea.solution_gaps && (
+                      <div className="mb-8">
+                        <Card className="glass-card border-red-400/30 bg-gradient-to-br from-red-500/10 to-orange-600/10 rounded-xl p-8 shadow-2xl relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-r from-red-400/5 to-orange-600/5 rounded-xl"></div>
+                          <div className="relative z-10">
+                            <div className="flex items-center mb-6">
+                              <div className="w-3 h-3 bg-red-400 rounded-full mr-4 shadow-lg shadow-red-400/50"></div>
+                              <h2 className="text-3xl font-bold text-white">Key Pain Points</h2>
+                              <div className="ml-4 px-3 py-1 bg-red-400/20 rounded-full">
+                                <span className="text-red-400 text-sm font-semibold">Critical Issues</span>
+                              </div>
+                            </div>
+                            <div className="flex items-start space-x-4">
+                              <div className="flex-shrink-0 w-12 h-12 bg-red-400/20 rounded-full flex items-center justify-center">
+                                <AlertCircle className="w-6 h-6 text-red-400" />
+                              </div>
+                              <p className="text-gray-200 leading-relaxed text-lg font-medium">{idea.solution_gaps}</p>
                             </div>
                           </div>
-                        )}
-
-                        {/* Existing Solutions */}
-                        {idea.existing_solutions && (
-                          <div className="glass-card border-white/20 bg-transparent rounded-lg p-5">
-                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                              <span className="w-1 h-6 bg-purple-400 rounded-full mr-3"></span>
-                              Current Market Solutions
-                            </h3>
-                            <p className="text-gray-300 leading-relaxed text-base">{idea.existing_solutions}</p>
-                          </div>
-                        )}
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-400/10 to-transparent rounded-full blur-3xl"></div>
+                        </Card>
                       </div>
+                    )}
 
-                      {/* Right Column - Reddit Sources & Actions */}
+                    {/* Main Content Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      {/* Left Column - Secondary Info */}
                       <div className="lg:col-span-2 space-y-6">
-                        {/* Reddit Sources */}
-                        <div className="glass-card border-white/20 bg-transparent rounded-lg p-5">
-                          <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-                            <i className="fab fa-reddit text-orange-500 mr-2"></i>
-                            Source Discussions
-                          </h3>
-                          <div className="space-y-3">
-                            {idea.reddit_post_urls && idea.reddit_post_urls.length > 0 ? (
-                              idea.reddit_post_urls.map((url: string, index: number) => (
-                                <a
-                                  key={index}
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200 group"
-                                >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="text-orange-400 font-medium text-sm">r/{idea.subreddit}</span>
-                                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-                                  </div>
-                                  <p className="text-gray-300 text-sm">Discussion #{index + 1}</p>
-                                  <p className="text-xs text-gray-500 mt-1">Click to view original post</p>
-                                </a>
-                              ))
-                            ) : (
-                              <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-                                <p className="text-gray-400 text-sm">No source links available</p>
+                        {/* Keywords & Confidence Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Keywords */}
+                          <Card className="glass-card border-white/20 bg-transparent rounded-lg p-6">
+                            <CardHeader className="pb-4 px-0 pt-0">
+                              <CardTitle className="text-lg font-semibold text-white flex items-center">
+                                <span className="w-2 h-2 bg-cyan-400 rounded-full mr-3"></span>
+                                Keywords
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="px-0 pb-0">
+                              <div className="flex flex-wrap gap-2">
+                                {idea.keywords && idea.keywords.length > 0 ? (
+                                  idea.keywords.map((keyword: string, index: number) => (
+                                    <Badge key={index} className="bg-cyan-400/20 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium">
+                                      {keyword}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-gray-400 text-sm">No keywords</span>
+                                )}
                               </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Confidence Score */}
+                          <Card className="glass-card border-white/20 bg-transparent rounded-lg p-6">
+                            <CardHeader className="pb-4 px-0 pt-0">
+                              <CardTitle className="text-lg font-semibold text-white flex items-center">
+                                <span className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></span>
+                                Confidence Score
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="px-0 pb-0">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-gray-300">Success Probability</span>
+                                  <span className="text-yellow-400 text-lg font-bold">{idea.confidence_score || 0}%</span>
+                                </div>
+                                <div className="w-full bg-gray-700 rounded-full h-3">
+                                  <div 
+                                    className="bg-gradient-to-r from-yellow-400 to-orange-400 h-3 rounded-full transition-all duration-500 shadow-lg shadow-yellow-400/30" 
+                                    style={{ width: `${(idea.confidence_score || 0)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        {/* Market Analysis Section */}
+                        <div className="space-y-6">
+                          <h3 className="text-2xl font-bold text-white flex items-center">
+                            <span className="w-3 h-3 bg-purple-400 rounded-full mr-4"></span>
+                            Market Analysis
+                          </h3>
+                          
+                          <div className="grid grid-cols-1 gap-6">
+                            {/* Market Size */}
+                            <Card className="glass-card border-green-400/20 bg-gradient-to-r from-green-500/5 to-emerald-600/5 rounded-lg p-6">
+                              <CardHeader className="pb-4 px-0 pt-0">
+                                <CardTitle className="text-lg font-semibold text-white flex items-center">
+                                  <span className="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                                  Market Size & Opportunity
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="px-0 pb-0">
+                                <p className="text-green-400 text-lg font-semibold">
+                                  {idea.market_size || 'Market size analysis not available'}
+                                </p>
+                              </CardContent>
+                            </Card>
+
+                            {/* Existing Solutions */}
+                            {idea.existing_solutions && (
+                              <Card className="glass-card border-purple-400/20 bg-gradient-to-r from-purple-500/5 to-violet-600/5 rounded-lg p-6">
+                                <CardHeader className="pb-4 px-0 pt-0">
+                                  <CardTitle className="text-lg font-semibold text-white flex items-center">
+                                    <span className="w-2 h-2 bg-purple-400 rounded-full mr-3"></span>
+                                    Current Market Solutions
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="px-0 pb-0">
+                                  <p className="text-gray-300 leading-relaxed">{idea.existing_solutions}</p>
+                                </CardContent>
+                              </Card>
                             )}
                           </div>
                         </div>
+                      </div>
+
+                      {/* Right Column - Reddit Sources & Actions */}
+                      <div className="space-y-6">
+                        {/* Reddit Sources */}
+                        <Card className="glass-card border-orange-400/20 bg-gradient-to-br from-orange-500/5 to-red-600/5 rounded-lg p-6">
+                          <CardHeader className="pb-4 px-0 pt-0">
+                            <CardTitle className="text-lg font-bold text-white flex items-center">
+                              <i className="fab fa-reddit text-orange-500 mr-3 text-xl"></i>
+                              Source Discussions
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="px-0 pb-0">
+                            <div className="space-y-3">
+                              {idea.reddit_post_urls && idea.reddit_post_urls.length > 0 ? (
+                                idea.reddit_post_urls.map((url: string, index: number) => (
+                                  <a
+                                    key={index}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 hover:border-orange-400/30 transition-all duration-200 group"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-orange-400 font-semibold text-sm">r/{idea.subreddit}</span>
+                                      <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-orange-400 transition-colors" />
+                                    </div>
+                                    <p className="text-gray-300 text-sm font-medium">Discussion #{index + 1}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Click to view original post</p>
+                                  </a>
+                                ))
+                              ) : (
+                                <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                                  <p className="text-gray-400 text-sm">No source links available</p>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
 
                         {/* Action Buttons */}
                         <div className="space-y-4">
                           <Button
                             onClick={handleFavoriteClick}
-                            className="w-full glass-card rounded-lg py-4 text-white hover:bg-white/20 transition-all duration-200 neon-glow border-0 font-semibold"
+                            className={`w-full glass-card rounded-lg py-4 text-white hover:bg-white/20 transition-all duration-200 neon-glow border-0 font-semibold ${
+                              isFavorited 
+                                ? 'bg-pink-500/20 hover:bg-pink-500/30 text-pink-400' 
+                                : 'bg-white/10 hover:bg-pink-500/20 hover:text-pink-400'
+                            }`}
                           >
                             <Bookmark className="w-5 h-5 mr-2" />
                             {isFavorited ? "Remove from Favorites" : "Add to Favorites"}
                           </Button>
                         </div>
 
-                        {/* Additional Info */}
-                        <div className="glass-card border-white/20 bg-transparent rounded-lg p-4">
-                          <h4 className="text-sm font-semibold text-white mb-3">Idea Stats</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Source Posts</span>
-                              <span className="text-white">{idea.reddit_post_urls?.length || 0}</span>
+                        {/* Stats Card */}
+                        <Card className="glass-card border-white/20 bg-transparent rounded-lg p-6">
+                          <CardHeader className="pb-4 px-0 pt-0">
+                            <CardTitle className="text-lg font-semibold text-white">Idea Statistics</CardTitle>
+                          </CardHeader>
+                          <CardContent className="px-0 pb-0">
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-400">Source Posts</span>
+                                <span className="text-white font-semibold">{idea.reddit_post_urls?.length || 0}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-400">Total Upvotes</span>
+                                <span className="text-green-400 font-semibold">{idea.upvotes}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-400">Comments</span>
+                                <span className="text-blue-400 font-semibold">{idea.comments}</span>
+                              </div>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Total Upvotes</span>
-                              <span className="text-green-400">{idea.upvotes}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Comments</span>
-                              <span className="text-blue-400">{idea.comments}</span>
-                            </div>
-                          </div>
-                        </div>
+                          </CardContent>
+                        </Card>
                       </div>
                     </div>
                   </motion.div>
