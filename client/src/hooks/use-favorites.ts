@@ -27,68 +27,79 @@ export function useFavorites(page: number = 1, pageSize: number = 20) {
         };
       }
 
-      const query = supabase
+      // 先获取用户的收藏夹列表
+      const { data: favoritesList, error: favoritesError, count } = await supabase
         .from('favorites')
-        .select(`
-          *,
-          startup_ideas!startupIdeaId(
-            *,
-            industry:industries!industryId(*)
-          )
-        `, { count: 'exact' })
-        .eq('userId', user.id)
-        .order('createdAt', { ascending: false })
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
-      const { data: favorites, error, count } = await query;
-
-      console.log('Favorites - Query result:', {
-        favoritesCount: favorites?.length || 0,
+      console.log('Favorites - Step 1 result:', {
+        favoritesCount: favoritesList?.length || 0,
         totalCount: count,
-        error: error?.message
+        error: favoritesError?.message,
+        firstFavorite: favoritesList?.[0]
       });
 
-      if (error) {
-        // Handle range not satisfiable error gracefully
-        if (error.message.includes('Range Not Satisfiable') || error.code === 'PGRST103') {
-          console.warn('Range not satisfiable for favorites, returning empty result');
-          return {
-            ideas: [],
-            total: 0,
-            page,
-            pageSize,
-            totalPages: 0
-          };
-        }
-        throw new Error(`Failed to fetch favorites: ${error.message}`);
+      if (favoritesError) {
+        throw new Error(`Failed to fetch favorites: ${favoritesError.message}`);
       }
 
-      // Map favorites to ideas format
-      const ideas: StartupIdea[] = (favorites || []).map(favorite => {
-        const idea = favorite.startup_ideas;
+      if (!favoritesList || favoritesList.length === 0) {
         return {
-          id: idea.id,
-          title: idea.title,
-          summary: idea.summary,
-          industryId: idea.industryId,
-          upvotes: idea.upvotes,
-          comments: idea.comments,
-          keywords: idea.keywords || [],
-          subreddit: idea.subreddit,
-          redditPostUrls: idea.redditPostUrls || [],
-          existingSolutions: idea.existingSolutions,
-          solutionGaps: idea.solutionGaps,
-          marketSize: idea.marketSize,
-          targetDate: idea.targetDate,
-          createdAt: idea.createdAt,
-          updatedAt: idea.updatedAt,
-          confidenceScore: idea.confidenceScore,
-          industry: idea.industry,
-          isFavorited: true
+          ideas: [],
+          total: count || 0,
+          page,
+          pageSize,
+          totalPages: Math.ceil((count || 0) / pageSize)
         };
+      }
+
+      // 获取相关的startup ideas
+      const ideaIds = favoritesList.map(fav => fav.startup_idea_id);
+      const { data: startupIdeas, error: ideasError } = await supabase
+        .from('startup_ideas')
+        .select(`
+          *,
+          industries!inner(*)
+        `)
+        .in('id', ideaIds);
+
+      console.log('Favorites - Step 2 result:', {
+        ideasCount: startupIdeas?.length || 0,
+        ideaIds,
+        error: ideasError?.message,
+        firstIdea: startupIdeas?.[0]
       });
 
-      console.log('Favorites - Mapped ideas:', ideas.length);
+      if (ideasError) {
+        throw new Error(`Failed to fetch startup ideas: ${ideasError.message}`);
+      }
+
+      // 映射数据
+      const ideas: StartupIdea[] = (startupIdeas || []).map(idea => ({
+        id: idea.id,
+        title: idea.title,
+        summary: idea.summary,
+        industryId: idea.industry_id,
+        upvotes: idea.upvotes,
+        comments: idea.comments,
+        keywords: idea.keywords || [],
+        subreddit: idea.subreddit,
+        redditPostUrls: idea.reddit_post_urls || [],
+        existingSolutions: idea.existing_solutions,
+        solutionGaps: idea.solution_gaps,
+        marketSize: idea.market_size,
+        targetDate: idea.target_date,
+        createdAt: idea.created_at,
+        updatedAt: idea.updated_at,
+        confidenceScore: idea.confidence_score,
+        industry: idea.industries,
+        isFavorited: true
+      }));
+
+      console.log('Favorites - Final mapped ideas:', ideas.length);
 
       return {
         ideas,
@@ -121,9 +132,9 @@ export function useFavoriteStatus(ideaIds: number[]) {
 
       const { data, error } = await supabase
         .from('favorites')
-        .select('startupIdeaId')
-        .eq('userId', user.id)
-        .in('startupIdeaId', ideaIds);
+        .select('startup_idea_id')
+        .eq('user_id', user.id)
+        .in('startup_idea_id', ideaIds);
 
       if (error) {
         throw new Error(`Failed to check favorite status: ${error.message}`);
@@ -135,7 +146,7 @@ export function useFavoriteStatus(ideaIds: number[]) {
       });
 
       (data || []).forEach(favorite => {
-        statusMap[favorite.startupIdeaId] = true;
+        statusMap[favorite.startup_idea_id] = true;
       });
 
       return statusMap;
@@ -160,8 +171,8 @@ export function useToggleFavorite() {
         const { error } = await supabase
           .from('favorites')
           .delete()
-          .eq('userId', user.id)
-          .eq('startupIdeaId', ideaId);
+          .eq('user_id', user.id)
+          .eq('startup_idea_id', ideaId);
 
         if (error) {
           throw new Error(`Failed to remove favorite: ${error.message}`);
@@ -171,8 +182,8 @@ export function useToggleFavorite() {
         const { error } = await supabase
           .from('favorites')
           .insert({
-            userId: user.id,
-            startupIdeaId: ideaId
+            user_id: user.id,
+            startup_idea_id: ideaId
           });
 
         if (error) {
