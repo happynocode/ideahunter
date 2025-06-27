@@ -99,18 +99,18 @@ export default function AuthModal({ open, onOpenChange, defaultTab = 'signin' }:
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={googleLoading}
-                  className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 flex items-center justify-center gap-3"
+                  className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 flex items-center justify-center gap-3 py-3"
                 >
                   <FaGoogle className="w-4 h-4" />
                   {googleLoading ? 'Signing in...' : 'Continue with Google'}
                 </Button>
 
-                <div className="relative">
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
                     <Separator className="w-full bg-white/20" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-gray-900 px-2 text-gray-400">Or continue with email</span>
+                    <span className="bg-gray-900 px-3 py-1 text-gray-400">Or continue with email</span>
                   </div>
                 </div>
 
@@ -183,18 +183,18 @@ export default function AuthModal({ open, onOpenChange, defaultTab = 'signin' }:
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={googleLoading}
-                  className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 flex items-center justify-center gap-3"
+                  className="w-full bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 flex items-center justify-center gap-3 py-3"
                 >
                   <FaGoogle className="w-4 h-4" />
                   {googleLoading ? 'Signing up...' : 'Continue with Google'}
                 </Button>
 
-                <div className="relative">
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
                     <Separator className="w-full bg-white/20" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-gray-900 px-2 text-gray-400">Or continue with email</span>
+                    <span className="bg-gray-900 px-3 py-1 text-gray-400">Or continue with email</span>
                   </div>
                 </div>
 
